@@ -768,6 +768,10 @@ name = "SuggestionChosen"
 payload = "SelectedItem"
 payload_adapter = "inspectable_string"
 
+[[objects.events]]
+name = "QuerySubmitted"
+payload = "QueryText"
+
 [[objects]]
 name = "PasswordBox"
 enabled = true

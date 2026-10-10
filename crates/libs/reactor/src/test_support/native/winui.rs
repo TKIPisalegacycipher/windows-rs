@@ -749,6 +749,10 @@ impl WinUiAdapter {
                 EventId::SuggestionChosen,
             ) => &value.suggestion_chosen,
             (
+                Some(Handle::Generated(GeneratedHandle::AutoSuggestBox(value))),
+                EventId::QuerySubmitted,
+            ) => &value.query_submitted,
+            (
                 Some(Handle::Generated(GeneratedHandle::TabView(value))),
                 EventId::TabCloseRequested,
             ) => &value.tab_close_requested,

@@ -1523,6 +1523,8 @@ impl reactor::Component for Fixture {
         assert_eq!(breadcrumb_runtime.dispatch_native_events().unwrap(), 0);
         let suggestion_values = Rc::new(RefCell::new(Vec::new()));
         let suggestion_callback = Rc::clone(&suggestion_values);
+        let query_values = Rc::new(RefCell::new(Vec::new()));
+        let query_callback = Rc::clone(&query_values);
         let mut suggestion_runtime =
             reactor::Runtime::new(reactor::native::WinUiAdapter::default());
         suggestion_runtime
@@ -1531,6 +1533,9 @@ impl reactor::Component for Fixture {
                     .items_source(["First", "Second"])
                     .on_suggestion_chosen(move |value| {
                         suggestion_callback.borrow_mut().push(value);
+                    })
+                    .on_query_submitted(move |value| {
+                        query_callback.borrow_mut().push(value);
                     }),
             )
             .unwrap();
@@ -1541,6 +1546,12 @@ impl reactor::Component for Fixture {
             .unwrap();
         assert_eq!(suggestion_runtime.dispatch_native_events().unwrap(), 1);
         assert_eq!(&*suggestion_values.borrow(), &[Rc::from("Second")]);
+        suggestion_runtime
+            .adapter()
+            .simulate_string_event(suggestions, reactor::EventId::QuerySubmitted, "inbox")
+            .unwrap();
+        assert_eq!(suggestion_runtime.dispatch_native_events().unwrap(), 1);
+        assert_eq!(&*query_values.borrow(), &[Rc::from("inbox")]);
         suggestion_runtime
             .adapter()
             .validate_graph(suggestion_runtime.graph())
