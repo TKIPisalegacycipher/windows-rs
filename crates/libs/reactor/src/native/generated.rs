@@ -285,6 +285,10 @@ struct GeneratedAutoSuggestBox {
     _suggestion_chosen: GeneratedRevoker,
     query_submitted: Rc<RefCell<NativeStringEvent>>,
     _query_submitted: GeneratedRevoker,
+    got_focus: Rc<RefCell<NativeFocusEventInfoEvent>>,
+    _got_focus: GeneratedRevoker,
+    lost_focus: Rc<RefCell<NativeFocusEventInfoEvent>>,
+    _lost_focus: GeneratedRevoker,
 }
 struct GeneratedPasswordBox {
     value: native::PasswordBox,
@@ -1589,6 +1593,76 @@ impl GeneratedHandle {
                     }
                 })?;
                 let _query_submitted = GeneratedRevoker::Event(revoker);
+                let got_focus = Rc::new(RefCell::new(NativeFocusEventInfoEvent::default()));
+                let event_for_callback = Rc::clone(&got_focus);
+                let event_queue_got_focus = Rc::clone(event_queue);
+                let source_got_focus = value.cast::<native::UIElement>()?;
+                let pending_focus_states_got_focus = Rc::clone(pending_focus_states);
+                let revoker = value
+                    .cast::<native::IUIElement>()?
+                    .GotFocus(move |_, args| {
+                        let dispatch = true;
+                        let observation = None;
+                        let value = match WinUiAdapter::focus_event_info(
+                            object,
+                            &source_got_focus,
+                            args,
+                            true,
+                            &pending_focus_states_got_focus,
+                        ) {
+                            Ok(value) => value,
+                            Err(error) => {
+                                report_error(error.into());
+                                return;
+                            }
+                        };
+                        if dispatch {
+                            WinUiAdapter::dispatch(
+                                &event_for_callback,
+                                &event_queue_got_focus,
+                                object,
+                                EventId::GotFocus,
+                                observation,
+                                value,
+                            );
+                        }
+                    })?;
+                let _got_focus = GeneratedRevoker::Event(revoker);
+                let lost_focus = Rc::new(RefCell::new(NativeFocusEventInfoEvent::default()));
+                let event_for_callback = Rc::clone(&lost_focus);
+                let event_queue_lost_focus = Rc::clone(event_queue);
+                let source_lost_focus = value.cast::<native::UIElement>()?;
+                let pending_focus_states_lost_focus = Rc::clone(pending_focus_states);
+                let revoker = value
+                    .cast::<native::IUIElement>()?
+                    .LostFocus(move |_, args| {
+                        let dispatch = true;
+                        let observation = None;
+                        let value = match WinUiAdapter::focus_event_info(
+                            object,
+                            &source_lost_focus,
+                            args,
+                            false,
+                            &pending_focus_states_lost_focus,
+                        ) {
+                            Ok(value) => value,
+                            Err(error) => {
+                                report_error(error.into());
+                                return;
+                            }
+                        };
+                        if dispatch {
+                            WinUiAdapter::dispatch(
+                                &event_for_callback,
+                                &event_queue_lost_focus,
+                                object,
+                                EventId::LostFocus,
+                                observation,
+                                value,
+                            );
+                        }
+                    })?;
+                let _lost_focus = GeneratedRevoker::Event(revoker);
                 Self::AutoSuggestBox(Box::new(GeneratedAutoSuggestBox {
                     value,
                     text_changed,
@@ -1597,6 +1671,10 @@ impl GeneratedHandle {
                     _suggestion_chosen,
                     query_submitted,
                     _query_submitted,
+                    got_focus,
+                    _got_focus,
+                    lost_focus,
+                    _lost_focus,
                 }))
             }
             ObjectType::PasswordBox => {
@@ -9557,6 +9635,16 @@ impl GeneratedHandle {
                     native_event.revision = native_event.revision.wrapping_add(1);
                     native_event.callback = None;
                 }
+                if clear.contains(&EventId::GotFocus) {
+                    let mut native_event = object.got_focus.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
+                if clear.contains(&EventId::LostFocus) {
+                    let mut native_event = object.lost_focus.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
                 for event in set {
                     match (event.id, &event.value) {
                         (EventId::TextChanged, EventValue::String(callback)) => {
@@ -9571,6 +9659,16 @@ impl GeneratedHandle {
                         }
                         (EventId::QuerySubmitted, EventValue::String(callback)) => {
                             let mut native_event = object.query_submitted.borrow_mut();
+                            native_event.revision = native_event.revision.wrapping_add(1);
+                            native_event.callback = Some(callback.clone());
+                        }
+                        (EventId::GotFocus, EventValue::FocusEventInfo(callback)) => {
+                            let mut native_event = object.got_focus.borrow_mut();
+                            native_event.revision = native_event.revision.wrapping_add(1);
+                            native_event.callback = Some(callback.clone());
+                        }
+                        (EventId::LostFocus, EventValue::FocusEventInfo(callback)) => {
+                            let mut native_event = object.lost_focus.borrow_mut();
                             native_event.revision = native_event.revision.wrapping_add(1);
                             native_event.callback = Some(callback.clone());
                         }
@@ -10783,6 +10881,20 @@ impl GeneratedHandle {
                     .then(|| event.callback.clone())
                     .flatten()
                     .map(EventValue::String)
+            }
+            (Self::AutoSuggestBox(object), EventId::GotFocus) => {
+                let event = object.got_focus.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::FocusEventInfo)
+            }
+            (Self::AutoSuggestBox(object), EventId::LostFocus) => {
+                let event = object.lost_focus.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::FocusEventInfo)
             }
             (Self::PasswordBox(object), EventId::PasswordChanged) => {
                 let event = object.password_changed.borrow();

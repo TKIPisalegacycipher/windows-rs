@@ -1525,6 +1525,8 @@ impl reactor::Component for Fixture {
         let suggestion_callback = Rc::clone(&suggestion_values);
         let query_values = Rc::new(RefCell::new(Vec::new()));
         let query_callback = Rc::clone(&query_values);
+        let suggestion_focus_values = Rc::new(RefCell::new(Vec::new()));
+        let suggestion_focus_callback = Rc::clone(&suggestion_focus_values);
         let mut suggestion_runtime =
             reactor::Runtime::new(reactor::native::WinUiAdapter::default());
         suggestion_runtime
@@ -1536,6 +1538,13 @@ impl reactor::Component for Fixture {
                     })
                     .on_query_submitted(move |value| {
                         query_callback.borrow_mut().push(value);
+                    })
+                    .on_got_focus(move |value| {
+                        suggestion_focus_callback.borrow_mut().push(value);
+                    })
+                    .on_lost_focus({
+                        let values = Rc::clone(&suggestion_focus_values);
+                        move |value| values.borrow_mut().push(value)
                     }),
             )
             .unwrap();
@@ -1552,6 +1561,35 @@ impl reactor::Component for Fixture {
             .unwrap();
         assert_eq!(suggestion_runtime.dispatch_native_events().unwrap(), 1);
         assert_eq!(&*query_values.borrow(), &[Rc::from("inbox")]);
+        let suggestion_got_focus = reactor::FocusEventInfo {
+            state: reactor::ElementFocusState::Keyboard,
+            is_direct: false,
+        };
+        let suggestion_lost_focus = reactor::FocusEventInfo {
+            state: reactor::ElementFocusState::Unfocused,
+            is_direct: true,
+        };
+        suggestion_runtime
+            .adapter()
+            .simulate_focus_event(
+                suggestions,
+                reactor::EventId::GotFocus,
+                suggestion_got_focus,
+            )
+            .unwrap();
+        suggestion_runtime
+            .adapter()
+            .simulate_focus_event(
+                suggestions,
+                reactor::EventId::LostFocus,
+                suggestion_lost_focus,
+            )
+            .unwrap();
+        assert_eq!(suggestion_runtime.dispatch_native_events().unwrap(), 2);
+        assert_eq!(
+            &*suggestion_focus_values.borrow(),
+            &[suggestion_got_focus, suggestion_lost_focus]
+        );
         suggestion_runtime
             .adapter()
             .validate_graph(suggestion_runtime.graph())

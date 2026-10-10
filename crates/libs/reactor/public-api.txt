@@ -646,6 +646,8 @@ pub fn windows_reactor::AutoSuggestBox::max_width(self, f64) -> Self
 pub fn windows_reactor::AutoSuggestBox::min_height(self, f64) -> Self
 pub fn windows_reactor::AutoSuggestBox::min_width(self, f64) -> Self
 pub fn windows_reactor::AutoSuggestBox::new() -> Self
+pub fn windows_reactor::AutoSuggestBox::on_got_focus(self, impl windows_reactor::IntoPayloadCallback<windows_reactor::FocusEventInfo>) -> Self
+pub fn windows_reactor::AutoSuggestBox::on_lost_focus(self, impl windows_reactor::IntoPayloadCallback<windows_reactor::FocusEventInfo>) -> Self
 pub fn windows_reactor::AutoSuggestBox::on_query_submitted(self, impl windows_reactor::IntoPayloadCallback<alloc::rcs::rc::Rc<str>>) -> Self
 pub fn windows_reactor::AutoSuggestBox::on_suggestion_chosen(self, impl windows_reactor::IntoPayloadCallback<alloc::rcs::rc::Rc<str>>) -> Self
 pub fn windows_reactor::AutoSuggestBox::on_text_changed(self, impl windows_reactor::IntoPayloadCallback<alloc::rcs::rc::Rc<str>>) -> Self

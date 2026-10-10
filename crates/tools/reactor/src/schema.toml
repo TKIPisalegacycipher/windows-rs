@@ -772,6 +772,14 @@ payload_adapter = "inspectable_string"
 name = "QuerySubmitted"
 payload = "QueryText"
 
+[[objects.events]]
+name = "GotFocus"
+adapter = "focus"
+
+[[objects.events]]
+name = "LostFocus"
+adapter = "focus"
+
 [[objects]]
 name = "PasswordBox"
 enabled = true

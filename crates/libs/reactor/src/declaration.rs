@@ -1341,6 +1341,8 @@ pub enum ElementFocusState {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FocusEventInfo {
     pub state: ElementFocusState,
+    /// `false` when the event was routed from a descendant, such as the inner
+    /// text box of an `AutoSuggestBox`, rather than raised by the element itself.
     pub is_direct: bool,
 }
 

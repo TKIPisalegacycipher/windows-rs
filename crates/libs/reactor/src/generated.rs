@@ -704,6 +704,14 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
                 id: EventId::QuerySubmitted,
                 value: ValueType::String,
             },
+            EventContract {
+                id: EventId::GotFocus,
+                value: ValueType::FocusEventInfo,
+            },
+            EventContract {
+                id: EventId::LostFocus,
+                value: ValueType::FocusEventInfo,
+            },
         ],
         ObjectType::PasswordBox => &[EventContract {
             id: EventId::PasswordChanged,

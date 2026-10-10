@@ -3409,6 +3409,20 @@ impl AutoSuggestBox {
         );
         self
     }
+    pub fn on_got_focus(mut self, callback: impl IntoPayloadCallback<FocusEventInfo>) -> Self {
+        self.0 = self.0.event(
+            EventId::GotFocus,
+            EventValue::FocusEventInfo(callback.into_payload_callback()),
+        );
+        self
+    }
+    pub fn on_lost_focus(mut self, callback: impl IntoPayloadCallback<FocusEventInfo>) -> Self {
+        self.0 = self.0.event(
+            EventId::LostFocus,
+            EventValue::FocusEventInfo(callback.into_payload_callback()),
+        );
+        self
+    }
 }
 impl Default for AutoSuggestBox {
     fn default() -> Self {

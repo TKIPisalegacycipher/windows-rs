@@ -190,6 +190,50 @@ fn focus_payloads_round_trip_through_recording_protocol() {
 }
 
 #[test]
+fn auto_suggest_box_focus_payloads_round_trip_through_recording_protocol() {
+    let values = Rc::new(RefCell::new(Vec::new()));
+    let callback = {
+        let values = Rc::clone(&values);
+        Callback::new(move |value| values.borrow_mut().push(value))
+    };
+    let got = FocusEventInfo {
+        state: ElementFocusState::Keyboard,
+        is_direct: false,
+    };
+    let lost = FocusEventInfo {
+        state: ElementFocusState::Unfocused,
+        is_direct: true,
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            AutoSuggestBox::new()
+                .on_got_focus(callback.clone())
+                .on_lost_focus(callback.clone()),
+        )
+        .unwrap();
+    let object = runtime.graph().root().unwrap();
+    for id in [EventId::GotFocus, EventId::LostFocus] {
+        assert!(
+            event_contracts(ObjectType::AutoSuggestBox).contains(&EventContract {
+                id,
+                value: ValueType::FocusEventInfo,
+            })
+        );
+    }
+    for (event, value) in [(EventId::GotFocus, got), (EventId::LostFocus, lost)] {
+        runtime.adapter_mut().queue_event(EventDispatch::new(
+            object,
+            event,
+            EventValue::FocusEventInfo(callback.clone()),
+            EventPayload::FocusEventInfo(value),
+        ));
+    }
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 2);
+    assert_eq!(&*values.borrow(), &[got, lost]);
+}
+
+#[test]
 fn drag_drop_policy_and_payloads_round_trip_through_recording_protocol() {
     let policy = DragDropPolicy::new()
         .storage_items(DragDropAction::new(DragDropOperation::Move))
