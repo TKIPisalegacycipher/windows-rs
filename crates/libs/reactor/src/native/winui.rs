@@ -1257,71 +1257,112 @@ impl NativeImageSource {
 }
 
 fn icon_element(value: &Icon) -> Result<native::IconElement, WinUiError> {
-    match value.value() {
+    let foreground = value.foreground_brush();
+    let icon: native::IconElement = match value.value() {
         IconValue::Symbol(value) => {
-            let icon = native::SymbolIcon::new()?;
+            let icon = new_icon("SymbolIcon", foreground, native::SymbolIcon::new)?;
             icon.SetSymbol(native_symbol(*value))?;
-            icon.cast().map_err(Into::into)
+            icon.cast()?
         }
         IconValue::Font(value) => {
-            let icon = native::FontIcon::new()?;
+            let icon = new_icon("FontIcon", foreground, native::FontIcon::new)?;
             icon.SetGlyph(value)?;
-            icon.cast().map_err(Into::into)
+            icon.cast()?
         }
         IconValue::Bitmap {
             uri,
             show_as_monochrome,
         } => {
-            let icon = native::BitmapIcon::new()?;
+            let icon = new_icon("BitmapIcon", foreground, native::BitmapIcon::new)?;
             icon.SetUriSource(&native::Uri::CreateUri(uri)?)?;
             icon.SetShowAsMonochrome(*show_as_monochrome)?;
-            icon.cast().map_err(Into::into)
+            icon.cast()?
         }
         IconValue::Image(value) => {
-            let icon = native::ImageIcon::new()?;
+            let icon = new_icon("ImageIcon", foreground, native::ImageIcon::new)?;
             icon.SetSource(&icon_image_source(value)?)?;
-            icon.cast().map_err(Into::into)
+            icon.cast()?
         }
         IconValue::Path(value) => {
-            let icon = native::PathIcon::new()?;
+            let icon = new_icon("PathIcon", foreground, native::PathIcon::new)?;
             icon.SetData(&parse_path_data(value)?)?;
-            icon.cast().map_err(Into::into)
+            icon.cast()?
         }
+    };
+    if let Some(Brush::Solid(color)) = foreground {
+        icon.SetForeground(&solid_color_brush(color)?)?;
+    }
+    Ok(icon)
+}
+
+/// An icon source is not in the visual tree, so a theme brush foreground is resolved when the icon
+/// is applied and may not follow later theme changes, unlike an icon element's.
+fn icon_source(value: &Icon) -> Result<native::IconSource, WinUiError> {
+    let foreground = value.foreground_brush();
+    let icon: native::IconSource = match value.value() {
+        IconValue::Symbol(value) => {
+            let icon = new_icon(
+                "SymbolIconSource",
+                foreground,
+                native::SymbolIconSource::new,
+            )?;
+            icon.SetSymbol(native_symbol(*value))?;
+            icon.cast()?
+        }
+        IconValue::Font(value) => {
+            let icon = new_icon("FontIconSource", foreground, native::FontIconSource::new)?;
+            icon.SetGlyph(value)?;
+            icon.cast()?
+        }
+        IconValue::Bitmap {
+            uri,
+            show_as_monochrome,
+        } => {
+            let icon = new_icon(
+                "BitmapIconSource",
+                foreground,
+                native::BitmapIconSource::new,
+            )?;
+            icon.SetUriSource(&native::Uri::CreateUri(uri)?)?;
+            icon.SetShowAsMonochrome(*show_as_monochrome)?;
+            icon.cast()?
+        }
+        IconValue::Image(value) => {
+            let icon = new_icon("ImageIconSource", foreground, native::ImageIconSource::new)?;
+            icon.SetImageSource(&icon_image_source(value)?)?;
+            icon.cast()?
+        }
+        IconValue::Path(value) => {
+            let icon = new_icon("PathIconSource", foreground, native::PathIconSource::new)?;
+            icon.SetData(&parse_path_data(value)?)?;
+            icon.cast()?
+        }
+    };
+    if let Some(Brush::Solid(color)) = foreground {
+        icon.SetForeground(&solid_color_brush(color)?)?;
+    }
+    Ok(icon)
+}
+
+/// Creates an icon element or icon source. A theme brush foreground is loaded from XAML as a
+/// `{ThemeResource}` so that it follows the icon's theme, as menu swatches do.
+fn new_icon<T: Interface>(
+    kind: &str,
+    foreground: Option<Brush>,
+    new: fn() -> windows_core::Result<T>,
+) -> Result<T, WinUiError> {
+    if let Some(Brush::Theme(brush)) = foreground {
+        Ok(native::XamlReader::Load(&themed_icon_xaml(kind, brush))?.cast()?)
+    } else {
+        Ok(new()?)
     }
 }
 
-fn icon_source(value: &Icon) -> Result<native::IconSource, WinUiError> {
-    match value.value() {
-        IconValue::Symbol(value) => {
-            let icon = native::SymbolIconSource::new()?;
-            icon.SetSymbol(native_symbol(*value))?;
-            icon.cast().map_err(Into::into)
-        }
-        IconValue::Font(value) => {
-            let icon = native::FontIconSource::new()?;
-            icon.SetGlyph(value)?;
-            icon.cast().map_err(Into::into)
-        }
-        IconValue::Bitmap {
-            uri,
-            show_as_monochrome,
-        } => {
-            let icon = native::BitmapIconSource::new()?;
-            icon.SetUriSource(&native::Uri::CreateUri(uri)?)?;
-            icon.SetShowAsMonochrome(*show_as_monochrome)?;
-            icon.cast().map_err(Into::into)
-        }
-        IconValue::Image(value) => {
-            let icon = native::ImageIconSource::new()?;
-            icon.SetImageSource(&icon_image_source(value)?)?;
-            icon.cast().map_err(Into::into)
-        }
-        IconValue::Path(value) => {
-            let icon = native::PathIconSource::new()?;
-            icon.SetData(&parse_path_data(value)?)?;
-            icon.cast().map_err(Into::into)
-        }
-    }
+pub(crate) fn themed_icon_xaml(kind: &str, brush: ThemeBrush) -> String {
+    format!(
+        "<{kind} xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Foreground='{{ThemeResource {}}}'/>",
+        brush.resource_key()
+    )
 }
 
 fn load_encoded_bitmap(

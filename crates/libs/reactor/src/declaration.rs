@@ -97,7 +97,10 @@ impl ImageSource {
 
 /// Icon content that can be realized for either an icon element or an icon source property.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Icon(IconValue);
+pub struct Icon {
+    value: IconValue,
+    foreground: Option<Brush>,
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum IconValue {
@@ -113,24 +116,24 @@ pub(crate) enum IconValue {
 
 impl Icon {
     pub fn symbol(symbol: Symbol) -> Self {
-        Self(IconValue::Symbol(symbol))
+        Self::new(IconValue::Symbol(symbol))
     }
 
     pub fn font(glyph: impl Into<Rc<str>>) -> Self {
-        Self(IconValue::Font(glyph.into()))
+        Self::new(IconValue::Font(glyph.into()))
     }
 
     pub fn bitmap(uri: impl Into<Rc<str>>, show_as_monochrome: bool) -> windows_core::Result<Self> {
         let uri = uri.into();
         validate_uri(&uri)?;
-        Ok(Self(IconValue::Bitmap {
+        Ok(Self::new(IconValue::Bitmap {
             uri,
             show_as_monochrome,
         }))
     }
 
     pub fn image(source: ImageSource) -> Self {
-        Self(IconValue::Image(source))
+        Self::new(IconValue::Image(source))
     }
 
     pub fn image_uri(uri: impl Into<Rc<str>>) -> windows_core::Result<Self> {
@@ -146,11 +149,34 @@ impl Icon {
     }
 
     pub fn path(data: impl Into<Rc<str>>) -> Self {
-        Self(IconValue::Path(data.into()))
+        Self::new(IconValue::Path(data.into()))
+    }
+
+    /// Sets the brush that tints the icon. It has no visible effect on image icons, or on bitmap
+    /// icons unless they are shown as monochrome.
+    ///
+    /// Where the icon is an element (a navigation item, app bar button, selector bar item, query or
+    /// command icon), a theme brush follows the element's light or dark theme. Where it is used as an
+    /// icon source (a title bar icon), the brush is resolved when the icon is applied and may not
+    /// follow later theme changes.
+    pub fn foreground(mut self, foreground: impl Into<Brush>) -> Self {
+        self.foreground = Some(foreground.into());
+        self
+    }
+
+    fn new(value: IconValue) -> Self {
+        Self {
+            value,
+            foreground: None,
+        }
     }
 
     pub(crate) fn value(&self) -> &IconValue {
-        &self.0
+        &self.value
+    }
+
+    pub(crate) fn foreground_brush(&self) -> Option<Brush> {
+        self.foreground
     }
 }
 

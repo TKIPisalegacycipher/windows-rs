@@ -1216,3 +1216,52 @@ fn scoped_key_accelerators_differ_from_window_wide_ones() {
     assert_eq!(scoped.values().len(), 1);
     assert!(!KeyAccelerators::default().is_scoped());
 }
+
+#[test]
+fn icon_foregrounds_are_part_of_the_icon_value() {
+    let plain = Icon::font("\u{E8B7}");
+    assert_eq!(plain.foreground_brush(), None);
+    assert_eq!(plain, Icon::font("\u{E8B7}"));
+
+    let themed = Icon::font("\u{E8B7}").foreground(ThemeBrush::Resource("FolderBrush"));
+    assert_eq!(
+        themed.foreground_brush(),
+        Some(Brush::Theme(ThemeBrush::Resource("FolderBrush")))
+    );
+    assert_ne!(themed, plain);
+
+    let solid = Icon::symbol(Symbol::Mail).foreground(Color::rgb(1, 2, 3));
+    assert_eq!(
+        solid.foreground_brush(),
+        Some(Brush::Solid(Color::rgb(1, 2, 3)))
+    );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(NavigationViewItem::new().content("Inbox").icon(plain))
+        .unwrap();
+    let item = runtime.graph().root().unwrap();
+    let mutations = runtime
+        .update(
+            NavigationViewItem::new()
+                .content("Inbox")
+                .icon(themed.clone()),
+        )
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| {
+        matches!(
+            mutation,
+            Mutation::SetProperties { set, .. } if set.as_ref() == [Property {
+                id: PropertyId::Icon,
+                value: PropertyValue::Icon(themed.clone()),
+            }]
+        )
+    }));
+    assert_eq!(
+        runtime.graph().properties(item).unwrap(),
+        [Property {
+            id: PropertyId::Icon,
+            value: PropertyValue::Icon(themed),
+        }]
+    );
+}
