@@ -293,6 +293,74 @@ impl From<Color> for Brush {
     }
 }
 
+/// An app-defined theme brush resource with its own light and dark color.
+///
+/// Once registered with [`register_theme_colors`], `ThemeBrush::Resource(key)` resolves it per
+/// element theme like a built-in Fluent brush. High contrast uses the system button text color.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct ThemeColorResource {
+    pub key: &'static str,
+    pub light: Color,
+    pub dark: Color,
+}
+
+static THEME_COLORS: Mutex<Vec<ThemeColorResource>> = Mutex::new(Vec::new());
+static RESOURCE_DOUBLES: Mutex<Vec<(&'static str, f64)>> = Mutex::new(Vec::new());
+
+/// Registers app-wide theme color resources, replacing any earlier color with the same key.
+///
+/// Call before `App::run*`; the resources are installed once, when the app launches.
+///
+/// # Panics
+///
+/// Panics if a key is empty or contains anything but ASCII letters, digits, `_` and `.`.
+pub fn register_theme_colors(colors: &[ThemeColorResource]) {
+    for color in colors {
+        assert!(
+            is_resource_key(color.key),
+            "theme color key may contain only ASCII letters, digits, `_` and `.`"
+        );
+    }
+    let mut registered = THEME_COLORS.lock().unwrap();
+    for color in colors {
+        registered.retain(|existing| existing.key != color.key);
+        registered.push(*color);
+    }
+}
+
+/// Registers app-wide `x:Double` resources, such as Fluent control sizes, replacing any earlier
+/// value with the same key.
+///
+/// Call before `App::run*`; the resources are installed once, when the app launches, after the
+/// Fluent resources they override.
+///
+/// # Panics
+///
+/// Panics if a key is empty or contains anything but ASCII letters, digits, `_` and `.`, or if a
+/// value is not finite.
+pub fn register_resource_doubles(values: &[(&'static str, f64)]) {
+    for (key, value) in values {
+        assert!(
+            is_resource_key(key),
+            "resource double key may contain only ASCII letters, digits, `_` and `.`"
+        );
+        assert!(value.is_finite(), "resource double must be finite");
+    }
+    let mut registered = RESOURCE_DOUBLES.lock().unwrap();
+    for &(key, value) in values {
+        registered.retain(|existing| existing.0 != key);
+        registered.push((key, value));
+    }
+}
+
+pub(crate) fn registered_theme_colors() -> Vec<ThemeColorResource> {
+    THEME_COLORS.lock().unwrap().clone()
+}
+
+pub(crate) fn registered_resource_doubles() -> Vec<(&'static str, f64)> {
+    RESOURCE_DOUBLES.lock().unwrap().clone()
+}
+
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum ButtonStyle {
