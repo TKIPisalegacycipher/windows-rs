@@ -61,6 +61,36 @@ impl AutomationHeadingLevel {
 }
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContentDialogButton {
+    None,
+    Primary,
+    Secondary,
+    Close,
+}
+impl ContentDialogButton {
+    pub(crate) fn property_value(self) -> PropertyValue {
+        match self {
+            Self::None => PropertyValue::Enum {
+                kind: "ContentDialogButton",
+                variant: "None",
+            },
+            Self::Primary => PropertyValue::Enum {
+                kind: "ContentDialogButton",
+                variant: "Primary",
+            },
+            Self::Secondary => PropertyValue::Enum {
+                kind: "ContentDialogButton",
+                variant: "Secondary",
+            },
+            Self::Close => PropertyValue::Enum {
+                kind: "ContentDialogButton",
+                variant: "Close",
+            },
+        }
+    }
+}
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum HorizontalAlignment {
     Left,
     Center,
@@ -6429,6 +6459,12 @@ impl ContentDialog {
             PropertyId::IsSecondaryButtonEnabled,
             PropertyValue::Bool(is_secondary_button_enabled),
         );
+        self
+    }
+    pub fn default_button(mut self, default_button: ContentDialogButton) -> Self {
+        self.0 = self
+            .0
+            .property(PropertyId::DefaultButton, default_button.property_value());
         self
     }
     pub fn title(mut self, title: impl AsRef<str>) -> Self {

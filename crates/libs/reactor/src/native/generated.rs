@@ -8996,6 +8996,36 @@ impl GeneratedHandle {
                     .SetIsSecondaryButtonEnabled(*value)
                     .map_err(Into::into),
             ),
+            (Self::ContentDialog(object), PropertyId::DefaultButton, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::ContentDialog::DefaultButtonProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::ContentDialog(object),
+                PropertyId::DefaultButton,
+                Some(PropertyValue::Enum {
+                    kind: "ContentDialogButton",
+                    variant,
+                }),
+            ) => Some(
+                object
+                    .value
+                    .SetDefaultButton(match *variant {
+                        "None" => native::ContentDialogButton::None,
+                        "Primary" => native::ContentDialogButton::Primary,
+                        "Secondary" => native::ContentDialogButton::Secondary,
+                        "Close" => native::ContentDialogButton::Close,
+                        _ => unreachable!("validated enum variant"),
+                    })
+                    .map_err(Into::into),
+            ),
             (Self::ContentDialog(object), PropertyId::Title, None) => Some(
                 object
                     .value

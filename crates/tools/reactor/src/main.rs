@@ -4011,6 +4011,7 @@ fn live_property_sample(
         "ThemeTransitions" => "[ThemeTransition::Reposition]".to_string(),
         "Thickness" => "Thickness::uniform(1.0)".to_string(),
         "AutomationHeadingLevel" => "AutomationHeadingLevel::Level1".to_string(),
+        "ContentDialogButton" => "ContentDialogButton::Primary".to_string(),
         "HorizontalAlignment" => "HorizontalAlignment::Center".to_string(),
         "InfoBarSeverity" => "InfoBarSeverity::Informational".to_string(),
         "ListViewSelectionMode" => "ListViewSelectionMode::Single".to_string(),

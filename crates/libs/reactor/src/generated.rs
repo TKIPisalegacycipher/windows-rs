@@ -114,6 +114,7 @@ pub enum PropertyId {
     Data,
     Date,
     DayVisible,
+    DefaultButton,
     Delay,
     DisplayMode,
     DisplayName,
@@ -2271,6 +2272,13 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
                 value: ValueType::Bool,
             })
         }
+        (ObjectType::ContentDialog, PropertyId::DefaultButton) => Some(PropertyContract {
+            id,
+            value: ValueType::Enum {
+                kind: "ContentDialogButton",
+                variants: &["None", "Primary", "Secondary", "Close"],
+            },
+        }),
         (ObjectType::ContentDialog, PropertyId::Title) => Some(PropertyContract {
             id,
             value: ValueType::String,
@@ -2611,7 +2619,8 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::ContentDialog, PropertyId::CloseButtonText) => 29,
         (ObjectType::ContentDialog, PropertyId::IsPrimaryButtonEnabled) => 30,
         (ObjectType::ContentDialog, PropertyId::IsSecondaryButtonEnabled) => 31,
-        (ObjectType::ContentDialog, PropertyId::Title) => 32,
+        (ObjectType::ContentDialog, PropertyId::DefaultButton) => 32,
+        (ObjectType::ContentDialog, PropertyId::Title) => 33,
         (ObjectType::CalendarView, PropertyId::IsTodayHighlighted) => 27,
         (ObjectType::CalendarView, PropertyId::IsGroupLabelVisible) => 28,
         (ObjectType::CalendarView, PropertyId::IsEnabled) => 29,
@@ -2750,6 +2759,7 @@ pub(crate) const ALL_PROPERTY_IDS: &[PropertyId] = &[
     PropertyId::Data,
     PropertyId::Date,
     PropertyId::DayVisible,
+    PropertyId::DefaultButton,
     PropertyId::Delay,
     PropertyId::DisplayMode,
     PropertyId::DisplayName,
