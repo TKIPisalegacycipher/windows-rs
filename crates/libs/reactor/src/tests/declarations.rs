@@ -1087,3 +1087,33 @@ fn icon_foregrounds_record_the_same_theme_brush_as_text() {
             .contains(&expected)
     );
 }
+
+#[test]
+fn resource_theme_brushes_use_their_key_verbatim() {
+    assert_eq!(
+        ThemeBrush::Resource("TextFillColorSecondaryBrush").resource_key(),
+        "TextFillColorSecondaryBrush"
+    );
+    assert_eq!(
+        ThemeBrush::Accent.resource_key(),
+        "AccentFillColorDefaultBrush"
+    );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(TextBlock::new().foreground(ThemeBrush::Resource("TextFillColorSecondaryBrush")))
+        .unwrap();
+    let text = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(text)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::Foreground,
+                value: PropertyValue::Brush(Brush::Theme(ThemeBrush::Resource(
+                    "TextFillColorSecondaryBrush"
+                ))),
+            })
+    );
+}

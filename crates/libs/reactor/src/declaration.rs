@@ -203,7 +203,6 @@ fn canonical_rich_edit_text(value: Rc<str>) -> Rc<str> {
 }
 
 /// A brush resolved from the active WinUI theme resources.
-#[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum ThemeBrush {
     Accent,
@@ -214,6 +213,8 @@ pub enum ThemeBrush {
     CardStroke,
     SystemCritical,
     SystemCriticalBackground,
+    /// Any theme brush resource, by key, such as `TextFillColorSecondaryBrush`.
+    Resource(&'static str),
 }
 
 impl ThemeBrush {
@@ -227,6 +228,7 @@ impl ThemeBrush {
             Self::CardStroke => "CardStrokeColorDefaultBrush",
             Self::SystemCritical => "SystemFillColorCriticalBrush",
             Self::SystemCriticalBackground => "SystemFillColorCriticalBackgroundBrush",
+            Self::Resource(key) => key,
         }
     }
 }
