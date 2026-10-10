@@ -72,6 +72,9 @@ struct Fixture {
     encoded_image_validated: bool,
     encoded_image_waits: usize,
     encoded_image_window: Option<reactor::native::NativeWindow>,
+    list_names_runtime: Option<reactor::Runtime<reactor::native::WinUiAdapter>>,
+    list_names_waits: usize,
+    list_names_window: Option<reactor::native::NativeWindow>,
     received_pointer_moved: Rc<Cell<bool>>,
     received_pointer_pressed: Rc<Cell<bool>>,
     received_pointer: Rc<RefCell<Option<reactor::PointerEventInfo>>>,
@@ -512,6 +515,14 @@ impl Fixture {
         context.spawn_background(|_| {
             std::thread::sleep(Duration::from_millis(20));
         });
+    }
+
+    fn named_list(first: &str) -> reactor::ListView {
+        reactor::ListView::new().items([
+            reactor::DataItem::new("first", first),
+            reactor::DataItem::new("second", "Second")
+                .content(reactor::TextBlock::new().text("Second content")),
+        ])
     }
 
     fn retirement_children(reversed: bool, include_retiring: bool) -> reactor::Grid {
@@ -1507,6 +1518,16 @@ impl reactor::Component for Fixture {
         keys_runtime
             .adapter()
             .validate_graph(keys_runtime.graph())
+            .unwrap();
+        let mut list_names_runtime =
+            reactor::Runtime::new(reactor::native::WinUiAdapter::default());
+        list_names_runtime
+            .update(Self::named_list("First"))
+            .unwrap();
+        let list_names_root = list_names_runtime.graph().root().unwrap();
+        let list_names_window = list_names_runtime
+            .adapter()
+            .open_window(list_names_root)
             .unwrap();
         let first_tree_values = Rc::new(RefCell::new(Vec::new()));
         let first_tree_callback = Rc::clone(&first_tree_values);
@@ -3063,6 +3084,9 @@ impl reactor::Component for Fixture {
             encoded_image_validated: false,
             encoded_image_waits: 0,
             encoded_image_window: Some(encoded_image_window),
+            list_names_runtime: Some(list_names_runtime),
+            list_names_waits: 0,
+            list_names_window: Some(list_names_window),
             received_pointer_moved,
             received_pointer_pressed,
             received_pointer,
@@ -3432,6 +3456,33 @@ impl reactor::Component for Fixture {
                     }
                 }
             }
+        }
+        if let Some(list_names_runtime) = self.list_names_runtime.as_mut() {
+            let list = list_names_runtime.graph().root().unwrap();
+            let names = list_names_runtime.adapter().list_item_names(list).unwrap();
+            if names.is_empty() {
+                self.list_names_waits += 1;
+                if self.list_names_waits >= LIVE_EVENT_TIMEOUT_TICKS {
+                    eprintln!("real WinUI ListView did not realize its item containers");
+                    std::process::exit(1);
+                }
+                Self::schedule(context);
+                return;
+            }
+            assert_eq!(names, ["First", "Second"]);
+            list_names_runtime
+                .update(Self::named_list("Renamed"))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime.adapter().list_item_names(list).unwrap(),
+                ["Renamed", "Second"]
+            );
+            list_names_runtime
+                .adapter()
+                .validate_graph(list_names_runtime.graph())
+                .unwrap();
+            self.list_names_window.take().unwrap().close().unwrap();
+            self.list_names_runtime.take();
         }
         if !self.pointer_activated {
             let root = self.pointer_runtime.graph().root().unwrap();
