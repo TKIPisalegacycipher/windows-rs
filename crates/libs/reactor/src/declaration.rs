@@ -643,15 +643,34 @@ impl KeyAccelerator {
 
 /// A set of keyboard accelerators assigned to a control.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct KeyAccelerators(Rc<Vec<KeyAccelerator>>);
+pub struct KeyAccelerators {
+    values: Rc<Vec<KeyAccelerator>>,
+    scoped: bool,
+}
 
 impl KeyAccelerators {
+    /// Accelerators that fire anywhere in the window.
     pub fn new(values: impl IntoIterator<Item = KeyAccelerator>) -> Self {
-        Self(Rc::new(values.into_iter().collect()))
+        Self {
+            values: Rc::new(values.into_iter().collect()),
+            scoped: false,
+        }
+    }
+
+    /// Accelerators that fire only while focus is inside the control they are assigned to.
+    pub fn scoped(values: impl IntoIterator<Item = KeyAccelerator>) -> Self {
+        Self {
+            scoped: true,
+            ..Self::new(values)
+        }
     }
 
     pub(crate) fn values(&self) -> &[KeyAccelerator] {
-        &self.0
+        &self.values
+    }
+
+    pub(crate) fn is_scoped(&self) -> bool {
+        self.scoped
     }
 }
 
