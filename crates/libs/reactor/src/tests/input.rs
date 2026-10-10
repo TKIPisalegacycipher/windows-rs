@@ -341,3 +341,31 @@ fn stale_pointer_event_does_not_reach_replacement_callback() {
     assert_eq!(first_count.get(), 1);
     assert_eq!(second_count.get(), 0);
 }
+
+#[test]
+fn hit_testing_records_set_and_clear() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(TextBlock::new().text("a").is_hit_test_visible(false))
+        .unwrap();
+    let text = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(text)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::IsHitTestVisible,
+                value: PropertyValue::Bool(false),
+            })
+    );
+
+    let mutations = runtime.update(TextBlock::new().text("a")).unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == text
+                && set.is_empty()
+                && clear.as_ref() == [PropertyId::IsHitTestVisible]
+    )));
+}
