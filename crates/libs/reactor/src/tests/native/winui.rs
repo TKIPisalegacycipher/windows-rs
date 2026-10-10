@@ -854,3 +854,15 @@ fn button_menus_open_below_the_button() {
     }
     assert_eq!(menu_placement(ObjectType::MenuBarItem), None);
 }
+
+#[test]
+fn menu_swatch_is_a_centred_circle_in_the_icon_slot() {
+    let xaml = menu_swatch_xaml(ThemeBrush::Resource("SwatchBrush"));
+    assert!(xaml.starts_with("<PathIcon "));
+    assert!(xaml.contains("Data='M3,8 A5,5 0 1 1 13,8 A5,5 0 1 1 3,8 Z'"));
+    assert!(xaml.contains("Foreground='{ThemeResource SwatchBrush}'"));
+    assert!(
+        menu_swatch_xaml(ThemeBrush::Accent)
+            .contains("{ThemeResource AccentFillColorDefaultBrush}")
+    );
+}

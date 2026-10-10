@@ -205,6 +205,7 @@ pub windows_reactor::ListViewSelectionMode::Single
 pub windows_reactor::MenuItem::Item::enabled: bool
 pub windows_reactor::MenuItem::Item::key: windows_reactor::Key
 pub windows_reactor::MenuItem::Item::label: alloc::rcs::rc::Rc<str>
+pub windows_reactor::MenuItem::Item::swatch: core::option::Option<windows_reactor::ThemeBrush>
 pub windows_reactor::MenuItem::Separator
 pub windows_reactor::MenuItem::Separator::key: windows_reactor::Key
 #[non_exhaustive] pub windows_reactor::MenuItem::Submenu
@@ -216,6 +217,7 @@ pub fn windows_reactor::MenuItem::disabled(impl core::convert::Into<windows_reac
 pub fn windows_reactor::MenuItem::item(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>) -> Self
 pub fn windows_reactor::MenuItem::separator(impl core::convert::Into<windows_reactor::Key>) -> Self
 pub fn windows_reactor::MenuItem::submenu(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>, impl core::iter::traits::collect::IntoIterator<Item = Self>) -> Self
+pub fn windows_reactor::MenuItem::swatch(self, windows_reactor::ThemeBrush) -> Self
 #[non_exhaustive] pub enum windows_reactor::NavigationViewBackButtonVisible
 pub windows_reactor::NavigationViewBackButtonVisible::Auto
 pub windows_reactor::NavigationViewBackButtonVisible::Collapsed

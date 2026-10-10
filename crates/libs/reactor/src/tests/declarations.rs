@@ -1473,3 +1473,34 @@ fn resource_double_registration_replaces_by_key() {
     assert!(std::panic::catch_unwind(|| register_resource_doubles(&[("Bad'Key", 1.0)])).is_err());
     assert!(std::panic::catch_unwind(|| register_resource_doubles(&[("Bad", f64::NAN)])).is_err());
 }
+
+#[test]
+fn menu_item_swatch_applies_only_to_items() {
+    let brush = ThemeBrush::Resource("K");
+    assert!(matches!(
+        MenuItem::item("a", "A").swatch(brush),
+        MenuItem::Item { swatch: Some(value), .. } if value == brush
+    ));
+    assert!(matches!(
+        MenuItem::disabled("a", "A").swatch(brush),
+        MenuItem::Item {
+            swatch: Some(_),
+            enabled: false,
+            ..
+        }
+    ));
+    assert!(matches!(
+        MenuItem::item("a", "A"),
+        MenuItem::Item { swatch: None, .. }
+    ));
+    assert_eq!(
+        MenuItem::separator("s").swatch(brush),
+        MenuItem::separator("s")
+    );
+    let submenu = MenuItem::submenu("m", "M", [MenuItem::item("a", "A")]);
+    assert_eq!(submenu.clone().swatch(brush), submenu);
+    assert!(
+        std::panic::catch_unwind(|| MenuItem::item("a", "A").swatch(ThemeBrush::Resource("Bad'")))
+            .is_err()
+    );
+}
