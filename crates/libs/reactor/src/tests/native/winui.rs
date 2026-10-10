@@ -652,3 +652,14 @@ fn accelerator_modifiers_map_to_virtual_key_modifiers() {
     assert_eq!(virtual_modifiers(M::ControlMenu), V::Control | V::Menu);
     assert_eq!(virtual_modifiers(M::MenuShift), V::Menu | V::Shift);
 }
+
+#[test]
+fn button_menus_open_below_the_button() {
+    for kind in [ObjectType::Button, ObjectType::DropDownButton] {
+        assert_eq!(
+            menu_placement(kind),
+            Some(native::FlyoutPlacementMode::BottomEdgeAlignedLeft)
+        );
+    }
+    assert_eq!(menu_placement(ObjectType::MenuBarItem), None);
+}

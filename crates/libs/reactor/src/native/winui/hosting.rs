@@ -64,6 +64,16 @@ fn virtual_modifiers(modifiers: AcceleratorModifiers) -> native::VirtualKeyModif
     }
 }
 
+/// `FlyoutBase.Placement` defaults to `Top`, which would open a button's menu over the button.
+fn menu_placement(kind: ObjectType) -> Option<native::FlyoutPlacementMode> {
+    match kind {
+        ObjectType::Button | ObjectType::DropDownButton => {
+            Some(native::FlyoutPlacementMode::BottomEdgeAlignedLeft)
+        }
+        _ => None,
+    }
+}
+
 impl WinUiAdapter {
     fn set_resource_overrides(
         &mut self,
@@ -598,6 +608,9 @@ impl WinUiAdapter {
                     target,
                     revision,
                 )?;
+                if let Some(placement) = menu_placement(kind) {
+                    flyout.cast::<native::IFlyoutBase>()?.SetPlacement(placement)?;
+                }
                 self.ui_element(target)?
                     .cast::<native::IButton>()?
                     .SetFlyout(&flyout)?;
