@@ -1428,6 +1428,8 @@ pub fn windows_reactor::ElementRef<windows_reactor::Grid>::request_set_child_vis
 impl windows_reactor::ElementRef<windows_reactor::Image>
 pub fn windows_reactor::ElementRef<windows_reactor::Image>::observe_rasterization_scale(&self, impl core::ops::function::Fn(f64) + 'static) -> windows_reactor::ElementObservation
 pub fn windows_reactor::ElementRef<windows_reactor::Image>::request_set_native_source(&self, core::option::Option<windows_core::unknown::IUnknown>, impl core::ops::function::Fn(core::result::Result<(), windows_reactor::IntegrationError>) + 'static) -> bool
+impl windows_reactor::ElementRef<windows_reactor::ScrollViewer>
+pub fn windows_reactor::ElementRef<windows_reactor::ScrollViewer>::request_vertical_offset(&self, f64) -> bool
 impl windows_reactor::ElementRef<windows_reactor::SwapChainPanel>
 pub fn windows_reactor::ElementRef<windows_reactor::SwapChainPanel>::observe_surface(&self, impl core::ops::function::Fn(windows_reactor::SwapChainPanelEvent) + 'static) -> windows_reactor::ElementObservation
 pub fn windows_reactor::ElementRef<windows_reactor::SwapChainPanel>::request_clear_swap_chain(&self, impl core::ops::function::Fn(core::result::Result<(), windows_reactor::IntegrationError>) + 'static) -> bool
@@ -3329,6 +3331,7 @@ pub fn windows_reactor::ScrollViewer::canvas_left(self, f64) -> Self
 pub fn windows_reactor::ScrollViewer::canvas_top(self, f64) -> Self
 pub fn windows_reactor::ScrollViewer::content(self, impl core::convert::Into<windows_reactor::View>) -> Self
 pub fn windows_reactor::ScrollViewer::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
+pub fn windows_reactor::ScrollViewer::element_ref<R>(self, &R) -> Self where R: windows_reactor::CompatibleElementRef<windows_reactor::ScrollViewer>
 pub fn windows_reactor::ScrollViewer::exit_fade(self, core::time::Duration) -> Self
 pub fn windows_reactor::ScrollViewer::exit_transition(self, core::option::Option<windows_reactor::ExitTransition>) -> Self
 pub fn windows_reactor::ScrollViewer::grid_column(self, i32) -> Self
@@ -3361,6 +3364,7 @@ impl core::convert::From<windows_reactor::ScrollViewer> for windows_reactor::Vie
 pub fn windows_reactor::View::from(windows_reactor::ScrollViewer) -> Self
 impl core::default::Default for windows_reactor::ScrollViewer
 pub fn windows_reactor::ScrollViewer::default() -> Self
+impl windows_reactor::ReferenceElement for windows_reactor::ScrollViewer
 pub struct windows_reactor::SelectorBar(_)
 impl windows_reactor::SelectorBar
 pub fn windows_reactor::SelectorBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
@@ -4685,6 +4689,7 @@ impl windows_reactor::ReferenceElement for windows_reactor::PasswordBox
 impl windows_reactor::ReferenceElement for windows_reactor::RadioButton
 impl windows_reactor::ReferenceElement for windows_reactor::RatingControl
 impl windows_reactor::ReferenceElement for windows_reactor::RichEditBox
+impl windows_reactor::ReferenceElement for windows_reactor::ScrollViewer
 impl windows_reactor::ReferenceElement for windows_reactor::Slider
 impl windows_reactor::ReferenceElement for windows_reactor::SwapChainPanel
 impl windows_reactor::ReferenceElement for windows_reactor::TextBox

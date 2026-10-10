@@ -192,7 +192,7 @@ Microsoft::UI::Xaml::Controls::IRichTextBlock::{get_Blocks, put_FontSize, put_Is
 Microsoft::UI::Xaml::Controls::IRichTextBlockStatics::{get_FontSizeProperty, get_IsTextSelectionEnabledProperty, get_TextWrappingProperty}
 Microsoft::UI::Xaml::Controls::IRowDefinition::{put_Height, put_MaxHeight, put_MinHeight}
 Microsoft::UI::Xaml::Controls::IScrollView::{put_Content, put_HorizontalScrollBarVisibility, put_VerticalScrollBarVisibility}
-Microsoft::UI::Xaml::Controls::IScrollViewer::{put_HorizontalScrollBarVisibility, put_VerticalScrollBarVisibility}
+Microsoft::UI::Xaml::Controls::IScrollViewer::{ChangeViewWithOptionalAnimation, put_HorizontalScrollBarVisibility, put_VerticalScrollBarVisibility}
 Microsoft::UI::Xaml::Controls::IScrollViewerStatics::{get_HorizontalScrollBarVisibilityProperty, get_VerticalScrollBarVisibilityProperty}
 Microsoft::UI::Xaml::Controls::IScrollViewStatics::{get_HorizontalScrollBarVisibilityProperty, get_VerticalScrollBarVisibilityProperty}
 Microsoft::UI::Xaml::Controls::ISelectorBar::{add_SelectionChanged, get_Items, get_SelectedItem, put_SelectedItem, remove_SelectionChanged}

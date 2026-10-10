@@ -309,6 +309,23 @@ impl ElementRef<Image> {
     }
 }
 
+impl ElementRef<ScrollViewer> {
+    /// Enqueues a scroll of the currently published viewer to `offset`, without animation.
+    ///
+    /// The user scrolls freely between requests; each request scrolls again.
+    #[must_use]
+    pub fn request_vertical_offset(&self, offset: f64) -> bool {
+        assert!(
+            offset.is_finite(),
+            "ScrollViewer vertical offset requires finite"
+        );
+        self.enqueue(move |object, _, _| ImperativeRequest::ChangeView {
+            object,
+            vertical_offset: offset,
+        })
+    }
+}
+
 impl ElementRef<Grid> {
     #[must_use]
     pub fn observe_composition_host(
@@ -672,6 +689,10 @@ pub enum ImperativeRequest {
         object: ObjectId,
         visual: Option<windows_core::IUnknown>,
         completion: Callback<Result<(), IntegrationError>>,
+    },
+    ChangeView {
+        object: ObjectId,
+        vertical_offset: f64,
     },
 }
 

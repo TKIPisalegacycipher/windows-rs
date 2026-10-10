@@ -2828,6 +2828,8 @@ impl From<Canvas> for View {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct ScrollViewer(Declaration);
+impl Sealed for ScrollViewer {}
+impl ReferenceElement for ScrollViewer {}
 impl ScrollViewer {
     pub fn new() -> Self {
         let declaration = Declaration::new(ObjectType::ScrollViewer);
@@ -2853,6 +2855,7 @@ impl ScrollViewer {
         );
         self
     }
+    reference_methods!(ScrollViewer);
     visual_methods!();
     /// Rejects values outside this relation's generated type contract.
     ///

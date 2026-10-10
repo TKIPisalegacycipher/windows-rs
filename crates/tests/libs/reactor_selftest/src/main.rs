@@ -581,6 +581,7 @@ impl reactor::Component for Fixture {
         let image_reference = reactor::ElementRef::<reactor::Image>::new();
         let webview_reference = reactor::ElementRef::<reactor::WebView2>::new();
         let surface_reference = reactor::ElementRef::<reactor::SwapChainPanel>::new();
+        let scroll_reference = reactor::ElementRef::<reactor::ScrollViewer>::new();
         let composition_events = Rc::new(Cell::new(0));
         let composition_callback = Rc::clone(&composition_events);
         let composition_observation = grid_reference.observe_composition_host(move |_| {
@@ -614,6 +615,10 @@ impl reactor::Component for Fixture {
                             "surface",
                             reactor::SwapChainPanel::new().element_ref(&surface_reference),
                         ),
+                        reactor::keyed(
+                            "scroll",
+                            reactor::ScrollViewer::new().element_ref(&scroll_reference),
+                        ),
                     ]),
             )
             .unwrap();
@@ -646,6 +651,7 @@ impl reactor::Component for Fixture {
         assert!(webview_reference.request_core_web_view2(move |_| {
             webview_completion.set(webview_completion.get() + 1);
         }));
+        assert!(scroll_reference.request_vertical_offset(0.0));
         reference_runtime.dispatch_native_events().unwrap();
         assert!(!composition_results.borrow().is_empty());
         assert!(!image_results.borrow().is_empty());
