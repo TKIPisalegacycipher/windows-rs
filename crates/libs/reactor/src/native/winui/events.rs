@@ -351,6 +351,8 @@ impl WinUiAdapter {
         Self::schedule_event_wake(event_queue);
     }
 
+    /// Returns the event payload and, if `release_capture` is set, the pointer to release once the
+    /// event is queued.
     fn pointer_event_info(
         object: ObjectId,
         element: &native::UIElement,
@@ -359,7 +361,7 @@ impl WinUiAdapter {
         release_capture: bool,
         focus_on_release: bool,
         pending_focus_states: &Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
-    ) -> Result<PointerEventInfo, WinUiError> {
+    ) -> Result<(PointerEventInfo, Option<native::Pointer>), WinUiError> {
         let args = args.unwrap();
         let local = args.GetCurrentPoint(element)?;
         let local_position = local.Position()?;
@@ -378,9 +380,6 @@ impl WinUiAdapter {
             .ok()
             .and_then(|captures| captures.IndexOf(&pointer, &mut capture_index).ok())
             .unwrap_or(false);
-        if release_capture {
-            element.ReleasePointerCapture(&pointer)?;
-        }
 
         if focus_on_release {
             let element = element.clone();
@@ -441,7 +440,7 @@ impl WinUiAdapter {
                 .and_then(|element| read(element).ok())
                 .unwrap_or(0.0)
         };
-        Ok(PointerEventInfo {
+        let info = PointerEventInfo {
             x: f64::from(local_position.x),
             y: f64::from(local_position.y),
             window_x: f64::from(window_position.x),
@@ -455,7 +454,18 @@ impl WinUiAdapter {
             is_left_button_pressed: properties.IsLeftButtonPressed()?,
             is_right_button_pressed: properties.IsRightButtonPressed()?,
             is_middle_button_pressed: properties.IsMiddleButtonPressed()?,
-        })
+        };
+        Ok((info, release_capture.then_some(pointer)))
+    }
+
+    /// Queues `PointerReleased` before releasing the capture. `ReleasePointerCapture` raises
+    /// `PointerCaptureLost` synchronously, so the other order would end a drag as a cancel.
+    fn release_then_uncapture(
+        dispatch: impl FnOnce(),
+        release: impl FnOnce() -> windows_core::Result<()>,
+    ) -> windows_core::Result<()> {
+        dispatch();
+        release()
     }
 
     fn input_modifiers() -> Result<InputModifiers, WinUiError> {
