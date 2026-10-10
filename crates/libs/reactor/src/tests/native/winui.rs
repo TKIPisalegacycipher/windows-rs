@@ -606,3 +606,49 @@ fn generated_feedback_contracts_distinguish_exact_normalized_and_clear() {
         ))
     );
 }
+
+#[test]
+fn accelerator_keys_map_to_virtual_keys() {
+    use AcceleratorKey as K;
+    use native::VirtualKey as V;
+
+    for (key, expected) in [
+        (K::F2, V::F2),
+        (K::F3, V::F3),
+        (K::F4, V::F4),
+        (K::F5, V::F5),
+        (K::F6, V::F6),
+        (K::F7, V::F7),
+        (K::F8, V::F8),
+        (K::F9, V::F9),
+        (K::F10, V::F10),
+        (K::F11, V::F11),
+        (K::F12, V::F12),
+        (K::Escape, V::Escape),
+        (K::D, V::D),
+        (K::S, V::S),
+        (K::Number1, V::Number1),
+        (K::Number2, V::Number2),
+        (K::Number3, V::Number3),
+        (K::Number4, V::Number4),
+        (K::PageUp, V::PageUp),
+        (K::PageDown, V::PageDown),
+        (K::Home, V::Home),
+        (K::Delete, V::Delete),
+        (K::Y, V::Y),
+    ] {
+        assert_eq!(virtual_key(key), expected);
+    }
+}
+
+#[test]
+fn accelerator_modifiers_map_to_virtual_key_modifiers() {
+    use AcceleratorModifiers as M;
+    use native::VirtualKeyModifiers as V;
+
+    assert_eq!(virtual_modifiers(M::None), V::None);
+    assert_eq!(virtual_modifiers(M::Control), V::Control);
+    assert_eq!(virtual_modifiers(M::Menu), V::Menu);
+    assert_eq!(virtual_modifiers(M::ControlMenu), V::Control | V::Menu);
+    assert_eq!(virtual_modifiers(M::MenuShift), V::Menu | V::Shift);
+}

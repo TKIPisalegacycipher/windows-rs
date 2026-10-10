@@ -437,6 +437,29 @@ pub enum AcceleratorKey {
     Add,
     Decimal,
     Enter,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+    Escape,
+    D,
+    S,
+    Number1,
+    Number2,
+    Number3,
+    Number4,
+    PageUp,
+    PageDown,
+    Home,
+    Delete,
+    Y,
 }
 
 /// Modifier keys for a keyboard accelerator.
@@ -445,6 +468,12 @@ pub enum AcceleratorModifiers {
     #[default]
     None,
     Control,
+    /// The Alt key. AltGr arrives as Control and Alt together.
+    Menu,
+    /// Control and Alt together.
+    ControlMenu,
+    /// Alt and Shift together.
+    MenuShift,
 }
 
 /// A keyboard accelerator and its callback.
