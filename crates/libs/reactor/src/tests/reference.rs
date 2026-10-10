@@ -60,12 +60,55 @@ fn typed_references_cover_all_imperative_controls() {
     let image = ElementRef::<Image>::new();
     let webview = ElementRef::<WebView2>::new();
     let swap_chain = ElementRef::<SwapChainPanel>::new();
+    let scroll_viewer = ElementRef::<ScrollViewer>::new();
 
     let _: View = TextBox::new("").element_ref(&text_box).into();
     let _: View = Grid::new().element_ref(&grid).into();
     let _: View = Image::new().element_ref(&image).into();
     let _: View = WebView2::new().element_ref(&webview).into();
     let _: View = SwapChainPanel::new().element_ref(&swap_chain).into();
+    let _: View = ScrollViewer::new().element_ref(&scroll_viewer).into();
+}
+
+#[test]
+fn scroll_viewer_reference_queues_vertical_offset() {
+    let reference = ElementRef::<ScrollViewer>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    assert!(!reference.request_vertical_offset(640.0));
+
+    runtime
+        .update(ScrollViewer::new().element_ref(&reference))
+        .unwrap();
+    let object = reference.get().unwrap();
+    assert!(reference.request_vertical_offset(640.0));
+    assert!(reference.request_vertical_offset(640.0));
+    runtime.dispatch_native_events().unwrap();
+    let request = ImperativeRequest::ChangeView {
+        object,
+        vertical_offset: 640.0,
+    };
+    assert_eq!(
+        runtime.adapter().imperatives(),
+        [request.clone(), request.clone()]
+    );
+
+    assert!(reference.request_vertical_offset(0.0));
+    runtime.update(ScrollViewer::new()).unwrap();
+    runtime.dispatch_native_events().unwrap();
+    assert!(!reference.request_vertical_offset(0.0));
+    assert_eq!(runtime.adapter().imperatives(), [request.clone(), request]);
+}
+
+#[test]
+fn scroll_viewer_vertical_offset_must_be_finite() {
+    for offset in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        assert!(
+            std::panic::catch_unwind(|| {
+                ElementRef::<ScrollViewer>::new().request_vertical_offset(offset)
+            })
+            .is_err()
+        );
+    }
 }
 
 #[test]
