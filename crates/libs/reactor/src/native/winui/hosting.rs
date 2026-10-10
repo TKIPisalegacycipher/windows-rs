@@ -1,3 +1,89 @@
+fn virtual_key(key: AcceleratorKey) -> native::VirtualKey {
+    match key {
+        AcceleratorKey::Left => native::VirtualKey::Left,
+        AcceleratorKey::Up => native::VirtualKey::Up,
+        AcceleratorKey::Right => native::VirtualKey::Right,
+        AcceleratorKey::Down => native::VirtualKey::Down,
+        AcceleratorKey::Space => native::VirtualKey::Space,
+        AcceleratorKey::N => native::VirtualKey::N,
+        AcceleratorKey::P => native::VirtualKey::P,
+        AcceleratorKey::R => native::VirtualKey::R,
+        AcceleratorKey::NumberPad0 => native::VirtualKey::NumberPad0,
+        AcceleratorKey::NumberPad1 => native::VirtualKey::NumberPad1,
+        AcceleratorKey::NumberPad2 => native::VirtualKey::NumberPad2,
+        AcceleratorKey::NumberPad3 => native::VirtualKey::NumberPad3,
+        AcceleratorKey::NumberPad4 => native::VirtualKey::NumberPad4,
+        AcceleratorKey::NumberPad5 => native::VirtualKey::NumberPad5,
+        AcceleratorKey::NumberPad6 => native::VirtualKey::NumberPad6,
+        AcceleratorKey::NumberPad7 => native::VirtualKey::NumberPad7,
+        AcceleratorKey::NumberPad8 => native::VirtualKey::NumberPad8,
+        AcceleratorKey::NumberPad9 => native::VirtualKey::NumberPad9,
+        AcceleratorKey::Divide => native::VirtualKey::Divide,
+        AcceleratorKey::Multiply => native::VirtualKey::Multiply,
+        AcceleratorKey::Subtract => native::VirtualKey::Subtract,
+        AcceleratorKey::Add => native::VirtualKey::Add,
+        AcceleratorKey::Decimal => native::VirtualKey::Decimal,
+        AcceleratorKey::Enter => native::VirtualKey::Enter,
+        AcceleratorKey::F2 => native::VirtualKey::F2,
+        AcceleratorKey::F3 => native::VirtualKey::F3,
+        AcceleratorKey::F4 => native::VirtualKey::F4,
+        AcceleratorKey::F5 => native::VirtualKey::F5,
+        AcceleratorKey::F6 => native::VirtualKey::F6,
+        AcceleratorKey::F7 => native::VirtualKey::F7,
+        AcceleratorKey::F8 => native::VirtualKey::F8,
+        AcceleratorKey::F9 => native::VirtualKey::F9,
+        AcceleratorKey::F10 => native::VirtualKey::F10,
+        AcceleratorKey::F11 => native::VirtualKey::F11,
+        AcceleratorKey::F12 => native::VirtualKey::F12,
+        AcceleratorKey::Escape => native::VirtualKey::Escape,
+        AcceleratorKey::D => native::VirtualKey::D,
+        AcceleratorKey::S => native::VirtualKey::S,
+        AcceleratorKey::Number1 => native::VirtualKey::Number1,
+        AcceleratorKey::Number2 => native::VirtualKey::Number2,
+        AcceleratorKey::Number3 => native::VirtualKey::Number3,
+        AcceleratorKey::Number4 => native::VirtualKey::Number4,
+        AcceleratorKey::PageUp => native::VirtualKey::PageUp,
+        AcceleratorKey::PageDown => native::VirtualKey::PageDown,
+        AcceleratorKey::Home => native::VirtualKey::Home,
+        AcceleratorKey::Delete => native::VirtualKey::Delete,
+        AcceleratorKey::Y => native::VirtualKey::Y,
+        AcceleratorKey::A => native::VirtualKey::A,
+        AcceleratorKey::B => native::VirtualKey::B,
+        AcceleratorKey::C => native::VirtualKey::C,
+        AcceleratorKey::E => native::VirtualKey::E,
+        AcceleratorKey::F => native::VirtualKey::F,
+        AcceleratorKey::G => native::VirtualKey::G,
+        AcceleratorKey::H => native::VirtualKey::H,
+        AcceleratorKey::I => native::VirtualKey::I,
+        AcceleratorKey::J => native::VirtualKey::J,
+        AcceleratorKey::K => native::VirtualKey::K,
+        AcceleratorKey::L => native::VirtualKey::L,
+        AcceleratorKey::M => native::VirtualKey::M,
+        AcceleratorKey::O => native::VirtualKey::O,
+        AcceleratorKey::Q => native::VirtualKey::Q,
+        AcceleratorKey::T => native::VirtualKey::T,
+        AcceleratorKey::U => native::VirtualKey::U,
+        AcceleratorKey::V => native::VirtualKey::V,
+        AcceleratorKey::W => native::VirtualKey::W,
+        AcceleratorKey::X => native::VirtualKey::X,
+        AcceleratorKey::Z => native::VirtualKey::Z,
+    }
+}
+
+fn virtual_modifiers(modifiers: InputModifiers) -> native::VirtualKeyModifiers {
+    [
+        (InputModifiers::CONTROL, native::VirtualKeyModifiers::Control),
+        (InputModifiers::ALT, native::VirtualKeyModifiers::Menu),
+        (InputModifiers::SHIFT, native::VirtualKeyModifiers::Shift),
+        (InputModifiers::WINDOWS, native::VirtualKeyModifiers::Windows),
+    ]
+    .into_iter()
+    .filter(|(modifier, _)| modifiers.contains(*modifier))
+    .fold(native::VirtualKeyModifiers::None, |all, (_, native)| {
+        all | native
+    })
+}
+
 impl WinUiAdapter {
     fn set_resource_overrides(
         &mut self,
@@ -67,36 +153,8 @@ impl WinUiAdapter {
         )?;
         for accelerator in accelerators.values() {
             let value = native::KeyboardAccelerator::new()?;
-            value.SetKey(match accelerator.key {
-                AcceleratorKey::Left => native::VirtualKey::Left,
-                AcceleratorKey::Up => native::VirtualKey::Up,
-                AcceleratorKey::Right => native::VirtualKey::Right,
-                AcceleratorKey::Down => native::VirtualKey::Down,
-                AcceleratorKey::Space => native::VirtualKey::Space,
-                AcceleratorKey::N => native::VirtualKey::N,
-                AcceleratorKey::P => native::VirtualKey::P,
-                AcceleratorKey::R => native::VirtualKey::R,
-                AcceleratorKey::NumberPad0 => native::VirtualKey::NumberPad0,
-                AcceleratorKey::NumberPad1 => native::VirtualKey::NumberPad1,
-                AcceleratorKey::NumberPad2 => native::VirtualKey::NumberPad2,
-                AcceleratorKey::NumberPad3 => native::VirtualKey::NumberPad3,
-                AcceleratorKey::NumberPad4 => native::VirtualKey::NumberPad4,
-                AcceleratorKey::NumberPad5 => native::VirtualKey::NumberPad5,
-                AcceleratorKey::NumberPad6 => native::VirtualKey::NumberPad6,
-                AcceleratorKey::NumberPad7 => native::VirtualKey::NumberPad7,
-                AcceleratorKey::NumberPad8 => native::VirtualKey::NumberPad8,
-                AcceleratorKey::NumberPad9 => native::VirtualKey::NumberPad9,
-                AcceleratorKey::Divide => native::VirtualKey::Divide,
-                AcceleratorKey::Multiply => native::VirtualKey::Multiply,
-                AcceleratorKey::Subtract => native::VirtualKey::Subtract,
-                AcceleratorKey::Add => native::VirtualKey::Add,
-                AcceleratorKey::Decimal => native::VirtualKey::Decimal,
-                AcceleratorKey::Enter => native::VirtualKey::Enter,
-            })?;
-            value.SetModifiers(match accelerator.modifiers {
-                AcceleratorModifiers::None => native::VirtualKeyModifiers::None,
-                AcceleratorModifiers::Control => native::VirtualKeyModifiers::Control,
-            })?;
+            value.SetKey(virtual_key(accelerator.key))?;
+            value.SetModifiers(virtual_modifiers(accelerator.modifiers))?;
             let callback = accelerator.callback.clone();
             value
                 .Invoked(move |_, args| {

@@ -699,3 +699,80 @@ fn generated_feedback_contracts_distinguish_exact_normalized_and_clear() {
         ))
     );
 }
+
+#[test]
+fn accelerator_keys_map_to_virtual_keys() {
+    use AcceleratorKey as K;
+    use native::VirtualKey as V;
+
+    for (key, expected) in [
+        (K::F2, V::F2),
+        (K::F3, V::F3),
+        (K::F4, V::F4),
+        (K::F5, V::F5),
+        (K::F6, V::F6),
+        (K::F7, V::F7),
+        (K::F8, V::F8),
+        (K::F9, V::F9),
+        (K::F10, V::F10),
+        (K::F11, V::F11),
+        (K::F12, V::F12),
+        (K::Escape, V::Escape),
+        (K::D, V::D),
+        (K::S, V::S),
+        (K::Number1, V::Number1),
+        (K::Number2, V::Number2),
+        (K::Number3, V::Number3),
+        (K::Number4, V::Number4),
+        (K::PageUp, V::PageUp),
+        (K::PageDown, V::PageDown),
+        (K::Home, V::Home),
+        (K::Delete, V::Delete),
+        (K::Y, V::Y),
+        (K::A, V::A),
+        (K::B, V::B),
+        (K::C, V::C),
+        (K::E, V::E),
+        (K::F, V::F),
+        (K::G, V::G),
+        (K::H, V::H),
+        (K::I, V::I),
+        (K::J, V::J),
+        (K::K, V::K),
+        (K::L, V::L),
+        (K::M, V::M),
+        (K::O, V::O),
+        (K::Q, V::Q),
+        (K::T, V::T),
+        (K::U, V::U),
+        (K::V, V::V),
+        (K::W, V::W),
+        (K::X, V::X),
+        (K::Z, V::Z),
+    ] {
+        assert_eq!(virtual_key(key), expected);
+    }
+}
+
+#[test]
+fn accelerator_modifiers_map_to_virtual_key_modifiers() {
+    use InputModifiers as M;
+    use native::VirtualKeyModifiers as V;
+
+    assert_eq!(virtual_modifiers(M::NONE), V::None);
+    assert_eq!(
+        virtual_modifiers(AcceleratorModifiers::Control.into()),
+        V::Control
+    );
+    assert_eq!(virtual_modifiers(M::ALT), V::Menu);
+    assert_eq!(virtual_modifiers(M::CONTROL | M::ALT), V::Control | V::Menu);
+    assert_eq!(virtual_modifiers(M::ALT | M::SHIFT), V::Menu | V::Shift);
+    assert_eq!(
+        virtual_modifiers(M::CONTROL | M::SHIFT),
+        V::Control | V::Shift
+    );
+    assert_eq!(
+        virtual_modifiers(M::CONTROL | M::ALT | M::SHIFT | M::WINDOWS),
+        V::Control | V::Menu | V::Shift | V::Windows
+    );
+}

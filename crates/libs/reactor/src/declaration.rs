@@ -448,9 +448,55 @@ pub enum AcceleratorKey {
     Add,
     Decimal,
     Enter,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+    Escape,
+    D,
+    S,
+    Number1,
+    Number2,
+    Number3,
+    Number4,
+    PageUp,
+    PageDown,
+    Home,
+    Delete,
+    Y,
+    A,
+    B,
+    C,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    O,
+    Q,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Z,
 }
 
 /// Modifier keys for a keyboard accelerator.
+///
+/// For any other combination, such as Control and Shift together, pass [`InputModifiers`]
+/// to [`KeyAccelerator::new`] instead.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum AcceleratorModifiers {
     #[default]
@@ -458,23 +504,37 @@ pub enum AcceleratorModifiers {
     Control,
 }
 
+impl From<AcceleratorModifiers> for InputModifiers {
+    fn from(value: AcceleratorModifiers) -> Self {
+        match value {
+            AcceleratorModifiers::None => Self::NONE,
+            AcceleratorModifiers::Control => Self::CONTROL,
+        }
+    }
+}
+
 /// A keyboard accelerator and its callback.
 #[derive(Clone, Debug, PartialEq)]
 pub struct KeyAccelerator {
     pub(crate) key: AcceleratorKey,
-    pub(crate) modifiers: AcceleratorModifiers,
+    pub(crate) modifiers: InputModifiers,
     pub(crate) callback: Callback<()>,
 }
 
 impl KeyAccelerator {
+    /// Creates an accelerator for `key` held with `modifiers`.
+    ///
+    /// `modifiers` is an [`AcceleratorModifiers`] or any combination of [`InputModifiers`], for
+    /// example `InputModifiers::CONTROL | InputModifiers::SHIFT`. AltGr arrives as Control and Alt
+    /// together.
     pub fn new(
         key: AcceleratorKey,
-        modifiers: AcceleratorModifiers,
+        modifiers: impl Into<InputModifiers>,
         callback: impl IntoUnitCallback,
     ) -> Self {
         Self {
             key,
-            modifiers,
+            modifiers: modifiers.into(),
             callback: callback.into_unit_callback(),
         }
     }
@@ -1292,6 +1352,14 @@ impl InputModifiers {
 
     pub const fn contains(self, value: Self) -> bool {
         self.0 & value.0 == value.0
+    }
+}
+
+impl std::ops::BitOr for InputModifiers {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self {
+        Self(self.0 | rhs.0)
     }
 }
 
