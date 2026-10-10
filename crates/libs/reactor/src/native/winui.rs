@@ -157,6 +157,7 @@ struct NativeMenu {
     menu: Menu,
     revision: u64,
     _flyout: Option<native::MenuFlyout>,
+    context_flyout: Option<native::FlyoutBase>,
     _revokers: Vec<windows_core::EventRevoker>,
 }
 

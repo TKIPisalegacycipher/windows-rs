@@ -732,6 +732,45 @@ fn button_menus_open_below_the_button() {
 }
 
 #[test]
+fn menus_on_other_elements_become_context_flyouts() {
+    for kind in [ObjectType::Button, ObjectType::DropDownButton] {
+        assert_eq!(menu_host(kind), MenuHost::Button);
+    }
+    assert_eq!(menu_host(ObjectType::MenuBarItem), MenuHost::MenuBarItem);
+    for kind in [
+        ObjectType::TextBlock,
+        ObjectType::TextBox,
+        ObjectType::NavigationViewItem,
+    ] {
+        assert_eq!(menu_host(kind), MenuHost::Context);
+        assert_eq!(menu_placement(kind), None);
+    }
+}
+
+#[test]
+fn context_menus_remember_the_element_flyout_once() {
+    let unread =
+        || -> Result<Option<&str>, ()> { panic!("a replaced menu must not read the element") };
+    assert_eq!(
+        original_context_flyout(None, || Ok::<_, ()>(Some("text"))),
+        Ok(Some("text"))
+    );
+    assert_eq!(
+        original_context_flyout(None, || Ok::<_, ()>(None::<&str>)),
+        Ok(None)
+    );
+    assert_eq!(
+        original_context_flyout(None, || Err::<Option<&str>, _>(())),
+        Err(())
+    );
+    assert_eq!(
+        original_context_flyout(Some(Some("text")), unread),
+        Ok(Some("text"))
+    );
+    assert_eq!(original_context_flyout(Some(None), unread), Ok(None));
+}
+
+#[test]
 fn clearing_menu_items_removes_them_one_by_one() {
     let items = IVector::<i32>::from(vec![1, 2, 3]);
     clear_menu_items(&items).unwrap();
