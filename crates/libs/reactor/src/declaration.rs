@@ -839,6 +839,7 @@ pub enum MenuItem {
         key: Key,
         label: Rc<str>,
         enabled: bool,
+        swatch: Option<ThemeBrush>,
     },
     Separator {
         key: Key,
@@ -856,6 +857,7 @@ impl MenuItem {
             key: key.into(),
             label: label.into(),
             enabled: true,
+            swatch: None,
         }
     }
 
@@ -864,7 +866,17 @@ impl MenuItem {
             key: key.into(),
             label: label.into(),
             enabled: false,
+            swatch: None,
         }
+    }
+
+    /// Shows a round swatch of `brush` in a command item's icon slot, such as beside a color
+    /// choice. Has no effect on separators and submenus.
+    pub fn swatch(mut self, brush: ThemeBrush) -> Self {
+        if let Self::Item { swatch, .. } = &mut self {
+            *swatch = Some(brush);
+        }
+        self
     }
 
     pub fn separator(key: impl Into<Key>) -> Self {

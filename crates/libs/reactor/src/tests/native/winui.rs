@@ -739,3 +739,15 @@ fn clearing_menu_items_removes_them_one_by_one() {
     clear_menu_items(&items).unwrap();
     assert_eq!(items.Size().unwrap(), 0);
 }
+
+#[test]
+fn menu_swatch_is_a_centred_circle_in_the_icon_slot() {
+    let xaml = menu_swatch_xaml(ThemeBrush::Resource("SwatchBrush"));
+    assert!(xaml.starts_with("<PathIcon "));
+    assert!(xaml.contains("Data='M3,8 A5,5 0 1 1 13,8 A5,5 0 1 1 3,8 Z'"));
+    assert!(xaml.contains("Foreground='{ThemeResource SwatchBrush}'"));
+    assert!(
+        menu_swatch_xaml(ThemeBrush::Accent)
+            .contains("{ThemeResource AccentFillColorDefaultBrush}")
+    );
+}

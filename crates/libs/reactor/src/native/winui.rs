@@ -1350,6 +1350,19 @@ fn load_encoded_bitmap(
     Ok(())
 }
 
+/// A menu item's round color swatch: a 10 px circle centered in the 16 px icon slot. It is loaded
+/// from XAML so that the fill is a `{ThemeResource}` and follows the active theme.
+pub(crate) fn menu_swatch(brush: ThemeBrush) -> windows_core::Result<native::IconElement> {
+    native::XamlReader::Load(&menu_swatch_xaml(brush))?.cast()
+}
+
+pub(crate) fn menu_swatch_xaml(brush: ThemeBrush) -> String {
+    format!(
+        "<PathIcon xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Data='M3,8 A5,5 0 1 1 13,8 A5,5 0 1 1 3,8 Z' Foreground='{{ThemeResource {}}}'/>",
+        brush.resource_key()
+    )
+}
+
 fn build_menu_items(
     items: &[MenuItem],
     output: &IVector<native::MenuFlyoutItemBase>,
@@ -1364,9 +1377,13 @@ fn build_menu_items(
                 key,
                 label,
                 enabled,
+                swatch,
             } => {
                 let item = native::MenuFlyoutItem::new()?;
                 item.SetText(label)?;
+                if let Some(brush) = swatch {
+                    item.SetIcon(&menu_swatch(*brush)?)?;
+                }
                 item.cast::<native::IControl>()?.SetIsEnabled(*enabled)?;
                 let clicked_key = key.clone();
                 let clicked_queue = Rc::clone(event_queue);

@@ -331,9 +331,13 @@ fn build_menu_items(
                 key,
                 label,
                 enabled,
+                swatch,
             } => {
                 let item = MenuFlyoutItem::new()?;
                 item.SetText(label)?;
+                if let Some(brush) = swatch {
+                    item.SetIcon(&menu_swatch(*brush)?)?;
+                }
                 item.cast::<IControl>()?.SetIsEnabled(*enabled)?;
                 let callback = callback.clone();
                 let key = key.clone();
