@@ -1818,10 +1818,11 @@ pub fn windows_reactor::View::from(windows_reactor::HyperlinkButton) -> Self
 impl core::default::Default for windows_reactor::HyperlinkButton
 pub fn windows_reactor::HyperlinkButton::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::HyperlinkButton
-pub struct windows_reactor::Icon(_)
+pub struct windows_reactor::Icon
 impl windows_reactor::Icon
 pub fn windows_reactor::Icon::bitmap(impl core::convert::Into<alloc::rcs::rc::Rc<str>>, bool) -> windows_result::Result<Self>
 pub fn windows_reactor::Icon::font(impl core::convert::Into<alloc::rcs::rc::Rc<str>>) -> Self
+pub fn windows_reactor::Icon::foreground(self, impl core::convert::Into<windows_reactor::Brush>) -> Self
 pub fn windows_reactor::Icon::image(windows_reactor::ImageSource) -> Self
 pub fn windows_reactor::Icon::image_data(windows_reactor::EncodedImage) -> Self
 pub fn windows_reactor::Icon::image_file(impl core::convert::AsRef<std::path::Path>) -> windows_result::Result<Self>
