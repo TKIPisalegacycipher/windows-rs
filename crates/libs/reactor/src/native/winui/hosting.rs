@@ -64,6 +64,11 @@ fn virtual_modifiers(modifiers: AcceleratorModifiers) -> native::VirtualKeyModif
     }
 }
 
+/// The element whose focus scope limits the accelerators, if they are scoped.
+fn scope_owner<'a, T>(accelerators: &KeyAccelerators, element: &'a T) -> Option<&'a T> {
+    accelerators.is_scoped().then_some(element)
+}
+
 /// `FlyoutBase.Placement` defaults to `Top`, which would open a button's menu over the button.
 fn menu_placement(kind: ObjectType) -> Option<native::FlyoutPlacementMode> {
     match kind {
@@ -183,6 +188,9 @@ impl WinUiAdapter {
             let value = native::KeyboardAccelerator::new()?;
             value.SetKey(virtual_key(accelerator.key))?;
             value.SetModifiers(virtual_modifiers(accelerator.modifiers))?;
+            if let Some(owner) = scope_owner(accelerators, &element) {
+                value.SetScopeOwner(owner)?;
+            }
             let callback = accelerator.callback.clone();
             value
                 .Invoked(move |_, args| {

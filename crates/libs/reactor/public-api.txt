@@ -2069,9 +2069,10 @@ pub fn windows_reactor::Key::from(usize) -> Self
 pub struct windows_reactor::KeyAccelerator
 impl windows_reactor::KeyAccelerator
 pub fn windows_reactor::KeyAccelerator::new(windows_reactor::AcceleratorKey, windows_reactor::AcceleratorModifiers, impl windows_reactor::IntoUnitCallback) -> Self
-pub struct windows_reactor::KeyAccelerators(_)
+pub struct windows_reactor::KeyAccelerators
 impl windows_reactor::KeyAccelerators
 pub fn windows_reactor::KeyAccelerators::new(impl core::iter::traits::collect::IntoIterator<Item = windows_reactor::KeyAccelerator>) -> Self
+pub fn windows_reactor::KeyAccelerators::scoped(impl core::iter::traits::collect::IntoIterator<Item = windows_reactor::KeyAccelerator>) -> Self
 pub struct windows_reactor::KeyEventInfo
 pub windows_reactor::KeyEventInfo::key: windows_reactor::VirtualKey
 pub windows_reactor::KeyEventInfo::modifiers: windows_reactor::InputModifiers
