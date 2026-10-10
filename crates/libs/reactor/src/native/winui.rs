@@ -16,6 +16,7 @@ struct NativeListView {
     value: native::ListView,
     selection_changed: Rc<RefCell<NativeSelectionIndexEvent>>,
     drag_items_completed: Rc<RefCell<NativeStringListEvent>>,
+    selected_keys_changed: Rc<RefCell<NativeKeysEvent>>,
     _selection_changed: windows_core::EventRevoker,
     _drag_items_completed: windows_core::EventRevoker,
 }
@@ -82,6 +83,7 @@ type NativeOptionalF64Event = NativeValueEvent<Option<f64>>;
 type NativeOptionalTimeSpanEvent = NativeValueEvent<Option<TimeSpan>>;
 type NativeNavigationViewDisplayModeEvent = NativeValueEvent<NavigationViewDisplayMode>;
 type NativePointerEventInfoEvent = NativeValueEvent<PointerEventInfo>;
+type NativeKeysEvent = NativeValueEvent<Vec<Key>>;
 type NativeKeyEventInfoEvent = NativeRoutedValueEvent<KeyEventInfo>;
 type NativeSelectionEvent = NativeValueEvent<Option<Rc<str>>>;
 type NativeSelectionIndexEvent = NativeValueEvent<Option<usize>>;
@@ -1674,6 +1676,7 @@ pub struct WinUiAdapter {
     style_cache: HashMap<NativeStyleKey, native::Style>,
     pending_focus_states: Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
     tree_node_texts: Rc<RefCell<HashMap<usize, Rc<str>>>>,
+    data_items: Rc<RefCell<HashMap<usize, ObjectId>>>,
 }
 
 struct NativeRetirement {
@@ -1716,6 +1719,7 @@ impl Default for WinUiAdapter {
             style_cache: HashMap::new(),
             pending_focus_states: Rc::new(RefCell::new(HashMap::new())),
             tree_node_texts: Rc::new(RefCell::new(HashMap::new())),
+            data_items: Rc::new(RefCell::new(HashMap::new())),
         }
     }
 }

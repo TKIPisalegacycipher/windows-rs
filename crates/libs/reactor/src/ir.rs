@@ -250,6 +250,7 @@ fn validate_object(
                 )
                 | (ValueType::PointerEventInfo, EventValue::PointerEventInfo(_))
                 | (ValueType::KeyEventInfo, EventValue::KeyEventInfo(_))
+                | (ValueType::Keys, EventValue::Keys(_))
                 | (ValueType::Selection, EventValue::Selection(_))
                 | (ValueType::SelectionIndex, EventValue::SelectionIndex(_))
                 | (ValueType::StringList, EventValue::StringList(_))

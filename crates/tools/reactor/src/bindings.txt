@@ -129,7 +129,7 @@ Microsoft::UI::Xaml::Controls::IItemContainerStatics::get_IsSelectedProperty
 Microsoft::UI::Xaml::Controls::IItemsControl::{get_Items, put_ItemsSource, put_ItemTemplate}
 Microsoft::UI::Xaml::Controls::IItemsControlStatics::get_ItemsSourceProperty
 Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate}
-Microsoft::UI::Xaml::Controls::IListViewBase::{add_DragItemsCompleted, get_CanDragItems, get_CanReorderItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_SelectionMode, remove_DragItemsCompleted}
+Microsoft::UI::Xaml::Controls::IListViewBase::{add_DragItemsCompleted, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_SelectionMode, remove_DragItemsCompleted}
 Microsoft::UI::Xaml::Controls::IListViewBaseStatics::{get_CanDragItemsProperty, get_CanReorderItemsProperty, get_SelectionModeProperty}
 Microsoft::UI::Xaml::Controls::Image::CreateInstance
 Microsoft::UI::Xaml::Controls::ImageIcon::CreateInstance

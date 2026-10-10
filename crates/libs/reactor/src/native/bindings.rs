@@ -12578,6 +12578,18 @@ impl windows_core::RuntimeType for IListViewBase {
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
 impl IListViewBase {
+    pub(crate) fn SelectedItems(
+        &self,
+    ) -> windows_core::Result<windows_collections::IVector<windows_core::IInspectable>> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).SelectedItems)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
     pub(crate) fn SelectionMode(&self) -> windows_core::Result<ListViewSelectionMode> {
         unsafe {
             let mut result__ = core::mem::zeroed();
@@ -12675,7 +12687,10 @@ impl IListViewBase {
 #[repr(C)]
 pub struct IListViewBase_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
-    SelectedItems: usize,
+    pub SelectedItems: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub SelectionMode: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut ListViewSelectionMode,
