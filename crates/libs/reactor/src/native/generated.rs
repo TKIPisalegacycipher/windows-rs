@@ -481,6 +481,8 @@ fn theme_style_info(
             &[(PropertyId::Fill, "Fill"), (PropertyId::Stroke, "Stroke")],
         )),
         ObjectType::Line => Some(("Line", &[(PropertyId::Stroke, "Stroke")])),
+        ObjectType::SymbolIcon => Some(("SymbolIcon", &[(PropertyId::Foreground, "Foreground")])),
+        ObjectType::FontIcon => Some(("FontIcon", &[(PropertyId::Foreground, "Foreground")])),
         _ => None,
     }
 }
@@ -7540,6 +7542,29 @@ impl GeneratedHandle {
                     })
                     .map_err(Into::into),
             ),
+            (Self::SymbolIcon(object), PropertyId::Foreground, None) => Some(
+                object
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::IconElement::ForegroundProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::SymbolIcon(object),
+                PropertyId::Foreground,
+                Some(PropertyValue::Brush(Brush::Solid(value))),
+            ) => Some(
+                object
+                    .cast::<native::IIconElement>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        solid_color_brush(*value)
+                            .and_then(|brush| object.SetForeground(&brush).map_err(Into::into))
+                    }),
+            ),
             (Self::ImageIcon(object), PropertyId::Source, None) => {
                 Some(object.SetSource(None).map_err(Into::into))
             }
@@ -7556,6 +7581,29 @@ impl GeneratedHandle {
             (Self::FontIcon(object), PropertyId::Glyph, Some(PropertyValue::String(value))) => {
                 Some(object.SetGlyph(value.as_ref()).map_err(Into::into))
             }
+            (Self::FontIcon(object), PropertyId::Foreground, None) => Some(
+                object
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::IconElement::ForegroundProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::FontIcon(object),
+                PropertyId::Foreground,
+                Some(PropertyValue::Brush(Brush::Solid(value))),
+            ) => Some(
+                object
+                    .cast::<native::IIconElement>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        solid_color_brush(*value)
+                            .and_then(|brush| object.SetForeground(&brush).map_err(Into::into))
+                    }),
+            ),
             (Self::BitmapIcon(object), PropertyId::ShowAsMonochrome, None) => Some(
                 object
                     .cast::<native::IDependencyObject>()

@@ -1982,6 +1982,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
                 ],
             },
         }),
+        (ObjectType::SymbolIcon, PropertyId::Foreground) => Some(PropertyContract {
+            id,
+            value: ValueType::Brush,
+        }),
         (ObjectType::ImageIcon, PropertyId::Source) => Some(PropertyContract {
             id,
             value: ValueType::ImageSource,
@@ -1989,6 +1993,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
         (ObjectType::FontIcon, PropertyId::Glyph) => Some(PropertyContract {
             id,
             value: ValueType::String,
+        }),
+        (ObjectType::FontIcon, PropertyId::Foreground) => Some(PropertyContract {
+            id,
+            value: ValueType::Brush,
         }),
         (ObjectType::BitmapIcon, PropertyId::ShowAsMonochrome) => Some(PropertyContract {
             id,
@@ -2515,8 +2523,10 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::Line, PropertyId::X2) => 31,
         (ObjectType::Line, PropertyId::Y2) => 32,
         (ObjectType::SymbolIcon, PropertyId::Symbol) => 27,
+        (ObjectType::SymbolIcon, PropertyId::Foreground) => 28,
         (ObjectType::ImageIcon, PropertyId::Source) => 27,
         (ObjectType::FontIcon, PropertyId::Glyph) => 27,
+        (ObjectType::FontIcon, PropertyId::Foreground) => 28,
         (ObjectType::BitmapIcon, PropertyId::ShowAsMonochrome) => 27,
         (ObjectType::BitmapIcon, PropertyId::UriSource) => 28,
         (ObjectType::PathIcon, PropertyId::Data) => 27,

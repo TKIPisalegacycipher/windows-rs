@@ -1283,6 +1283,10 @@ name = "SymbolIcon"
 [[objects.properties]]
 name = "Symbol"
 
+[[objects.properties]]
+name = "Foreground"
+adapter = "theme_brush"
+
 [[objects]]
 name = "ImageIcon"
 
@@ -1295,6 +1299,10 @@ name = "FontIcon"
 
 [[objects.properties]]
 name = "Glyph"
+
+[[objects.properties]]
+name = "Foreground"
+adapter = "theme_brush"
 
 [[objects]]
 name = "BitmapIcon"
