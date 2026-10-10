@@ -20,6 +20,27 @@ struct NativeListView {
     _selection_changed: windows_core::EventRevoker,
     _drag_items_completed: windows_core::EventRevoker,
     _container_content_changing: windows_core::EventRevoker,
+    item_min_height: Rc<Cell<Option<f64>>>,
+}
+
+impl NativeListView {
+    fn set_item_min_height(&self, height: Option<f64>) -> Result<(), WinUiError> {
+        self.item_min_height.set(height);
+        let containers = self.value.cast::<native::IItemContainerMapping>()?;
+        let count = self
+            .value
+            .cast::<native::IItemsControl>()?
+            .Items()?
+            .Size()?;
+        for index in 0..count {
+            match containers.ContainerFromIndex(index as i32) {
+                Ok(container) => set_list_container_min_height(&container, height)?,
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(())
+    }
 }
 
 struct NativeTreeView {
@@ -2248,6 +2269,20 @@ fn name_list_container(
     key: &HSTRING,
 ) -> windows_core::Result<()> {
     native::AutomationProperties::SetName(container, &data_item_text(item, key)?.to_string_lossy())
+}
+
+/// Applies a ListView's item minimum height to one of its containers; clearing restores the
+/// height from the container's style.
+fn set_list_container_min_height(
+    container: &native::DependencyObject,
+    height: Option<f64>,
+) -> windows_core::Result<()> {
+    match height {
+        Some(height) => container
+            .cast::<native::IFrameworkElement>()?
+            .SetMinHeight(height),
+        None => container.ClearValue(&native::FrameworkElement::MinHeightProperty()?),
+    }
 }
 
 fn simulate_active_slot_reorder<T: Clone>(

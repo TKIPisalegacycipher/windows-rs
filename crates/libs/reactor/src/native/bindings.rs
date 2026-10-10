@@ -10662,6 +10662,16 @@ impl IFrameworkElement {
             .ok()
         }
     }
+    pub(crate) fn MinHeight(&self) -> windows_core::Result<f64> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).MinHeight)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
     pub(crate) fn SetMinHeight(&self, value: f64) -> windows_core::Result<()> {
         unsafe {
             (windows_core::Interface::vtable(self).SetMinHeight)(
@@ -10900,7 +10910,8 @@ pub struct IFrameworkElement_Vtbl {
     MaxWidth: usize,
     pub SetMaxWidth:
         unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
-    MinHeight: usize,
+    pub MinHeight:
+        unsafe extern "system" fn(*mut core::ffi::c_void, *mut f64) -> windows_core::HRESULT,
     pub SetMinHeight:
         unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
     pub MaxHeight:

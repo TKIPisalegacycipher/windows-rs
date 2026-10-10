@@ -630,6 +630,11 @@ name = "CanReorderItems"
 name = "AllowDrop"
 
 [[objects.properties]]
+name = "ItemMinHeight"
+adapter = "item_container_min_height"
+validation = "finite_non_negative"
+
+[[objects.properties]]
 name = "SelectedIndex"
 adapter = "selection_index"
 controlled = "SelectionChanged"
