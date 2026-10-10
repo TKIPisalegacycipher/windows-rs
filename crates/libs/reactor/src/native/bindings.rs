@@ -17014,6 +17014,31 @@ impl IScrollViewer {
             .ok()
         }
     }
+    pub(crate) fn ChangeViewWithOptionalAnimation(
+        &self,
+        horizontaloffset: Option<f64>,
+        verticaloffset: Option<f64>,
+        zoomfactor: Option<f32>,
+        disableanimation: bool,
+    ) -> windows_core::Result<bool> {
+        let horizontaloffset__ =
+            horizontaloffset.map(<windows_reference::IReference<f64> as From<_>>::from);
+        let verticaloffset__ =
+            verticaloffset.map(<windows_reference::IReference<f64> as From<_>>::from);
+        let zoomfactor__ = zoomfactor.map(<windows_reference::IReference<f32> as From<_>>::from);
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).ChangeViewWithOptionalAnimation)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Param::param(horizontaloffset__.as_ref()).abi(),
+                windows_core::Param::param(verticaloffset__.as_ref()).abi(),
+                windows_core::Param::param(zoomfactor__.as_ref()).abi(),
+                disableanimation,
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
 }
 #[repr(C)]
 pub struct IScrollViewer_Vtbl {
@@ -17027,6 +17052,88 @@ pub struct IScrollViewer_Vtbl {
     pub SetVerticalScrollBarVisibility: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         ScrollBarVisibility,
+    ) -> windows_core::HRESULT,
+    IsHorizontalRailEnabled: usize,
+    SetIsHorizontalRailEnabled: usize,
+    IsVerticalRailEnabled: usize,
+    SetIsVerticalRailEnabled: usize,
+    IsHorizontalScrollChainingEnabled: usize,
+    SetIsHorizontalScrollChainingEnabled: usize,
+    IsVerticalScrollChainingEnabled: usize,
+    SetIsVerticalScrollChainingEnabled: usize,
+    IsZoomChainingEnabled: usize,
+    SetIsZoomChainingEnabled: usize,
+    IsScrollInertiaEnabled: usize,
+    SetIsScrollInertiaEnabled: usize,
+    IsZoomInertiaEnabled: usize,
+    SetIsZoomInertiaEnabled: usize,
+    HorizontalScrollMode: usize,
+    SetHorizontalScrollMode: usize,
+    VerticalScrollMode: usize,
+    SetVerticalScrollMode: usize,
+    ZoomMode: usize,
+    SetZoomMode: usize,
+    HorizontalSnapPointsAlignment: usize,
+    SetHorizontalSnapPointsAlignment: usize,
+    VerticalSnapPointsAlignment: usize,
+    SetVerticalSnapPointsAlignment: usize,
+    HorizontalSnapPointsType: usize,
+    SetHorizontalSnapPointsType: usize,
+    VerticalSnapPointsType: usize,
+    SetVerticalSnapPointsType: usize,
+    ZoomSnapPointsType: usize,
+    SetZoomSnapPointsType: usize,
+    HorizontalOffset: usize,
+    ViewportWidth: usize,
+    ScrollableWidth: usize,
+    ComputedHorizontalScrollBarVisibility: usize,
+    ExtentWidth: usize,
+    VerticalOffset: usize,
+    ViewportHeight: usize,
+    ScrollableHeight: usize,
+    ComputedVerticalScrollBarVisibility: usize,
+    ExtentHeight: usize,
+    MinZoomFactor: usize,
+    SetMinZoomFactor: usize,
+    MaxZoomFactor: usize,
+    SetMaxZoomFactor: usize,
+    ZoomFactor: usize,
+    ZoomSnapPoints: usize,
+    TopLeftHeader: usize,
+    SetTopLeftHeader: usize,
+    LeftHeader: usize,
+    SetLeftHeader: usize,
+    TopHeader: usize,
+    SetTopHeader: usize,
+    ReduceViewportForCoreInputViewOcclusions: usize,
+    SetReduceViewportForCoreInputViewOcclusions: usize,
+    HorizontalAnchorRatio: usize,
+    SetHorizontalAnchorRatio: usize,
+    VerticalAnchorRatio: usize,
+    SetVerticalAnchorRatio: usize,
+    CanContentRenderOutsideBounds: usize,
+    SetCanContentRenderOutsideBounds: usize,
+    AnchorRequested: usize,
+    RemoveAnchorRequested: usize,
+    ViewChanging: usize,
+    RemoveViewChanging: usize,
+    ViewChanged: usize,
+    RemoveViewChanged: usize,
+    DirectManipulationStarted: usize,
+    RemoveDirectManipulationStarted: usize,
+    DirectManipulationCompleted: usize,
+    RemoveDirectManipulationCompleted: usize,
+    ScrollToHorizontalOffset: usize,
+    ScrollToVerticalOffset: usize,
+    ZoomToFactor: usize,
+    ChangeView: usize,
+    pub ChangeViewWithOptionalAnimation: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        bool,
+        *mut bool,
     ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(

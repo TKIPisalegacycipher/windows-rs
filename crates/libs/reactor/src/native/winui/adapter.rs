@@ -680,6 +680,17 @@ impl Adapter for WinUiAdapter {
                 .map_err(integration_error);
                 completion.call(result);
             }
+            ImperativeRequest::ChangeView {
+                object,
+                vertical_offset,
+            } => {
+                let Some(Handle::Generated(GeneratedHandle::ScrollViewer(control))) =
+                    self.handles.get(&object)
+                else {
+                    return Ok(());
+                };
+                control.ChangeViewWithOptionalAnimation(None, Some(vertical_offset), None, true)?;
+            }
         }
         Ok(())
     }
