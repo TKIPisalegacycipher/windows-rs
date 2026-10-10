@@ -72,8 +72,8 @@ pub use declaration::{
     KeyAccelerators, KeyEventInfo, KeyedView, Menu, MenuExt, MenuItem, NavigationViewDisplayMode,
     PhysicalKeyStatus, PointerEventInfo, ResourceOverrides, ResourceValue, RichText,
     RichTextHyperlink, RichTextInline, RichTextParagraph, RichTextRun, RoutedCallback, ThemeBrush,
-    ThemeTransition, Thickness, Tooltip, TooltipExt, TooltipPlacement, View, VirtualKey,
-    VirtualSource, keyed,
+    ThemeColorResource, ThemeTransition, Thickness, Tooltip, TooltipExt, TooltipPlacement, View,
+    VirtualKey, VirtualSource, keyed, register_resource_doubles, register_theme_colors,
 };
 #[cfg(not(any(test, feature = "test")))]
 use generated::*;

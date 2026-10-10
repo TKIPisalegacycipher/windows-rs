@@ -1117,3 +1117,43 @@ fn resource_theme_brushes_use_their_key_verbatim() {
             })
     );
 }
+
+#[test]
+fn theme_color_registration_replaces_by_key() {
+    let first = ThemeColorResource {
+        key: "RegistrationTestBrush",
+        light: Color::rgb(1, 2, 3),
+        dark: Color::rgb(4, 5, 6),
+    };
+    let second = ThemeColorResource {
+        light: Color::rgb(7, 8, 9),
+        ..first
+    };
+    register_theme_colors(&[first]);
+    register_theme_colors(&[second]);
+    let registered: Vec<_> = registered_theme_colors()
+        .into_iter()
+        .filter(|color| color.key == first.key)
+        .collect();
+    assert_eq!(registered, [second]);
+    assert!(
+        std::panic::catch_unwind(|| register_theme_colors(&[ThemeColorResource {
+            key: "",
+            ..first
+        }]))
+        .is_err()
+    );
+}
+
+#[test]
+fn resource_double_registration_replaces_by_key() {
+    register_resource_doubles(&[("RegistrationTestDouble", 1.0)]);
+    register_resource_doubles(&[("RegistrationTestDouble", 2.5)]);
+    let registered: Vec<_> = registered_resource_doubles()
+        .into_iter()
+        .filter(|(key, _)| *key == "RegistrationTestDouble")
+        .collect();
+    assert_eq!(registered, [("RegistrationTestDouble", 2.5)]);
+    assert!(std::panic::catch_unwind(|| register_resource_doubles(&[("", 1.0)])).is_err());
+    assert!(std::panic::catch_unwind(|| register_resource_doubles(&[("Bad", f64::NAN)])).is_err());
+}
