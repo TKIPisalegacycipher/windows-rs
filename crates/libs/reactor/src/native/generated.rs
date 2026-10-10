@@ -774,7 +774,7 @@ impl GeneratedHandle {
                         .PointerPressed(move |_, args| {
                             let dispatch = true;
                             let observation = None;
-                            let value = match WinUiAdapter::pointer_event_info(
+                            let (value, _) = match WinUiAdapter::pointer_event_info(
                                 object,
                                 &source_pointer_pressed,
                                 args,
@@ -812,7 +812,7 @@ impl GeneratedHandle {
                         .PointerMoved(move |_, args| {
                             let dispatch = true;
                             let observation = None;
-                            let value = match WinUiAdapter::pointer_event_info(
+                            let (value, _) = match WinUiAdapter::pointer_event_info(
                                 object,
                                 &source_pointer_moved,
                                 args,
@@ -850,7 +850,7 @@ impl GeneratedHandle {
                         .PointerEntered(move |_, args| {
                             let dispatch = true;
                             let observation = None;
-                            let value = match WinUiAdapter::pointer_event_info(
+                            let (value, _) = match WinUiAdapter::pointer_event_info(
                                 object,
                                 &source_pointer_entered,
                                 args,
@@ -888,7 +888,7 @@ impl GeneratedHandle {
                         .PointerExited(move |_, args| {
                             let dispatch = true;
                             let observation = None;
-                            let value = match WinUiAdapter::pointer_event_info(
+                            let (value, _) = match WinUiAdapter::pointer_event_info(
                                 object,
                                 &source_pointer_exited,
                                 args,
@@ -931,7 +931,7 @@ impl GeneratedHandle {
                         .PointerReleased(move |_, args| {
                             let dispatch = true;
                             let observation = None;
-                            let value = match WinUiAdapter::pointer_event_info(
+                            let (value, release) = match WinUiAdapter::pointer_event_info(
                                 object,
                                 &source_pointer_released,
                                 args,
@@ -946,15 +946,26 @@ impl GeneratedHandle {
                                     return;
                                 }
                             };
-                            if dispatch {
-                                WinUiAdapter::dispatch(
-                                    &event_for_callback,
-                                    &event_queue_pointer_released,
-                                    object,
-                                    EventId::PointerReleased,
-                                    observation,
-                                    value,
-                                );
+                            if let Err(error) = WinUiAdapter::release_then_uncapture(
+                                || {
+                                    if dispatch {
+                                        WinUiAdapter::dispatch(
+                                            &event_for_callback,
+                                            &event_queue_pointer_released,
+                                            object,
+                                            EventId::PointerReleased,
+                                            observation,
+                                            value,
+                                        );
+                                    }
+                                },
+                                || {
+                                    release.map_or(Ok(()), |pointer| {
+                                        source_pointer_released.ReleasePointerCapture(&pointer)
+                                    })
+                                },
+                            ) {
+                                report_error(error);
                             }
                         })?;
                 let _pointer_released = GeneratedRevoker::Event(revoker);

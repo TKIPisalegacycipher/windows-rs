@@ -1378,24 +1378,37 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                         } else {
                             "None"
                         };
-                        let release_capture = if event.name == "PointerReleased" {
-                            "capture_pointer_on_press_pointer_released.get()"
+                        let released = event.name == "PointerReleased";
+                        let (release_capture, focus_on_release, release) = if released {
+                            (
+                                "capture_pointer_on_press_pointer_released.get()",
+                                "focus_on_pointer_release_pointer_released.get()",
+                                "release",
+                            )
                         } else {
-                            "false"
-                        };
-                        let focus_on_release = if event.name == "PointerReleased" {
-                            "focus_on_pointer_release_pointer_released.get()"
-                        } else {
-                            "false"
+                            ("false", "false", "_")
                         };
                         output.push_str(&format!(
-                            "let value = match WinUiAdapter::pointer_event_info(\
+                            "let (value, {release}) = match WinUiAdapter::pointer_event_info(\
                              object, &source_{field}, args, {capture_on_press}, {release_capture}, \
                              {focus_on_release}, &pending_focus_states_{field}) {{ \
                              Ok(value) => value, Err(error) => {{ \
                              report_error(error.into()); return; }} }};\n"
                         ));
-                        Some("value")
+                        if released {
+                            output.push_str(&format!(
+                                "if let Err(error) = WinUiAdapter::release_then_uncapture(\
+                                 || if dispatch {{ WinUiAdapter::dispatch(&event_for_callback, \
+                                 &event_queue_{field}, object, EventId::{}, observation, value); }}, \
+                                 || release.map_or(Ok(()), |pointer| \
+                                 source_{field}.ReleasePointerCapture(&pointer))) {{ \
+                                 report_error(error); }}\n",
+                                event.name,
+                            ));
+                            None
+                        } else {
+                            Some("value")
+                        }
                     }
                     "FocusEventInfo" => {
                         let got_focus = event.name == "GotFocus";

@@ -427,6 +427,73 @@ fn pointer_event_queue_preserves_payload_and_revision() {
     assert_eq!(event.payload, EventPayload::PointerEventInfo(payload));
 }
 
+fn pointer_release_order(release: windows_core::Result<()>) -> (bool, Vec<EventId>) {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(Border::new()).unwrap();
+    let object = runtime.graph().root().unwrap();
+    let released = Rc::new(RefCell::new(NativePointerEventInfoEvent {
+        revision: 1,
+        callback: Some(Callback::new(|_| {})),
+    }));
+    let capture_lost = Rc::new(RefCell::new(NativeUnitEvent {
+        revision: 1,
+        callback: Some(Callback::new(|_| {})),
+    }));
+    let event_queue = Rc::new(NativeEventQueue::default());
+
+    let result = WinUiAdapter::release_then_uncapture(
+        || {
+            WinUiAdapter::dispatch(
+                &released,
+                &event_queue,
+                object,
+                EventId::PointerReleased,
+                None,
+                PointerEventInfo::default(),
+            );
+        },
+        // `ReleasePointerCapture` raises `PointerCaptureLost` synchronously.
+        || {
+            release?;
+            WinUiAdapter::dispatch(
+                &capture_lost,
+                &event_queue,
+                object,
+                EventId::PointerCaptureLost,
+                None,
+                (),
+            );
+            Ok(())
+        },
+    );
+    let order = event_queue
+        .events
+        .borrow()
+        .iter()
+        .map(|queued| queued.event.as_ref().unwrap().event)
+        .collect();
+    (result.is_ok(), order)
+}
+
+#[test]
+fn pointer_released_is_queued_before_capture_lost() {
+    assert_eq!(
+        pointer_release_order(Ok(())),
+        (
+            true,
+            vec![EventId::PointerReleased, EventId::PointerCaptureLost]
+        )
+    );
+}
+
+#[test]
+fn failed_pointer_release_still_queues_pointer_released() {
+    assert_eq!(
+        pointer_release_order(Err(native::E_FAIL.into())),
+        (false, vec![EventId::PointerReleased])
+    );
+}
+
 #[test]
 #[ignore = "requires an interactive WinUI desktop"]
 fn event_dispatch_wakes_only_when_queued() {
