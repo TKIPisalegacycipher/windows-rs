@@ -122,6 +122,7 @@ Microsoft::UI::Xaml::Controls::IHyperlinkButton::put_NavigateUri
 Microsoft::UI::Xaml::Controls::IHyperlinkButtonStatics::get_NavigateUriProperty
 Microsoft::UI::Xaml::Controls::IIconElement::{get_Foreground, put_Foreground}
 Microsoft::UI::Xaml::Controls::IIconElementStatics::get_ForegroundProperty
+Microsoft::UI::Xaml::Controls::IIconSource::put_Foreground
 Microsoft::UI::Xaml::Controls::IImage::{add_ImageFailed, add_ImageOpened, get_Source, put_Source, put_Stretch, remove_ImageFailed, remove_ImageOpened}
 Microsoft::UI::Xaml::Controls::IImageIcon::{get_Source, put_Source}
 Microsoft::UI::Xaml::Controls::IImageIconSource::put_ImageSource

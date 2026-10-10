@@ -916,3 +916,15 @@ fn menu_swatch_is_a_centred_circle_in_the_icon_slot() {
             .contains("{ThemeResource AccentFillColorDefaultBrush}")
     );
 }
+
+// Covers the XAML text only; lib tests do not run live WinUI.
+#[test]
+fn themed_icons_load_with_a_theme_resource_foreground() {
+    let xaml = themed_icon_xaml("FontIconSource", ThemeBrush::Resource("FolderBrush"));
+    assert!(xaml.starts_with("<FontIconSource "));
+    assert!(xaml.contains("Foreground='{ThemeResource FolderBrush}'"));
+    assert!(
+        themed_icon_xaml("SymbolIcon", ThemeBrush::Accent)
+            .contains("{ThemeResource AccentFillColorDefaultBrush}")
+    );
+}
