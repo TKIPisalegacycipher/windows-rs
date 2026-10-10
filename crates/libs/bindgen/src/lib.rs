@@ -625,7 +625,12 @@ impl Bindgen {
             filter.validate_implements(implements);
         }
 
-        let event_only_delegates = compute_event_only_delegates(&types, reader);
+        let event_only_delegates = compute_event_only_delegates(&types, reader, |name, method| {
+            implements
+                .as_ref()
+                .is_some_and(|implements| implements.matches(name))
+                || filter.includes_method(name, method)
+        });
 
         let config = Config {
             bindgen: self,
@@ -783,19 +788,28 @@ fn expand_input(input: &[Input], input_default: bool) -> Vec<File> {
     result
 }
 
-/// Finds delegates used only as event-handler parameters.
-fn compute_event_only_delegates(types: &TypeMap, reader: &Reader) -> HashSet<TypeName> {
+/// Finds delegates used only as event-handler parameters. Only emitted methods count: a delegate
+/// taken by a filtered-out method needs no constructor.
+fn compute_event_only_delegates(
+    types: &TypeMap,
+    reader: &Reader,
+    includes_method: impl Fn(TypeName, MethodDef) -> bool,
+) -> HashSet<TypeName> {
     let mut event_delegates: HashSet<TypeName> = HashSet::new();
     let mut non_event_delegates: HashSet<TypeName> = HashSet::new();
 
     for type_set in types.values() {
         for ty in type_set {
-            let (methods, generics): (Box<dyn Iterator<Item = MethodDef>>, &[Type]) = match ty {
-                Type::Interface(i) => (Box::new(i.def.methods()), &i.generics),
-                _ => continue,
-            };
+            let (name, methods, generics): (_, Box<dyn Iterator<Item = MethodDef>>, &[Type]) =
+                match ty {
+                    Type::Interface(i) => (i.type_name(), Box::new(i.def.methods()), &i.generics),
+                    _ => continue,
+                };
 
             for method in methods {
+                if !includes_method(name, method) {
+                    continue;
+                }
                 let is_event_add = method.flags().contains(MethodAttributes::SpecialName)
                     && method.name().starts_with("add_");
 
