@@ -1676,6 +1676,7 @@ pub enum EventValue {
     PointerEventInfo(Callback<PointerEventInfo>),
     KeyEventInfo(RoutedCallback<KeyEventInfo>),
     Key(Callback<Key>),
+    Keys(Callback<Vec<Key>>),
     Selection(Callback<Option<Rc<str>>>),
     SelectionIndex(Callback<Option<usize>>),
     StringList(Callback<Vec<String>>),
@@ -1703,6 +1704,9 @@ pub enum EventPayload {
     #[cfg(any(test, feature = "test"))]
     KeyEventInfo(KeyEventInfo),
     Key(Key),
+    /// Keyed child objects, in native order. The runtime delivers their keys as `Keys`.
+    Items(Vec<ObjectId>),
+    Keys(Vec<Key>),
     Selection(SelectionChange),
     SelectionIndex(Option<usize>),
     StringList(Vec<String>),

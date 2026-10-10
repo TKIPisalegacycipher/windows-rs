@@ -399,6 +399,7 @@ impl EventDispatch {
                 callback.call(value);
             }
             (EventValue::Key(callback), EventPayload::Key(value)) => callback.call(value),
+            (EventValue::Keys(callback), EventPayload::Keys(value)) => callback.call(value),
             (EventValue::SelectionIndex(callback), EventPayload::SelectionIndex(value)) => {
                 callback.call(value);
             }
@@ -796,7 +797,7 @@ impl RetainedGraph {
         })
     }
 
-    fn validate_event_dispatch(&self, dispatch: &EventDispatch) -> Result<bool, GraphError> {
+    fn validate_event_dispatch(&self, dispatch: &mut EventDispatch) -> Result<bool, GraphError> {
         let Some(object) = self.get(dispatch.object) else {
             return Ok(false);
         };
@@ -893,11 +894,36 @@ impl RetainedGraph {
                 EventPayload::SelectionIndex(_),
             )
             | (ValueType::StringList, EventValue::StringList(_), EventPayload::StringList(_))
+            | (ValueType::Keys, EventValue::Keys(_), EventPayload::Items(_))
             | (ValueType::Unit, EventValue::Unit(_), EventPayload::Unit) => true,
             _ => false,
         };
         if !valid {
             return Err(GraphError::InvalidEventValue(dispatch.event));
+        }
+        if let EventPayload::Items(items) = &dispatch.payload {
+            let children = object
+                .relations
+                .iter()
+                .filter_map(|relation| match &relation.value {
+                    RetainedRelationValue::Many(children) => Some(children),
+                    RetainedRelationValue::One(_) => None,
+                })
+                .flatten()
+                .collect::<HashSet<_>>();
+            let Some(keys) = items
+                .iter()
+                .map(|item| {
+                    children
+                        .contains(item)
+                        .then(|| self.get(*item)?.key.clone())
+                        .flatten()
+                })
+                .collect::<Option<Vec<_>>>()
+            else {
+                return Ok(false);
+            };
+            dispatch.payload = EventPayload::Keys(keys);
         }
         if let EventPayload::Selection(selection) = &dispatch.payload
             && let Some(item) = selection.item
@@ -1848,10 +1874,10 @@ impl<A: Adapter> Runtime<A> {
         if event.realization.is_some() {
             return Err(UpdateError::PendingNativeEvent);
         }
-        let Some(dispatch) = event.event else {
+        let Some(mut dispatch) = event.event else {
             return Ok(None);
         };
-        match self.graph.validate_event_dispatch(&dispatch) {
+        match self.graph.validate_event_dispatch(&mut dispatch) {
             Ok(true) => Ok(Some(dispatch)),
             Ok(false) => Ok(None),
             Err(error) => {
@@ -1909,10 +1935,10 @@ impl<A: Adapter> Runtime<A> {
                     UpdateError::InvalidNativeEvent(error)
                 });
         }
-        let Some(dispatch) = event.event else {
+        let Some(mut dispatch) = event.event else {
             return Ok(Some(NativeWork::Maintenance));
         };
-        match self.graph.validate_event_dispatch(&dispatch) {
+        match self.graph.validate_event_dispatch(&mut dispatch) {
             Ok(true) => {
                 self.native_event_active.set(true);
                 Ok(Some(NativeWork::Event(NativeEventDispatch::new(

@@ -326,6 +326,7 @@ pub enum EventId {
     QuerySubmitted,
     SelectedDateChanged,
     SelectedDatesChanged,
+    SelectedKeysChanged,
     SelectedTimeChanged,
     SelectionChanged,
     SuggestionChosen,
@@ -391,6 +392,7 @@ pub enum ValueType {
     ImageSource,
     KeyAccelerators,
     KeyEventInfo,
+    Keys,
     NavigationViewDisplayMode,
     OptionalBool,
     OptionalDateTime,
@@ -687,6 +689,10 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
             EventContract {
                 id: EventId::DragItemsCompleted,
                 value: ValueType::StringList,
+            },
+            EventContract {
+                id: EventId::SelectedKeysChanged,
+                value: ValueType::Keys,
             },
         ],
         ObjectType::DataItem => &[],

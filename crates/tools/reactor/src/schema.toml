@@ -675,6 +675,10 @@ name = "DragItemsCompleted"
 field = "on_reordered"
 adapter = "string_list"
 
+[[objects.events]]
+name = "SelectedKeysChanged"
+adapter = "item_keys"
+
 [[objects]]
 name = "DataItem"
 category = "Data"

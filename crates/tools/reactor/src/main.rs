@@ -306,6 +306,7 @@ enum EventAdapter {
     DragKind,
     DroppedData,
     Focus,
+    ItemKeys,
     ItemTag,
     Key,
     Pointer,
@@ -319,6 +320,7 @@ impl EventAdapter {
             Self::DragKind => "DragKind",
             Self::DroppedData => "DroppedData",
             Self::Focus => "FocusEventInfo",
+            Self::ItemKeys => "Keys",
             Self::ItemTag => "String",
             Self::Key => "KeyEventInfo",
             Self::Pointer => "PointerEventInfo",
@@ -2973,6 +2975,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
              ImageSource,\n\
              KeyAccelerators,\n\
              KeyEventInfo,\n\
+             Keys,\n\
              NavigationViewDisplayMode,\n\
              OptionalBool,\n\
              OptionalDateTime,\n\
@@ -3841,6 +3844,7 @@ fn generate_declarations(
                         "ContentDialogResult" => "ContentDialogResult",
                         "F64" => "f64",
                         "FocusEventInfo" => "FocusEventInfo",
+                        "Keys" => "Vec<Key>",
                         "DragKind" => "DragKind",
                         "DroppedData" => "DroppedData",
                         "OptionalBool" => "Option<bool>",

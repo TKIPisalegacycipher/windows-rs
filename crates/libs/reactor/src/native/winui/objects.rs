@@ -116,6 +116,10 @@ impl WinUiAdapter {
                     let selection_queue = Rc::clone(&self.event_queue);
                     let selection_source = value.cast::<native::ISelector>()?;
                     let selection_source_for_callback = selection_source.clone();
+                    let selected_keys_changed = Rc::new(RefCell::new(NativeKeysEvent::default()));
+                    let selected_keys_event = Rc::clone(&selected_keys_changed);
+                    let selected_items_source = value.cast::<native::IListViewBase>()?;
+                    let data_items = Rc::clone(&self.data_items);
                     let _selection_changed = selection_source.SelectionChanged(move |_, _| {
                         let value = match selection_source_for_callback
                             .SelectedIndex()
@@ -149,6 +153,15 @@ impl WinUiAdapter {
                                 value,
                             );
                         }
+                        if let Err(error) = Self::dispatch_selected_items(
+                            &selected_keys_event,
+                            &selection_queue,
+                            object,
+                            &selected_items_source,
+                            &data_items,
+                        ) {
+                            report_error(error.into());
+                        }
                     })?;
                     let drag_items_completed =
                         Rc::new(RefCell::new(NativeStringListEvent::default()));
@@ -172,13 +185,18 @@ impl WinUiAdapter {
                         value,
                         selection_changed,
                         drag_items_completed,
+                        selected_keys_changed,
                         _selection_changed,
                         _drag_items_completed,
                     })
                 }
                 ObjectType::DataItem => {
-                    let values = BTreeMap::<HSTRING, Option<IInspectable>>::new();
-                    Handle::Data(values.into())
+                    let values: IObservableMap<HSTRING, IInspectable> =
+                        BTreeMap::<HSTRING, Option<IInspectable>>::new().into();
+                    self.data_items
+                        .borrow_mut()
+                        .insert(com_identity(&values)?, object);
+                    Handle::Data(values)
                 }
                 _ => unreachable!("generated object was not created"),
             }
@@ -603,6 +621,9 @@ impl WinUiAdapter {
                 self.tree_node_texts
                     .borrow_mut()
                     .remove(&com_identity(&node.value)?);
+            }
+            Handle::Data(value) => {
+                self.data_items.borrow_mut().remove(&com_identity(&value)?);
             }
             Handle::Generated(GeneratedHandle::ContentDialog(dialog)) => {
                 self.event_queue

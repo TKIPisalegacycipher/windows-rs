@@ -418,6 +418,107 @@ fn list_view_selection_and_reorder_callbacks_replace_remove_and_reject_stale_eve
 }
 
 #[test]
+fn list_view_selected_keys_follow_selection_order_and_reject_stale_items() {
+    let log = Rc::new(RefCell::new(Vec::new()));
+    let selection = {
+        let log = Rc::clone(&log);
+        Callback::new(move |value: Option<usize>| log.borrow_mut().push(format!("{value:?}")))
+    };
+    let keys = {
+        let log = Rc::clone(&log);
+        Callback::new(move |value: Vec<Key>| log.borrow_mut().push(format!("{value:?}")))
+    };
+    let items = || {
+        [
+            DataItem::new("first", "First"),
+            DataItem::new(2u64, "Second"),
+            DataItem::new("third", "Third"),
+        ]
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            ListView::new()
+                .selection_mode(ListViewSelectionMode::Multiple)
+                .items(items())
+                .on_selection_changed(selection.clone())
+                .on_selected_keys_changed(keys.clone()),
+        )
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let children = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    assert!(
+        event_contracts(ObjectType::ListView).contains(&EventContract {
+            id: EventId::SelectedKeysChanged,
+            value: ValueType::Keys,
+        })
+    );
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        list,
+        EventId::SelectionChanged,
+        EventValue::SelectionIndex(selection),
+        EventPayload::SelectionIndex(Some(0)),
+    ));
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        list,
+        EventId::SelectedKeysChanged,
+        EventValue::Keys(keys.clone()),
+        EventPayload::Items(vec![children[2], children[0], children[1]]),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 2);
+    assert_eq!(
+        *log.borrow(),
+        [
+            format!("{:?}", Some(0)),
+            format!(
+                "{:?}",
+                [Key::from("third"), Key::from("first"), Key::from(2u64)]
+            ),
+        ]
+    );
+
+    runtime
+        .update(
+            ListView::new()
+                .selection_mode(ListViewSelectionMode::Multiple)
+                .items([
+                    DataItem::new("first", "First"),
+                    DataItem::new(2u64, "Second"),
+                ])
+                .on_selected_keys_changed(keys.clone()),
+        )
+        .unwrap();
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        list,
+        EventId::SelectedKeysChanged,
+        EventValue::Keys(keys.clone()),
+        EventPayload::Items(vec![children[0], children[2]]),
+    ));
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        list,
+        EventId::SelectedKeysChanged,
+        EventValue::Keys(keys.clone()),
+        EventPayload::Items(Vec::new()),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 1);
+    assert_eq!(log.borrow().last().unwrap(), "[]");
+
+    runtime.update(ListView::new().items(items())).unwrap();
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        list,
+        EventId::SelectedKeysChanged,
+        EventValue::Keys(keys),
+        EventPayload::Items(vec![children[0]]),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 0);
+    assert_eq!(log.borrow().len(), 3);
+}
+
+#[test]
 fn tree_view_selection_mode_and_item_invocation_replace_remove_and_reject_stale_events() {
     let first = Rc::new(RefCell::new(Vec::new()));
     let first_callback = {

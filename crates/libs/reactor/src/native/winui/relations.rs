@@ -787,6 +787,12 @@ impl WinUiAdapter {
                         .then(|| event.callback.clone().map(EventValue::StringList))
                         .flatten()
                 }
+                (Some(Handle::ListView(list)), EventId::SelectedKeysChanged) => {
+                    let event = list.selected_keys_changed.borrow();
+                    (event.revision == queued.revision)
+                        .then(|| event.callback.clone().map(EventValue::Keys))
+                        .flatten()
+                }
                 (Some(Handle::Generated(handle)), event) => {
                     handle.event_callback(event, queued.revision)
                 }

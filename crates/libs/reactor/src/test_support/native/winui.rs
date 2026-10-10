@@ -730,6 +730,21 @@ impl WinUiAdapter {
         Ok(())
     }
 
+    pub fn select_list_items(&self, object: ObjectId, indices: &[usize]) -> Result<(), WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        let items = list.value.cast::<native::IItemsControl>()?.Items()?;
+        let selected = list
+            .value
+            .cast::<native::IListViewBase>()?
+            .SelectedItems()?;
+        for index in indices {
+            selected.Append(&items.GetAt(index32(*index)?)?)?;
+        }
+        Ok(())
+    }
+
     pub fn list_view_state(
         &self,
         object: ObjectId,

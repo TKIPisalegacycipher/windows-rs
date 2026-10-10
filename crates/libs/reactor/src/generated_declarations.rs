@@ -3295,6 +3295,16 @@ impl ListView {
         );
         self
     }
+    pub fn on_selected_keys_changed(
+        mut self,
+        callback: impl IntoPayloadCallback<Vec<Key>>,
+    ) -> Self {
+        self.0 = self.0.event(
+            EventId::SelectedKeysChanged,
+            EventValue::Keys(callback.into_payload_callback()),
+        );
+        self
+    }
 }
 impl Default for ListView {
     fn default() -> Self {

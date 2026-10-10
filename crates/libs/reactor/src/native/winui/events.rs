@@ -125,6 +125,40 @@ impl WinUiAdapter {
         Ok(tags)
     }
 
+    /// Queues the data items of `SelectedItems`, in selection order, for the runtime to report
+    /// as their keys.
+    fn dispatch_selected_items(
+        event: &Rc<RefCell<NativeKeysEvent>>,
+        event_queue: &Rc<NativeEventQueue>,
+        object: ObjectId,
+        source: &native::IListViewBase,
+        data_items: &RefCell<HashMap<usize, ObjectId>>,
+    ) -> Result<(), WinUiError> {
+        let event = event.borrow();
+        if event.callback.is_none() {
+            return Ok(());
+        }
+        let items = source.SelectedItems()?;
+        let data_items = data_items.borrow();
+        let mut selected = Vec::with_capacity(items.Size()? as usize);
+        for index in 0..items.Size()? {
+            if let Some(item) = data_items.get(&com_identity(&items.GetAt(index)?)?) {
+                selected.push(*item);
+            }
+        }
+        event_queue.queue(
+            None,
+            Some(QueuedEvent {
+                object,
+                event: EventId::SelectedKeysChanged,
+                revision: event.revision,
+                payload: EventPayload::Items(selected),
+            }),
+        );
+        Self::schedule_event_wake(event_queue);
+        Ok(())
+    }
+
     fn tab_item_tags(source: &native::ITabView) -> Result<Vec<String>, WinUiError> {
         let items = source.TabItems()?;
         let mut tags = Vec::with_capacity(items.Size()? as usize);
@@ -672,6 +706,11 @@ impl WinUiAdapter {
                             native_event.revision = native_event.revision.wrapping_add(1);
                             native_event.callback = None;
                         }
+                        EventId::SelectedKeysChanged => {
+                            let mut native_event = value.selected_keys_changed.borrow_mut();
+                            native_event.revision = native_event.revision.wrapping_add(1);
+                            native_event.callback = None;
+                        }
                         _ => return Err(WinUiError::InvalidEvent(object, *event)),
                     }
                 }
@@ -684,6 +723,11 @@ impl WinUiAdapter {
                         }
                         (EventId::DragItemsCompleted, EventValue::StringList(callback)) => {
                             let mut native_event = value.drag_items_completed.borrow_mut();
+                            native_event.revision = native_event.revision.wrapping_add(1);
+                            native_event.callback = Some(callback.clone());
+                        }
+                        (EventId::SelectedKeysChanged, EventValue::Keys(callback)) => {
+                            let mut native_event = value.selected_keys_changed.borrow_mut();
                             native_event.revision = native_event.revision.wrapping_add(1);
                             native_event.callback = Some(callback.clone());
                         }
