@@ -1192,13 +1192,18 @@ impl WinUiAdapter {
         event: EventId,
         value: FocusEventInfo,
     ) -> Result<(), WinUiError> {
-        let Some(Handle::Generated(GeneratedHandle::Border(border))) = self.handles.get(&object)
-        else {
-            return Err(WinUiError::InvalidObject(object));
+        let (got_focus, lost_focus) = match self.handles.get(&object) {
+            Some(Handle::Generated(GeneratedHandle::Border(border))) => {
+                (&border.got_focus, &border.lost_focus)
+            }
+            Some(Handle::Generated(GeneratedHandle::AutoSuggestBox(suggestions))) => {
+                (&suggestions.got_focus, &suggestions.lost_focus)
+            }
+            _ => return Err(WinUiError::InvalidObject(object)),
         };
         let native_event = match event {
-            EventId::GotFocus => &border.got_focus,
-            EventId::LostFocus => &border.lost_focus,
+            EventId::GotFocus => got_focus,
+            EventId::LostFocus => lost_focus,
             _ => return Err(WinUiError::InvalidEvent(object, event)),
         };
         Self::dispatch(native_event, &self.event_queue, object, event, None, value);
