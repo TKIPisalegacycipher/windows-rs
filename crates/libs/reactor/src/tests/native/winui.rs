@@ -928,3 +928,16 @@ fn themed_icons_load_with_a_theme_resource_foreground() {
             .contains("{ThemeResource AccentFillColorDefaultBrush}")
     );
 }
+
+#[test]
+fn data_item_text_names_list_containers() {
+    let key = HSTRING::from("Text");
+    let values: IObservableMap<HSTRING, IInspectable> =
+        BTreeMap::<HSTRING, Option<IInspectable>>::new().into();
+    let item: IInspectable = values.cast().unwrap();
+    assert_eq!(data_item_text(&item, &key).unwrap(), "");
+    let text: IInspectable =
+        windows_reference::IReference::from(HSTRING::from("Unread message")).into();
+    values.Insert(&key, &text).unwrap();
+    assert_eq!(data_item_text(&item, &key).unwrap(), "Unread message");
+}

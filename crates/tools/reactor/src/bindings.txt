@@ -101,6 +101,7 @@ Microsoft::UI::Xaml::Controls::IComboBox::{put_Header, put_IsEditable, put_Place
 Microsoft::UI::Xaml::Controls::IComboBoxStatics::{get_IsEditableProperty, get_PlaceholderTextProperty}
 Microsoft::UI::Xaml::Controls::ICommandBar::{get_PrimaryCommands, get_SecondaryCommands}
 Microsoft::UI::Xaml::Controls::ICommandBarFlyout::{get_PrimaryCommands, get_SecondaryCommands}
+Microsoft::UI::Xaml::Controls::IContainerContentChangingEventArgs::{get_InRecycleQueue, get_Item, get_ItemContainer}
 Microsoft::UI::Xaml::Controls::IContentControl::put_Content
 Microsoft::UI::Xaml::Controls::IContentDialog::{add_Closed, add_Opened, get_DefaultButton, Hide, put_CloseButtonText, put_DefaultButton, put_IsPrimaryButtonEnabled, put_IsSecondaryButtonEnabled, put_PrimaryButtonText, put_SecondaryButtonText, put_Title, remove_Closed, remove_Opened, ShowAsync}
 Microsoft::UI::Xaml::Controls::IContentDialogClosedEventArgs::get_Result
@@ -132,11 +133,12 @@ Microsoft::UI::Xaml::Controls::IInfoBadgeStatics::get_ValueProperty
 Microsoft::UI::Xaml::Controls::IInfoBar::{add_Closed, put_IsClosable, put_IsOpen, put_Message, put_Severity, put_Title, remove_Closed}
 Microsoft::UI::Xaml::Controls::IInfoBarStatics::{get_IsClosableProperty, get_IsOpenProperty, get_MessageProperty, get_SeverityProperty, get_TitleProperty}
 Microsoft::UI::Xaml::Controls::IItemContainer::{get_IsSelected, put_IsSelected}
+Microsoft::UI::Xaml::Controls::IItemContainerMapping::{ContainerFromIndex, ContainerFromItem}
 Microsoft::UI::Xaml::Controls::IItemContainerStatics::get_IsSelectedProperty
 Microsoft::UI::Xaml::Controls::IItemsControl::{get_Items, put_ItemsSource, put_ItemTemplate}
 Microsoft::UI::Xaml::Controls::IItemsControlStatics::get_ItemsSourceProperty
 Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate}
-Microsoft::UI::Xaml::Controls::IListViewBase::{add_DragItemsCompleted, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_SelectionMode, remove_DragItemsCompleted}
+Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted}
 Microsoft::UI::Xaml::Controls::IListViewBaseStatics::{get_CanDragItemsProperty, get_CanReorderItemsProperty, get_SelectionModeProperty}
 Microsoft::UI::Xaml::Controls::Image::CreateInstance
 Microsoft::UI::Xaml::Controls::ImageIcon::CreateInstance

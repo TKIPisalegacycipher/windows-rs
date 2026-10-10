@@ -181,6 +181,25 @@ impl WinUiAdapter {
                             ),
                             Err(error) => report_error(error.into()),
                         })?;
+                    let text_key = self.data_text_key.clone();
+                    let _container_content_changing = value
+                        .cast::<native::IListViewBase>()?
+                        .ContainerContentChanging(move |_, args| {
+                            let args = args.unwrap();
+                            let result = args.InRecycleQueue().and_then(|recycled| {
+                                if recycled {
+                                    return Ok(());
+                                }
+                                name_list_container(
+                                    &args.ItemContainer()?.cast()?,
+                                    &args.Item()?,
+                                    &text_key,
+                                )
+                            });
+                            if let Err(error) = result {
+                                report_error(error);
+                            }
+                        })?;
                     Handle::ListView(NativeListView {
                         value,
                         selection_changed,
@@ -188,6 +207,7 @@ impl WinUiAdapter {
                         selected_keys_changed,
                         _selection_changed,
                         _drag_items_completed,
+                        _container_content_changing,
                     })
                 }
                 ObjectType::DataItem => {

@@ -19,6 +19,7 @@ struct NativeListView {
     selected_keys_changed: Rc<RefCell<NativeKeysEvent>>,
     _selection_changed: windows_core::EventRevoker,
     _drag_items_completed: windows_core::EventRevoker,
+    _container_content_changing: windows_core::EventRevoker,
 }
 
 struct NativeTreeView {
@@ -2254,6 +2255,28 @@ fn relation_contract(
 
 fn com_identity(value: &impl Interface) -> Result<usize, WinUiError> {
     Ok(value.cast::<windows_core::IUnknown>()?.as_raw() as usize)
+}
+
+/// Reads a `DataItem`'s text from its native property map.
+fn data_item_text(item: &IInspectable, key: &HSTRING) -> windows_core::Result<HSTRING> {
+    let properties = item.cast::<IMap<HSTRING, IInspectable>>()?;
+    if !properties.HasKey(key)? {
+        return Ok(HSTRING::new());
+    }
+    properties
+        .Lookup(key)?
+        .cast::<windows_reference::IReference<HSTRING>>()?
+        .Value()
+}
+
+/// Names a ListView item container after its `DataItem`, since the item template's content does
+/// not name the container for UI Automation.
+fn name_list_container(
+    container: &native::DependencyObject,
+    item: &IInspectable,
+    key: &HSTRING,
+) -> windows_core::Result<()> {
+    native::AutomationProperties::SetName(container, &data_item_text(item, key)?.to_string_lossy())
 }
 
 fn simulate_active_slot_reorder<T: Clone>(
