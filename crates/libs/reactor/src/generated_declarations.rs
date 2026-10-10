@@ -5158,6 +5158,13 @@ impl SymbolIcon {
         self.0 = self.0.property(PropertyId::Symbol, symbol.property_value());
         self
     }
+    pub fn foreground(mut self, foreground: impl Into<Brush>) -> Self {
+        self.0 = self.0.property(
+            PropertyId::Foreground,
+            PropertyValue::Brush(foreground.into()),
+        );
+        self
+    }
     visual_methods!();
 }
 impl Default for SymbolIcon {

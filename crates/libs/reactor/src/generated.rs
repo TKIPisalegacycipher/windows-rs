@@ -2086,6 +2086,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
                 ],
             },
         }),
+        (ObjectType::SymbolIcon, PropertyId::Foreground) => Some(PropertyContract {
+            id,
+            value: ValueType::Brush,
+        }),
         (ObjectType::ImageIcon, PropertyId::Source) => Some(PropertyContract {
             id,
             value: ValueType::ImageSource,
@@ -2654,6 +2658,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::Line, PropertyId::X2) => 32,
         (ObjectType::Line, PropertyId::Y2) => 33,
         (ObjectType::SymbolIcon, PropertyId::Symbol) => 28,
+        (ObjectType::SymbolIcon, PropertyId::Foreground) => 29,
         (ObjectType::ImageIcon, PropertyId::Source) => 28,
         (ObjectType::FontIcon, PropertyId::Glyph) => 28,
         (ObjectType::FontIcon, PropertyId::FontSize) => 29,

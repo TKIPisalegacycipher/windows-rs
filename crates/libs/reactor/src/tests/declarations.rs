@@ -1333,3 +1333,58 @@ fn generated_controls_cover_distinct_native_value_and_relation_shapes() {
         }]
     );
 }
+
+#[test]
+fn icon_foregrounds_record_the_same_theme_brush_as_text() {
+    let expected = Property {
+        id: PropertyId::Foreground,
+        value: PropertyValue::Brush(Brush::Theme(ThemeBrush::PrimaryText)),
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+
+    runtime
+        .update(TextBlock::new().foreground(ThemeBrush::PrimaryText))
+        .unwrap();
+    let text = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(text)
+            .unwrap()
+            .contains(&expected)
+    );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            SymbolIcon::new()
+                .symbol(Symbol::Previous)
+                .foreground(ThemeBrush::PrimaryText),
+        )
+        .unwrap();
+    let symbol = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(symbol)
+            .unwrap()
+            .contains(&expected)
+    );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            FontIcon::new()
+                .glyph("\u{E700}")
+                .foreground(ThemeBrush::PrimaryText),
+        )
+        .unwrap();
+    let font = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(font)
+            .unwrap()
+            .contains(&expected)
+    );
+}

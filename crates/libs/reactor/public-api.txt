@@ -3726,6 +3726,7 @@ pub fn windows_reactor::SymbolIcon::canvas_top(self, f64) -> Self
 pub fn windows_reactor::SymbolIcon::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
 pub fn windows_reactor::SymbolIcon::exit_fade(self, core::time::Duration) -> Self
 pub fn windows_reactor::SymbolIcon::exit_transition(self, core::option::Option<windows_reactor::ExitTransition>) -> Self
+pub fn windows_reactor::SymbolIcon::foreground(self, impl core::convert::Into<windows_reactor::Brush>) -> Self
 pub fn windows_reactor::SymbolIcon::grid_column(self, i32) -> Self
 pub fn windows_reactor::SymbolIcon::grid_column_span(self, i32) -> Self
 pub fn windows_reactor::SymbolIcon::grid_row(self, i32) -> Self
