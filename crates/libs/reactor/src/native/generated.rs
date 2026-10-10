@@ -283,6 +283,8 @@ struct GeneratedAutoSuggestBox {
     _text_changed: GeneratedRevoker,
     suggestion_chosen: Rc<RefCell<NativeStringEvent>>,
     _suggestion_chosen: Option<GeneratedRevoker>,
+    query_submitted: Rc<RefCell<NativeStringEvent>>,
+    _query_submitted: Option<GeneratedRevoker>,
 }
 struct GeneratedPasswordBox {
     value: native::PasswordBox,
@@ -990,12 +992,16 @@ impl GeneratedHandle {
                 let _text_changed = GeneratedRevoker::Event(revoker);
                 let suggestion_chosen = Rc::new(RefCell::new(NativeStringEvent::default()));
                 let _suggestion_chosen = None;
+                let query_submitted = Rc::new(RefCell::new(NativeStringEvent::default()));
+                let _query_submitted = None;
                 Self::AutoSuggestBox(Box::new(GeneratedAutoSuggestBox {
                     value,
                     text_changed,
                     _text_changed,
                     suggestion_chosen,
                     _suggestion_chosen,
+                    query_submitted,
+                    _query_submitted,
                 }))
             }
             ObjectType::PasswordBox => {
@@ -9053,6 +9059,11 @@ impl GeneratedHandle {
                     native_event.revision = native_event.revision.wrapping_add(1);
                     native_event.callback = None;
                 }
+                if clear.contains(&EventId::QuerySubmitted) {
+                    let mut native_event = object.query_submitted.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
                 for event in set {
                     match (event.id, &event.value) {
                         (EventId::TextChanged, EventValue::String(callback)) => {
@@ -9067,6 +9078,14 @@ impl GeneratedHandle {
                                 native_event.callback = Some(callback.clone());
                             }
                             object.subscribe_suggestion_chosen(object_id, context)?;
+                        }
+                        (EventId::QuerySubmitted, EventValue::String(callback)) => {
+                            {
+                                let mut native_event = object.query_submitted.borrow_mut();
+                                native_event.revision = native_event.revision.wrapping_add(1);
+                                native_event.callback = Some(callback.clone());
+                            }
+                            object.subscribe_query_submitted(object_id, context)?;
                         }
                         _ => return Err(WinUiError::InvalidObject(object_id)),
                     }
@@ -10336,6 +10355,13 @@ impl GeneratedHandle {
                     .flatten()
                     .map(EventValue::String)
             }
+            (Self::AutoSuggestBox(object), EventId::QuerySubmitted) => {
+                let event = object.query_submitted.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::String)
+            }
             (Self::PasswordBox(object), EventId::PasswordChanged) => {
                 let event = object.password_changed.borrow();
                 (event.revision == revision)
@@ -11494,6 +11520,42 @@ impl GeneratedAutoSuggestBox {
             }
         })?;
         self._suggestion_chosen = Some(GeneratedRevoker::Event(revoker));
+        Ok(())
+    }
+    fn subscribe_query_submitted(
+        &mut self,
+        object: ObjectId,
+        context: EventContext,
+    ) -> Result<(), WinUiError> {
+        if self._query_submitted.is_some() {
+            return Ok(());
+        }
+        let value = &self.value;
+        let event_for_callback = Rc::clone(&self.query_submitted);
+        let event_queue_query_submitted = Rc::clone(context.event_queue);
+        let revoker = value.QuerySubmitted(move |_, args| {
+            let dispatch = true;
+            let observation = None;
+            let args = args.unwrap();
+            let payload = match args.QueryText().map(Rc::<str>::from) {
+                Ok(value) => value,
+                Err(error) => {
+                    report_error(error);
+                    return;
+                }
+            };
+            if dispatch {
+                WinUiAdapter::dispatch(
+                    &event_for_callback,
+                    &event_queue_query_submitted,
+                    object,
+                    EventId::QuerySubmitted,
+                    observation,
+                    payload,
+                );
+            }
+        })?;
+        self._query_submitted = Some(GeneratedRevoker::Event(revoker));
         Ok(())
     }
 }

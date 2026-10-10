@@ -323,6 +323,7 @@ pub enum EventId {
     PointerPressed,
     PointerReleased,
     PreviewKeyDown,
+    QuerySubmitted,
     SelectedDateChanged,
     SelectedDatesChanged,
     SelectedTimeChanged,
@@ -709,6 +710,10 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
             },
             EventContract {
                 id: EventId::SuggestionChosen,
+                value: ValueType::String,
+            },
+            EventContract {
+                id: EventId::QuerySubmitted,
                 value: ValueType::String,
             },
         ],

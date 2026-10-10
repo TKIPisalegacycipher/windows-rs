@@ -544,6 +544,34 @@ fn inspectable_string_item_events_deliver_typed_values() {
 }
 
 #[test]
+fn auto_suggest_box_query_submitted_delivers_query_text() {
+    let values = Rc::new(RefCell::new(Vec::new()));
+    let callback = {
+        let values = Rc::clone(&values);
+        Callback::new(move |value| values.borrow_mut().push(value))
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(AutoSuggestBox::new().on_query_submitted(callback.clone()))
+        .unwrap();
+    let object = runtime.graph().root().unwrap();
+    assert!(
+        event_contracts(ObjectType::AutoSuggestBox).contains(&EventContract {
+            id: EventId::QuerySubmitted,
+            value: ValueType::String,
+        })
+    );
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        object,
+        EventId::QuerySubmitted,
+        EventValue::String(callback),
+        EventPayload::String(Rc::from("inbox")),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 1);
+    assert_eq!(&*values.borrow(), &[Rc::from("inbox")]);
+}
+
+#[test]
 fn tab_view_events_deliver_item_tags() {
     let closed_values = Rc::new(RefCell::new(Vec::new()));
     let closed_callback = {
