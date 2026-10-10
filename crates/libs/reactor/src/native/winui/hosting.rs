@@ -74,6 +74,35 @@ fn menu_placement(kind: ObjectType) -> Option<native::FlyoutPlacementMode> {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MenuHost {
+    Button,
+    MenuBarItem,
+    Context,
+}
+
+/// Buttons open the menu as their flyout and menu bar items own its items; any other element
+/// shows it as its context flyout.
+fn menu_host(kind: ObjectType) -> MenuHost {
+    match kind {
+        ObjectType::Button | ObjectType::DropDownButton => MenuHost::Button,
+        ObjectType::MenuBarItem => MenuHost::MenuBarItem,
+        _ => MenuHost::Context,
+    }
+}
+
+/// The element's own `ContextFlyout` (text controls ship one) to restore when its menu goes. A
+/// replaced menu hands on the one it remembered; only a first menu reads the element.
+fn original_context_flyout<T, E>(
+    previous: Option<Option<T>>,
+    current: impl FnOnce() -> Result<Option<T>, E>,
+) -> Result<Option<T>, E> {
+    match previous {
+        Some(original) => Ok(original),
+        None => current(),
+    }
+}
+
 /// Removes the items from the end. `MenuBarItem` mirrors `Items` into its flyout on insert and
 /// remove only, so `Clear` would leave the old entries in the flyout.
 fn clear_menu_items<T: windows_core::RuntimeType + 'static>(items: &IVector<T>) -> Result<(), WinUiError> {
@@ -584,13 +613,15 @@ impl WinUiAdapter {
         revision: u64,
     ) -> Result<(), WinUiError> {
         let kind = self.kind(target)?;
+        let host = menu_host(kind);
+        let mut previous_context = None;
         if let Some(previous) = self.menus.remove(&target) {
-            match kind {
-                ObjectType::Button | ObjectType::DropDownButton => self
+            match host {
+                MenuHost::Button => self
                     .ui_element(target)?
                     .cast::<native::IButton>()?
                     .SetFlyout(None::<&native::FlyoutBase>)?,
-                ObjectType::MenuBarItem => {
+                MenuHost::MenuBarItem => {
                     let Some(Handle::Generated(GeneratedHandle::MenuBarItem(item))) =
                         self.handles.get(&target)
                     else {
@@ -598,16 +629,20 @@ impl WinUiAdapter {
                     };
                     clear_menu_items(&item.Items()?)?;
                 }
-                _ => return Err(WinUiError::InvalidObject(target)),
+                MenuHost::Context => self
+                    .ui_element(target)?
+                    .SetContextFlyout(previous.context_flyout.as_ref())?,
             }
+            previous_context = Some(previous.context_flyout.clone());
             drop(previous);
         }
         let Some(menu) = menu else {
             return Ok(());
         };
         let mut revokers = Vec::new();
-        let flyout = match kind {
-            ObjectType::Button | ObjectType::DropDownButton => {
+        let mut context_flyout = None;
+        let flyout = match host {
+            MenuHost::Button => {
                 let flyout = native::MenuFlyout::new()?;
                 build_menu_items(
                     &menu.items,
@@ -625,7 +660,7 @@ impl WinUiAdapter {
                     .SetFlyout(&flyout)?;
                 Some(flyout)
             }
-            ObjectType::MenuBarItem => {
+            MenuHost::MenuBarItem => {
                 let Some(Handle::Generated(GeneratedHandle::MenuBarItem(item))) =
                     self.handles.get(&target)
                 else {
@@ -643,7 +678,26 @@ impl WinUiAdapter {
                 )?;
                 None
             }
-            _ => return Err(WinUiError::InvalidObject(target)),
+            MenuHost::Context => {
+                let flyout = native::MenuFlyout::new()?;
+                build_menu_items(
+                    &menu.items,
+                    &flyout.Items()?,
+                    &mut revokers,
+                    &self.event_queue,
+                    target,
+                    revision,
+                )?;
+                let element = self.ui_element(target)?;
+                context_flyout =
+                    original_context_flyout(previous_context, || match element.ContextFlyout() {
+                        Ok(flyout) => Ok(Some(flyout)),
+                        Err(error) if error.code().is_ok() => Ok(None),
+                        Err(error) => Err(error),
+                    })?;
+                element.SetContextFlyout(&flyout)?;
+                Some(flyout)
+            }
         };
         self.menus.insert(
             target,
@@ -651,6 +705,7 @@ impl WinUiAdapter {
                 menu: menu.clone(),
                 revision,
                 _flyout: flyout,
+                context_flyout,
                 _revokers: revokers,
             },
         );
