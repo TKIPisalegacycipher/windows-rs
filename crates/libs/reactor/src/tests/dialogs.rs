@@ -383,3 +383,42 @@ fn content_dialog_protocol_and_nesting_are_rejected() {
         )))
     );
 }
+
+#[test]
+fn content_dialog_default_button_updates_and_clears() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(
+            Button::new().content_dialog(
+                ContentDialog::new()
+                    .primary_button_text("Yes")
+                    .default_button(ContentDialogButton::Primary),
+            ),
+        )
+        .unwrap();
+    let owner = runtime.graph().root().unwrap();
+    let dialog = runtime.graph().content_dialog(owner).unwrap().0;
+    let set = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == dialog => Some(set),
+            _ => None,
+        })
+        .unwrap();
+    assert!(
+        set.iter()
+            .any(|value| value.id == PropertyId::DefaultButton)
+    );
+
+    let mutations = runtime
+        .update(Button::new().content_dialog(ContentDialog::new().primary_button_text("Yes")))
+        .unwrap();
+    let clear = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, clear, .. } if *object == dialog => Some(clear),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(&**clear, [PropertyId::DefaultButton]);
+}

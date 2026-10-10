@@ -1808,6 +1808,9 @@ name = "IsPrimaryButtonEnabled"
 name = "IsSecondaryButtonEnabled"
 
 [[objects.properties]]
+name = "DefaultButton"
+
+[[objects.properties]]
 name = "Title"
 adapter = "inspectable_string"
 
