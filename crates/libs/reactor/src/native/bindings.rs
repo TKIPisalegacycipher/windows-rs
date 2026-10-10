@@ -12259,6 +12259,18 @@ impl IKeyboardAccelerator {
             .ok()
         }
     }
+    pub(crate) fn SetScopeOwner<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<DependencyObject>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetScopeOwner)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
     pub(crate) fn Invoked<F>(&self, handler: F) -> windows_core::Result<windows_core::EventRevoker>
     where
         F: Fn(
@@ -12311,7 +12323,10 @@ pub struct IKeyboardAccelerator_Vtbl {
     IsEnabled: usize,
     SetIsEnabled: usize,
     ScopeOwner: usize,
-    SetScopeOwner: usize,
+    pub SetScopeOwner: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub Invoked: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,

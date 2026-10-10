@@ -764,6 +764,16 @@ fn accelerator_modifiers_map_to_virtual_key_modifiers() {
 }
 
 #[test]
+fn scoped_accelerators_name_their_element_as_scope_owner() {
+    let accelerator = KeyAccelerator::new(AcceleratorKey::Enter, AcceleratorModifiers::None, || {});
+    let window = KeyAccelerators::new([accelerator.clone()]);
+    let scoped = KeyAccelerators::scoped([accelerator]);
+
+    assert_eq!(scope_owner(&window, &1), None);
+    assert_eq!(scope_owner(&scoped, &1), Some(&1));
+}
+
+#[test]
 fn button_menus_open_below_the_button() {
     for kind in [ObjectType::Button, ObjectType::DropDownButton] {
         assert_eq!(

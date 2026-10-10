@@ -1184,3 +1184,16 @@ fn menu_item_swatch_applies_only_to_items() {
     let submenu = MenuItem::submenu("m", "M", [MenuItem::item("a", "A")]);
     assert_eq!(submenu.clone().swatch(brush), submenu);
 }
+
+#[test]
+fn scoped_key_accelerators_differ_from_window_wide_ones() {
+    let accelerator = KeyAccelerator::new(AcceleratorKey::Enter, AcceleratorModifiers::None, || {});
+    let window = KeyAccelerators::new([accelerator.clone()]);
+    let scoped = KeyAccelerators::scoped([accelerator]);
+
+    assert!(!window.is_scoped());
+    assert!(scoped.is_scoped());
+    assert_ne!(window, scoped);
+    assert_eq!(scoped.values().len(), 1);
+    assert!(!KeyAccelerators::default().is_scoped());
+}
