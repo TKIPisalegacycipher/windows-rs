@@ -724,6 +724,31 @@ impl WinUiAdapter {
         Ok(names)
     }
 
+    /// Lays out a ListView and returns the minimum heights of its realized item containers.
+    pub fn list_item_min_heights(&self, object: ObjectId) -> Result<Vec<f64>, WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        list.value.cast::<native::IUIElement>()?.UpdateLayout()?;
+        let containers = list.value.cast::<native::IItemContainerMapping>()?;
+        let count = list
+            .value
+            .cast::<native::IItemsControl>()?
+            .Items()?
+            .Size()?;
+        let mut heights = Vec::new();
+        for index in 0..count {
+            match containers.ContainerFromIndex(index as i32) {
+                Ok(container) => {
+                    heights.push(container.cast::<native::IFrameworkElement>()?.MinHeight()?);
+                }
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(heights)
+    }
+
     pub fn list_view_state(
         &self,
         object: ObjectId,

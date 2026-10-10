@@ -255,6 +255,43 @@ fn list_view_properties_update_and_clear() {
 }
 
 #[test]
+fn list_view_item_min_height_updates_clears_and_rejects_invalid_values() {
+    for value in [-1.0, f64::NAN, f64::INFINITY] {
+        assert!(std::panic::catch_unwind(|| ListView::new().item_min_height(value)).is_err());
+    }
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(ListView::new().item_min_height(28.0))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let set = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == list => Some(set),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(
+        &**set,
+        [Property {
+            id: PropertyId::ItemMinHeight,
+            value: PropertyValue::F64(28.0),
+        }]
+    );
+
+    let mutations = runtime.update(ListView::new()).unwrap();
+    let clear = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, clear, .. } if *object == list => Some(clear),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(&**clear, [PropertyId::ItemMinHeight]);
+}
+
+#[test]
 fn list_view_selection_and_reorder_callbacks_replace_remove_and_reject_stale_events() {
     let first_selections = Rc::new(RefCell::new(Vec::new()));
     let first_selection = {
