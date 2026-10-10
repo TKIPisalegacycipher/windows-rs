@@ -167,6 +167,12 @@ fn controlled_property_feedback_uses_exact_incumbent_clear_values() {
             EventId::IsPaneOpenChanged,
             PropertyValue::Bool(true),
         ),
+        (
+            ObjectType::CalendarDatePicker,
+            PropertyId::Date,
+            EventId::DateChanged,
+            PropertyValue::OptionalDateTime(None),
+        ),
     ];
 
     for (kind, property, event, value) in cases {
@@ -181,6 +187,43 @@ fn controlled_property_feedback_uses_exact_incumbent_clear_values() {
             ))
         );
     }
+}
+
+#[test]
+fn calendar_date_feedback_suppresses_only_the_written_date() {
+    let object = ObjectId::test(1);
+    let date = |secs| Property {
+        id: PropertyId::Date,
+        value: PropertyValue::OptionalDateTime(Some(DateTime::from_unix_secs(secs))),
+    };
+    let written = date(1_700_000_000);
+    let Some((event, expectation)) = GeneratedHandle::feedback_expectation(
+        ObjectType::CalendarDatePicker,
+        PropertyId::Date,
+        Some(&written.value),
+    ) else {
+        panic!("CalendarDatePicker.Date is controlled");
+    };
+    assert_eq!(event, EventId::DateChanged);
+    let mut feedback = FeedbackState::default();
+    feedback.begin(object, event, expectation);
+    assert!(!feedback.observe(
+        object,
+        event,
+        Observation::SetProperty {
+            object,
+            property: written,
+        }
+    ));
+    assert!(feedback.observe(
+        object,
+        event,
+        Observation::SetProperty {
+            object,
+            property: date(1_705_000_000),
+        }
+    ));
+    assert_eq!(feedback.finish(object, event), None);
 }
 
 fn virtual_index(value: IInspectable) -> i32 {

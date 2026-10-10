@@ -6343,6 +6343,13 @@ impl CalendarDatePicker {
             .property(PropertyId::IsEnabled, PropertyValue::Bool(is_enabled));
         self
     }
+    pub fn date(mut self, date: impl Into<Option<DateTime>>) -> Self {
+        self.0 = self.0.property(
+            PropertyId::Date,
+            PropertyValue::OptionalDateTime(date.into()),
+        );
+        self
+    }
     visual_methods!();
     /// Rejects values outside this relation's generated type contract.
     ///

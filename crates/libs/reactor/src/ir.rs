@@ -370,6 +370,7 @@ pub(crate) fn validate_property(kind: ObjectType, property: &Property) -> Result
         | (ValueType::Icon, PropertyValue::Icon(_))
         | (ValueType::ImageSource, PropertyValue::ImageSource(_))
         | (ValueType::KeyAccelerators, PropertyValue::KeyAccelerators(_))
+        | (ValueType::OptionalDateTime, PropertyValue::OptionalDateTime(_))
         | (ValueType::OptionalF64, PropertyValue::OptionalF64(_))
         | (ValueType::OptionalBool, PropertyValue::OptionalBool(_))
         | (ValueType::ResourceOverrides, PropertyValue::ResourceOverrides(_))

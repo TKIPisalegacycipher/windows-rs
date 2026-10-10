@@ -1097,6 +1097,10 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                                 }
                             ),
                             "Color" => format!("{observed_read}.map(from_native_color)"),
+                            "OptionalDateTime" => format!(
+                                "{observed_read}.map(Some).or_else(|error| \
+                                 if error.code().is_ok() {{ Ok(None) }} else {{ Err(error) }})"
+                            ),
                             "SelectionIndex" => {
                                 format!("{observed_read}.map(|value| usize::try_from(value).ok())")
                             }
@@ -2021,6 +2025,7 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                             "PropertyValue::OptionalBool(Some({}))",
                             property.clear_feedback
                         ),
+                        "OptionalDateTime" => "PropertyValue::OptionalDateTime(None)".to_string(),
                         "OptionalF64" => "PropertyValue::OptionalF64(None)".to_string(),
                         "SelectionIndex" => {
                             output.push_str(&format!(
@@ -2509,6 +2514,19 @@ fn emit_native_property_arms(
             "{pattern}None) => Some(set_grid_definitions({target}, &[], {rows})),\n\
              {pattern}Some(PropertyValue::GridLengths(value))) => \
              Some(set_grid_definitions({target}, value, {rows})),\n"
+        ));
+        return;
+    }
+    if value == "OptionalDateTime" {
+        let clear = native_interface_call(target, target_class, interface, metadata, |object| {
+            format!("{object}.Set{native}(None).map_err(Into::into)")
+        });
+        let set = native_interface_call(target, target_class, interface, metadata, |object| {
+            format!("{object}.Set{native}(*value).map_err(Into::into)")
+        });
+        output.push_str(&format!(
+            "{pattern}None) => Some({clear}),\n\
+             {pattern}Some(PropertyValue::OptionalDateTime(value))) => Some({set}),\n"
         ));
         return;
     }
@@ -3713,6 +3731,7 @@ fn property_argument_parts(name: &str, value: &str) -> String {
         "Icon" => format!("{name}: impl Into<Icon>"),
         "ImageSource" => format!("{name}: ImageSource"),
         "KeyAccelerators" => format!("{name}: KeyAccelerators"),
+        "OptionalDateTime" => format!("{name}: impl Into<Option<DateTime>>"),
         "OptionalF64" => format!("{name}: impl Into<Option<f64>>"),
         "OptionalBool" => format!("{name}: impl Into<Option<bool>>"),
         "ResourceOverrides" => format!("{name}: ResourceOverrides"),
@@ -3746,6 +3765,7 @@ fn property_value_parts(value: &str, name: &str) -> String {
         "Icon" => format!("PropertyValue::Icon({name}.into())"),
         "ImageSource" => format!("PropertyValue::ImageSource({name})"),
         "KeyAccelerators" => format!("PropertyValue::KeyAccelerators({name})"),
+        "OptionalDateTime" => format!("PropertyValue::OptionalDateTime({name}.into())"),
         "OptionalF64" => format!("PropertyValue::OptionalF64({name}.into())"),
         "OptionalBool" => format!("PropertyValue::OptionalBool({name}.into())"),
         "SelectionIndex" => format!("PropertyValue::SelectionIndex({name}.into())"),
@@ -3980,6 +4000,7 @@ fn live_property_sample(
         "GridLengths" => "[GridLength::Auto]".to_string(),
         "KeyAccelerators" => "KeyAccelerators::default()".to_string(),
         "OptionalBool" => "Some(true)".to_string(),
+        "OptionalDateTime" => "Some(DateTime::from_unix_secs(1_700_000_000))".to_string(),
         "OptionalF64" => "Some(1.0)".to_string(),
         "ResourceOverrides" => "ResourceOverrides::new()".to_string(),
         "RichText" => "RichText::new([RichTextParagraph::new([RichTextInline::Run(\

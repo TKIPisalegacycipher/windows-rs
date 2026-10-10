@@ -6847,6 +6847,17 @@ impl windows_core::RuntimeType for ICalendarDatePicker {
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
 impl ICalendarDatePicker {
+    pub(crate) fn Date(&self) -> windows_core::Result<windows_time::DateTime> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Date)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+            .and_then(|r__: windows_reference::IReference<windows_time::DateTime>| r__.Value())
+        }
+    }
     pub(crate) fn SetDate(
         &self,
         value: Option<windows_time::DateTime>,
@@ -6943,7 +6954,10 @@ impl ICalendarDatePicker {
 #[repr(C)]
 pub struct ICalendarDatePicker_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
-    Date: usize,
+    pub Date: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub SetDate: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
