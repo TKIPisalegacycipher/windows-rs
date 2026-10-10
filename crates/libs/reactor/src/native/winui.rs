@@ -1928,11 +1928,9 @@ impl NativeWindow {
         &mut self,
         title: Option<&str>,
         visuals: Option<&WindowVisuals>,
-        color_scheme_observer: Option<Rc<dyn Fn(ColorScheme)>>,
         size_observer: Option<Rc<dyn Fn(WindowSize)>>,
         initial: bool,
     ) -> Result<(), WinUiError> {
-        self.actual_theme_changed = None;
         self.size_changed = size_observer
             .map(|observer| {
                 self.state.root_element.SizeChanged(move |_, args| {
@@ -1977,7 +1975,15 @@ impl NativeWindow {
             self.published_visuals = false;
         }
 
-        self.actual_theme_changed = color_scheme_observer
+        Ok(())
+    }
+
+    pub(crate) fn set_color_scheme_observer(
+        &mut self,
+        observer: Option<Rc<dyn Fn(ColorScheme)>>,
+    ) -> Result<(), WinUiError> {
+        self.actual_theme_changed = None;
+        self.actual_theme_changed = observer
             .map(|observer| {
                 let initial = match self.state.root_element.ActualTheme()? {
                     native::ElementTheme::Dark => ColorScheme::Dark,

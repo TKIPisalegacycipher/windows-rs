@@ -187,6 +187,7 @@ jobs:
           cargo run -p test-reactor-integration --bin canvas_integration --quiet
           cargo run -p test-reactor-integration --bin window_state --quiet
           cargo run -p test-reactor-integration --bin title_bar --quiet
+          cargo run -p test-reactor-integration --bin color_scheme --quiet
           "normal", "maximized", "position", "offscreen", "secondary", "same-bounds", "constrained" |
             ForEach-Object {
               cargo run -p test-reactor-integration --bin window_placement `

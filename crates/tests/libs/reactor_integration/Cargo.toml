@@ -55,6 +55,10 @@ path = "src/menu_position.rs"
 name = "title_bar"
 path = "src/title_bar.rs"
 
+[[bin]]
+name = "color_scheme"
+path = "src/color_scheme.rs"
+
 [dependencies]
 windows-canvas = { workspace = true, features = ["composition", "reactor"] }
 windows-core = { workspace = true }
