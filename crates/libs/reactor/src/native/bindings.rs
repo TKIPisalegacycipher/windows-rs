@@ -21939,6 +21939,15 @@ impl IUIElement {
             .ok()
         }
     }
+    pub(crate) fn SetIsHitTestVisible(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetIsHitTestVisible)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetTransitions<P0>(&self, value: P0) -> windows_core::Result<()>
     where
         P0: windows_core::Param<TransitionCollection>,
@@ -22668,7 +22677,8 @@ pub struct IUIElement_Vtbl {
     RenderTransformOrigin: usize,
     SetRenderTransformOrigin: usize,
     IsHitTestVisible: usize,
-    SetIsHitTestVisible: usize,
+    pub SetIsHitTestVisible:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     Visibility: usize,
     SetVisibility: usize,
     RenderSize: usize,
@@ -23058,7 +23068,10 @@ pub struct IUIElementStatics_Vtbl {
     ProjectionProperty: usize,
     Transform3DProperty: usize,
     RenderTransformOriginProperty: usize,
-    IsHitTestVisibleProperty: usize,
+    pub IsHitTestVisibleProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     VisibilityProperty: usize,
     UseLayoutRoundingProperty: usize,
     pub TransitionsProperty: unsafe extern "system" fn(
@@ -32462,6 +32475,16 @@ impl UIElement {
         Self::IUIElementStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
             (windows_core::Interface::vtable(this).OpacityProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn IsHitTestVisibleProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IUIElementStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).IsHitTestVisibleProperty)(
                 windows_core::Interface::as_raw(this),
                 &mut result__,
             )

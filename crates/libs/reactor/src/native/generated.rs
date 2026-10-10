@@ -3217,6 +3217,19 @@ impl GeneratedHandle {
             (PropertyId::Opacity, Some(PropertyValue::F64(value))) => {
                 Some(element.SetOpacity(*value).map_err(Into::into))
             }
+            (PropertyId::IsHitTestVisible, None) => Some(
+                element
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::UIElement::IsHitTestVisibleProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (PropertyId::IsHitTestVisible, Some(PropertyValue::Bool(value))) => {
+                Some(element.SetIsHitTestVisible(*value).map_err(Into::into))
+            }
             (PropertyId::Transitions, Some(PropertyValue::ThemeTransitions(values))) => {
                 Some((|| {
                     let collection = native::TransitionCollection::new()?;

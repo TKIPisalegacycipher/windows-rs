@@ -1869,6 +1869,13 @@ macro_rules! visual_methods {
                 .property(PropertyId::Opacity, PropertyValue::F64(opacity));
             self
         }
+        pub fn is_hit_test_visible(mut self, is_hit_test_visible: bool) -> Self {
+            self.0 = self.0.property(
+                PropertyId::IsHitTestVisible,
+                PropertyValue::Bool(is_hit_test_visible),
+            );
+            self
+        }
         pub fn transitions<T>(self, transitions: T) -> Self
         where
             T: IntoIterator<Item = ThemeTransition>,
