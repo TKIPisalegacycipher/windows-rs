@@ -434,11 +434,20 @@ impl WinUiAdapter {
                 .into());
             }
         }
+        let framework_element = element.cast::<native::IFrameworkElement>().ok();
+        let size = |read: fn(&native::IFrameworkElement) -> windows_core::Result<f64>| {
+            framework_element
+                .as_ref()
+                .and_then(|element| read(element).ok())
+                .unwrap_or(0.0)
+        };
         Ok(PointerEventInfo {
             x: f64::from(local_position.x),
             y: f64::from(local_position.y),
             window_x: f64::from(window_position.x),
             window_y: f64::from(window_position.y),
+            width: size(native::IFrameworkElement::ActualWidth),
+            height: size(native::IFrameworkElement::ActualHeight),
             pointer_id: local.PointerId()?,
             modifiers: Self::input_modifiers_from_virtual_keys(args.KeyModifiers()?),
             capture_succeeded,

@@ -2733,12 +2733,14 @@ impl core::default::Default for windows_reactor::PivotItem
 pub fn windows_reactor::PivotItem::default() -> Self
 #[non_exhaustive] pub struct windows_reactor::PointerEventInfo
 pub windows_reactor::PointerEventInfo::capture_succeeded: core::option::Option<bool>
+pub windows_reactor::PointerEventInfo::height: f64
 pub windows_reactor::PointerEventInfo::is_captured: bool
 pub windows_reactor::PointerEventInfo::is_left_button_pressed: bool
 pub windows_reactor::PointerEventInfo::is_middle_button_pressed: bool
 pub windows_reactor::PointerEventInfo::is_right_button_pressed: bool
 pub windows_reactor::PointerEventInfo::modifiers: windows_reactor::InputModifiers
 pub windows_reactor::PointerEventInfo::pointer_id: u32
+pub windows_reactor::PointerEventInfo::width: f64
 pub windows_reactor::PointerEventInfo::window_x: f64
 pub windows_reactor::PointerEventInfo::window_y: f64
 pub windows_reactor::PointerEventInfo::x: f64

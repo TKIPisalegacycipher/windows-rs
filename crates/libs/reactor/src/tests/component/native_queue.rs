@@ -104,6 +104,8 @@ fn native_queue_callback_bursts_are_linear() {
                         y: 1.0,
                         window_x: f64::from(pointer_id),
                         window_y: 1.0,
+                        width: 0.0,
+                        height: 0.0,
                         pointer_id,
                         modifiers: InputModifiers::NONE,
                         capture_succeeded: None,
