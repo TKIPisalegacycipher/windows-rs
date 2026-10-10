@@ -701,6 +701,29 @@ impl WinUiAdapter {
         Ok(())
     }
 
+    /// Lays out a ListView and returns the automation names of its realized item containers.
+    pub fn list_item_names(&self, object: ObjectId) -> Result<Vec<String>, WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        list.value.cast::<native::IUIElement>()?.UpdateLayout()?;
+        let containers = list.value.cast::<native::IItemContainerMapping>()?;
+        let count = list
+            .value
+            .cast::<native::IItemsControl>()?
+            .Items()?
+            .Size()?;
+        let mut names = Vec::new();
+        for index in 0..count {
+            match containers.ContainerFromIndex(index as i32) {
+                Ok(container) => names.push(native::AutomationProperties::GetName(&container)?),
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(names)
+    }
+
     pub fn list_view_state(
         &self,
         object: ObjectId,

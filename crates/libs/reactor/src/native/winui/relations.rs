@@ -584,6 +584,21 @@ impl WinUiAdapter {
         if !properties.HasKey(&content_key)? {
             properties.Insert(&content_key, &text)?;
         }
+        let item = value.cast::<IInspectable>()?;
+        if let Some((parent, RelationId::Items)) = self.owners.get(&object).copied()
+            && let Some(Handle::ListView(list)) = self.handles.get(&parent)
+        {
+            // Rename a realized container; the others are named when the list prepares them.
+            match list
+                .value
+                .cast::<native::IItemContainerMapping>()?
+                .ContainerFromItem(&item)
+            {
+                Ok(container) => name_list_container(&container, &item, &text_key)?,
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
         Ok(())
     }
 
