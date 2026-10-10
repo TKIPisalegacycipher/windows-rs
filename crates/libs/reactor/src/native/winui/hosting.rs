@@ -74,6 +74,15 @@ fn menu_placement(kind: ObjectType) -> Option<native::FlyoutPlacementMode> {
     }
 }
 
+/// Removes the items from the end. `MenuBarItem` mirrors `Items` into its flyout on insert and
+/// remove only, so `Clear` would leave the old entries in the flyout.
+fn clear_menu_items<T: windows_core::RuntimeType + 'static>(items: &IVector<T>) -> Result<(), WinUiError> {
+    while let size @ 1.. = items.Size()? {
+        items.RemoveAt(size - 1)?;
+    }
+    Ok(())
+}
+
 impl WinUiAdapter {
     fn set_resource_overrides(
         &mut self,
@@ -587,7 +596,7 @@ impl WinUiAdapter {
                     else {
                         return Err(WinUiError::InvalidObject(target));
                     };
-                    item.Items()?.Clear()?;
+                    clear_menu_items(&item.Items()?)?;
                 }
                 _ => return Err(WinUiError::InvalidObject(target)),
             }
@@ -622,9 +631,11 @@ impl WinUiAdapter {
                 else {
                     return Err(WinUiError::InvalidObject(target));
                 };
+                let items = item.Items()?;
+                clear_menu_items(&items)?;
                 build_menu_items(
                     &menu.items,
-                    &item.Items()?,
+                    &items,
                     &mut revokers,
                     &self.event_queue,
                     target,

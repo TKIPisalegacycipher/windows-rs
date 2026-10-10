@@ -663,3 +663,12 @@ fn button_menus_open_below_the_button() {
     }
     assert_eq!(menu_placement(ObjectType::MenuBarItem), None);
 }
+
+#[test]
+fn clearing_menu_items_removes_them_one_by_one() {
+    let items = IVector::<i32>::from(vec![1, 2, 3]);
+    clear_menu_items(&items).unwrap();
+    assert_eq!(items.Size().unwrap(), 0);
+    clear_menu_items(&items).unwrap();
+    assert_eq!(items.Size().unwrap(), 0);
+}
