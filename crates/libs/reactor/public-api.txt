@@ -514,12 +514,13 @@ pub windows_reactor::TextTrimming::WordEllipsis
 pub windows_reactor::TextWrapping::NoWrap
 pub windows_reactor::TextWrapping::Wrap
 pub windows_reactor::TextWrapping::WrapWholeWords
-#[non_exhaustive] #[repr(u8)] pub enum windows_reactor::ThemeBrush
+#[non_exhaustive] pub enum windows_reactor::ThemeBrush
 pub windows_reactor::ThemeBrush::Accent
 pub windows_reactor::ThemeBrush::AccentText
 pub windows_reactor::ThemeBrush::CardBackground
 pub windows_reactor::ThemeBrush::CardStroke
 pub windows_reactor::ThemeBrush::PrimaryText
+pub windows_reactor::ThemeBrush::Resource(&'static str)
 pub windows_reactor::ThemeBrush::SolidBackground
 pub windows_reactor::ThemeBrush::SystemCritical
 pub windows_reactor::ThemeBrush::SystemCriticalBackground

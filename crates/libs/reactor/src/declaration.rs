@@ -213,7 +213,6 @@ fn canonical_rich_edit_text(value: Rc<str>) -> Rc<str> {
 
 /// A brush resolved from the active WinUI theme resources.
 #[non_exhaustive]
-#[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum ThemeBrush {
     Accent,
@@ -224,6 +223,29 @@ pub enum ThemeBrush {
     CardStroke,
     SystemCritical,
     SystemCriticalBackground,
+    /// Any theme brush resource, by key, such as `TextFillColorSecondaryBrush`.
+    ///
+    /// The key is written into XAML, so it may contain only ASCII letters, digits, `_` and `.`;
+    /// using a brush with any other key panics.
+    Resource(&'static str),
+}
+
+/// Whether `key` can name a resource in XAML that the reactor generates: ASCII letters, digits,
+/// `_` and `.` only.
+pub(crate) const fn is_resource_key(key: &str) -> bool {
+    let bytes = key.as_bytes();
+    if bytes.is_empty() {
+        return false;
+    }
+    let mut index = 0;
+    while index < bytes.len() {
+        let byte = bytes[index];
+        if !(byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'.') {
+            return false;
+        }
+        index += 1;
+    }
+    true
 }
 
 impl ThemeBrush {
@@ -237,6 +259,13 @@ impl ThemeBrush {
             Self::CardStroke => "CardStrokeColorDefaultBrush",
             Self::SystemCritical => "SystemFillColorCriticalBrush",
             Self::SystemCriticalBackground => "SystemFillColorCriticalBackgroundBrush",
+            Self::Resource(key) => {
+                assert!(
+                    is_resource_key(key),
+                    "theme brush resource key may contain only ASCII letters, digits, `_` and `.`"
+                );
+                key
+            }
         }
     }
 }
@@ -249,7 +278,11 @@ pub enum Brush {
 }
 
 impl From<ThemeBrush> for Brush {
+    /// # Panics
+    ///
+    /// Panics if `value` is a resource brush whose key is not a valid resource key.
     fn from(value: ThemeBrush) -> Self {
+        _ = value.resource_key();
         Self::Theme(value)
     }
 }

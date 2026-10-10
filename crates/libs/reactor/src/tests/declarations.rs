@@ -1388,3 +1388,45 @@ fn icon_foregrounds_record_the_same_theme_brush_as_text() {
             .contains(&expected)
     );
 }
+
+#[test]
+fn theme_brush_resource_keys_must_be_xaml_names() {
+    assert_eq!(
+        Brush::from(ThemeBrush::Resource("App.Folder_Brush1")),
+        Brush::Theme(ThemeBrush::Resource("App.Folder_Brush1"))
+    );
+    for key in ["", "Bad Key", "Bad'Key", "Bad}Key", "Bad<Key", "Bad\"Key"] {
+        assert!(std::panic::catch_unwind(|| Brush::from(ThemeBrush::Resource(key))).is_err());
+        assert!(std::panic::catch_unwind(|| ThemeBrush::Resource(key).resource_key()).is_err());
+    }
+}
+
+#[test]
+fn resource_theme_brushes_use_their_key_verbatim() {
+    assert_eq!(
+        ThemeBrush::Resource("TextFillColorSecondaryBrush").resource_key(),
+        "TextFillColorSecondaryBrush"
+    );
+    assert_eq!(
+        ThemeBrush::Accent.resource_key(),
+        "AccentFillColorDefaultBrush"
+    );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(TextBlock::new().foreground(ThemeBrush::Resource("TextFillColorSecondaryBrush")))
+        .unwrap();
+    let text = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(text)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::Foreground,
+                value: PropertyValue::Brush(Brush::Theme(ThemeBrush::Resource(
+                    "TextFillColorSecondaryBrush"
+                ))),
+            })
+    );
+}
