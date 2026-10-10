@@ -976,22 +976,29 @@ fn apply_component_window_publication(
             _ = services.size(generation, size, window);
         }) as Rc<dyn Fn(WindowSize)>
     });
-    let color_scheme_observer = publication.on_color_scheme.as_ref().map(|_| {
-        let services = Rc::clone(services);
-        Rc::new(move |scheme| {
-            _ = services.color_scheme(generation, scheme, window);
-        }) as Rc<dyn Fn(ColorScheme)>
-    });
     state.window.apply_publication(
         publication.title.as_deref(),
         publication.visuals.as_ref(),
-        color_scheme_observer,
         size_observer,
         initial,
     )?;
-    state.window_color_scheme = publication
-        .on_color_scheme
-        .map(|callback| (generation, callback));
+    if state
+        .window_color_scheme
+        .as_ref()
+        .map(|(_, callback)| callback)
+        != publication.on_color_scheme.as_ref()
+    {
+        let observer = publication.on_color_scheme.as_ref().map(|_| {
+            let services = Rc::clone(services);
+            Rc::new(move |scheme| {
+                _ = services.color_scheme(generation, scheme, window);
+            }) as Rc<dyn Fn(ColorScheme)>
+        });
+        state.window.set_color_scheme_observer(observer)?;
+        state.window_color_scheme = publication
+            .on_color_scheme
+            .map(|callback| (generation, callback));
+    }
     state.window_size = publication.on_size.map(|callback| (generation, callback));
     if state
         .window_placement

@@ -965,6 +965,9 @@ impl<C: Component> ViewContext<'_, C> {
             .is_some();
     }
 
+    /// Observes the window's actual color scheme, including the initial scheme.
+    ///
+    /// Repeated unchanged declarations do not replay the current scheme.
     pub fn on_color_scheme(&mut self, callback: impl IntoPayloadCallback<ColorScheme>) {
         self.window_color_scheme_duplicate |= self
             .window
