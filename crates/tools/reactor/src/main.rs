@@ -184,6 +184,7 @@ enum PropertyAdapter {
     ImplicitTranslationTransition,
     InspectableString,
     InspectableStringList,
+    ItemContainerMinHeight,
     KeyAccelerators,
     NativeColor,
     NumberBoxValue,
@@ -215,7 +216,7 @@ impl PropertyAdapter {
             Self::ImplicitOpacityTransition
             | Self::ImplicitScaleTransition
             | Self::ImplicitTranslationTransition => "Duration",
-            Self::ImplicitScale => "F64",
+            Self::ImplicitScale | Self::ItemContainerMinHeight => "F64",
             Self::ImplicitTranslation => "Vector2",
             Self::InspectableString | Self::PathData | Self::RichEditText | Self::Uri => "String",
             Self::InspectableStringList => "StringList",
@@ -243,6 +244,11 @@ impl PropertyAdapter {
             Self::ResourceOverrides => Some("resource_overrides"),
             _ => None,
         }
+    }
+
+    /// Applied by the handwritten adapter rather than through a native property.
+    fn is_handwritten(self) -> bool {
+        matches!(self, Self::ItemContainerMinHeight)
     }
 
     fn has_managed_state(self) -> bool {
@@ -2073,11 +2079,13 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
     {
         let native = object.native_path();
         let owner = native.rsplit('.').next().unwrap();
-        for property in object
-            .properties
-            .iter()
-            .filter(|property| property.controlled.is_none() && property.coerces.is_none())
-        {
+        for property in object.properties.iter().filter(|property| {
+            property.controlled.is_none()
+                && property.coerces.is_none()
+                && !property
+                    .adapter
+                    .is_some_and(PropertyAdapter::is_handwritten)
+        }) {
             let native = native_property(property);
             let method = if property
                 .adapter

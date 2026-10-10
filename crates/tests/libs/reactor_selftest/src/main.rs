@@ -3501,6 +3501,31 @@ impl reactor::Component for Fixture {
                 list_names_runtime.adapter().list_item_names(list).unwrap(),
                 ["Renamed", "Second"]
             );
+            let default_heights = list_names_runtime
+                .adapter()
+                .list_item_min_heights(list)
+                .unwrap();
+            assert!(default_heights.iter().all(|height| *height > 28.0));
+            list_names_runtime
+                .update(Self::named_list("Renamed").item_min_height(28.0))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_min_heights(list)
+                    .unwrap(),
+                [28.0, 28.0]
+            );
+            list_names_runtime
+                .update(Self::named_list("Renamed"))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_min_heights(list)
+                    .unwrap(),
+                default_heights
+            );
             list_names_runtime
                 .adapter()
                 .validate_graph(list_names_runtime.graph())

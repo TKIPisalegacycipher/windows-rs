@@ -3251,6 +3251,17 @@ impl ListView {
             .property(PropertyId::AllowDrop, PropertyValue::Bool(allow_drop));
         self
     }
+    pub fn item_min_height(mut self, item_min_height: f64) -> Self {
+        assert!(
+            item_min_height.is_finite() && item_min_height >= 0.0,
+            "ListView.ItemMinHeight requires finite_non_negative"
+        );
+        self.0 = self.0.property(
+            PropertyId::ItemMinHeight,
+            PropertyValue::F64(item_min_height),
+        );
+        self
+    }
     pub fn selected_index(mut self, selected_index: impl Into<Option<usize>>) -> Self {
         self.0 = self.0.property(
             PropertyId::SelectedIndex,

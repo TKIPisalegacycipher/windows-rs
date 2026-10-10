@@ -182,6 +182,8 @@ impl WinUiAdapter {
                             Err(error) => report_error(error.into()),
                         })?;
                     let text_key = self.data_text_key.clone();
+                    let item_min_height = Rc::new(Cell::new(None));
+                    let container_min_height = Rc::clone(&item_min_height);
                     let _container_content_changing = value
                         .cast::<native::IListViewBase>()?
                         .ContainerContentChanging(move |_, args| {
@@ -190,10 +192,11 @@ impl WinUiAdapter {
                                 if recycled {
                                     return Ok(());
                                 }
-                                name_list_container(
-                                    &args.ItemContainer()?.cast()?,
-                                    &args.Item()?,
-                                    &text_key,
+                                let container = args.ItemContainer()?.cast()?;
+                                name_list_container(&container, &args.Item()?, &text_key)?;
+                                set_list_container_min_height(
+                                    &container,
+                                    container_min_height.get(),
                                 )
                             });
                             if let Err(error) = result {
@@ -208,6 +211,7 @@ impl WinUiAdapter {
                         _selection_changed,
                         _drag_items_completed,
                         _container_content_changing,
+                        item_min_height,
                     })
                 }
                 ObjectType::DataItem => {
@@ -392,6 +396,9 @@ impl WinUiAdapter {
                         .cast::<native::ISelector>()?
                         .SetSelectedIndex(-1)
                         .map_err(Into::into),
+                    (Handle::ListView(value), PropertyId::ItemMinHeight) => {
+                        value.set_item_min_height(None)
+                    }
                     _ => Err(WinUiError::InvalidObject(object)),
                 };
             };
@@ -563,6 +570,11 @@ impl WinUiAdapter {
                         .cast::<native::ISelector>()?
                         .SetSelectedIndex(native_selection_index(*selected)?)
                         .map_err(Into::into),
+                    (
+                        Handle::ListView(value),
+                        PropertyId::ItemMinHeight,
+                        PropertyValue::F64(height),
+                    ) => value.set_item_min_height(Some(*height)),
                     _ => Err(WinUiError::InvalidObject(object)),
                 };
             };
