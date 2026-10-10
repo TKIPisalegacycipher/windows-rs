@@ -17,6 +17,8 @@ fn pointer_event_payload_round_trips_through_recording_protocol() {
         y: 24.5,
         window_x: 112.5,
         window_y: 224.5,
+        width: 300.0,
+        height: 40.0,
         pointer_id: 42,
         modifiers: InputModifiers::CONTROL,
         capture_succeeded: None,
@@ -40,6 +42,26 @@ fn pointer_event_payload_round_trips_through_recording_protocol() {
             id: EventId::PointerReleased,
             value: ValueType::PointerEventInfo,
         })
+    );
+}
+
+#[test]
+fn pointer_event_info_reports_element_size() {
+    let info = PointerEventInfo::default();
+    assert_eq!(info.width, 0.0);
+    assert_eq!(info.height, 0.0);
+
+    let sized = PointerEventInfo {
+        width: 320.0,
+        ..info
+    };
+    assert_ne!(info, sized);
+    assert_ne!(
+        sized,
+        PointerEventInfo {
+            height: 320.0,
+            ..info
+        }
     );
 }
 

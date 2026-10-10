@@ -1435,6 +1435,12 @@ pub struct PointerEventInfo {
     pub y: f64,
     pub window_x: f64,
     pub window_y: f64,
+    /// The element's `ActualWidth` in device-independent pixels when the event was raised, or 0 if
+    /// unavailable.
+    pub width: f64,
+    /// The element's `ActualHeight` in device-independent pixels when the event was raised, or 0 if
+    /// unavailable.
+    pub height: f64,
     pub pointer_id: u32,
     pub modifiers: InputModifiers,
     pub capture_succeeded: Option<bool>,
