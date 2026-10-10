@@ -10,6 +10,7 @@ fn page(mounted: bool, grid: &ElementRef<Grid>, web: &ElementRef<WebView2>) -> V
                 |index| TextBlock::new().text(index.to_string()),
             )),
             TreeView::new().nodes([TreeNode::new("a", "a"), TreeNode::new("b", "b")]),
+            ListView::new().items([DataItem::new("a", "a"), DataItem::new("b", "b")]),
             Grid::new().width(10.0).height(10.0).element_ref(grid),
             WebView2::new().width(10.0).height(10.0).element_ref(web),
         ))
@@ -24,6 +25,7 @@ fn assert_released(adapter: &WinUiAdapter) {
     assert!(adapter.retirements.is_empty());
     assert!(adapter.virtual_items.is_empty());
     assert!(adapter.tree_node_texts.borrow().is_empty());
+    assert!(adapter.data_items.borrow().is_empty());
     assert!(adapter.observations.is_empty());
     assert!(adapter.webview_initializations.borrow().is_empty());
 }
@@ -89,6 +91,7 @@ fn retirement_and_replacement_release_adapter_state() {
                     let adapter = runtime.adapter();
                     assert_eq!(adapter.virtual_items.len(), 1);
                     assert_eq!(adapter.tree_node_texts.borrow().len(), 2);
+                    assert_eq!(adapter.data_items.borrow().len(), 2);
                     assert_eq!(adapter.observations.len(), 1);
                     assert_eq!(adapter.webview_initializations.borrow().len(), 1);
                     runtime.update(page(false, &grid, &web)).unwrap();

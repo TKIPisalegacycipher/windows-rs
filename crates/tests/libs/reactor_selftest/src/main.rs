@@ -1443,6 +1443,71 @@ impl reactor::Component for Fixture {
             .adapter()
             .validate_graph(list_runtime.graph())
             .unwrap();
+        let list_events = Rc::new(RefCell::new(Vec::new()));
+        let list_index_callback = reactor::Callback::new({
+            let events = Rc::clone(&list_events);
+            move |value: Option<usize>| events.borrow_mut().push(format!("index {value:?}"))
+        });
+        let list_keys_callback = reactor::Callback::new({
+            let events = Rc::clone(&list_events);
+            move |value: Vec<reactor::Key>| events.borrow_mut().push(format!("keys {value:?}"))
+        });
+        let keyed_list = |handled: bool| {
+            let list = reactor::ListView::new()
+                .items([
+                    reactor::DataItem::new("first", "First"),
+                    reactor::DataItem::new(2u64, "Second"),
+                    reactor::DataItem::new("third", "Third"),
+                ])
+                .selection_mode(reactor::ListViewSelectionMode::Multiple)
+                .on_selection_changed(list_index_callback.clone());
+            if handled {
+                list.on_selected_keys_changed(list_keys_callback.clone())
+            } else {
+                list
+            }
+        };
+        let mut keys_runtime = reactor::Runtime::new(reactor::native::WinUiAdapter::default());
+        keys_runtime.update(keyed_list(true)).unwrap();
+        let keys_list = keys_runtime.graph().root().unwrap();
+        keys_runtime
+            .adapter()
+            .select_list_items(keys_list, &[2, 0, 1])
+            .unwrap();
+        assert_eq!(keys_runtime.dispatch_native_events().unwrap(), 6);
+        let third = reactor::Key::from("third");
+        let first = reactor::Key::from("first");
+        let second = reactor::Key::from(2u64);
+        assert_eq!(
+            *list_events.borrow(),
+            [
+                "index Some(2)".to_string(),
+                format!("keys {:?}", [&third]),
+                "index Some(2)".to_string(),
+                format!("keys {:?}", [&third, &first]),
+                "index Some(2)".to_string(),
+                format!("keys {:?}", [&third, &first, &second]),
+            ]
+        );
+        list_events.borrow_mut().clear();
+        // A programmatic selection is not echoed as an index change, but the keys still report it.
+        keys_runtime
+            .update(keyed_list(true).selected_index(Some(1)))
+            .unwrap();
+        assert_eq!(keys_runtime.dispatch_native_events().unwrap(), 1);
+        assert_eq!(*list_events.borrow(), [format!("keys {:?}", [&second])]);
+        list_events.borrow_mut().clear();
+        keys_runtime.update(keyed_list(false)).unwrap();
+        keys_runtime
+            .adapter()
+            .simulate_list_selection(keys_list, None)
+            .unwrap();
+        assert_eq!(keys_runtime.dispatch_native_events().unwrap(), 1);
+        assert_eq!(*list_events.borrow(), ["index None".to_string()]);
+        keys_runtime
+            .adapter()
+            .validate_graph(keys_runtime.graph())
+            .unwrap();
         let first_tree_values = Rc::new(RefCell::new(Vec::new()));
         let first_tree_callback = Rc::clone(&first_tree_values);
         let mut tree_runtime = reactor::Runtime::new(reactor::native::WinUiAdapter::default());
