@@ -1553,114 +1553,119 @@ pub fn cases() -> Vec<CoverageCase> {
             clear: coverage_308_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.DateChanged",
+            contract: "CalendarDatePicker.Date",
             set: coverage_309_set,
             clear: coverage_309_clear,
         },
         CoverageCase {
-            contract: "CalendarView.IsTodayHighlighted",
+            contract: "CalendarDatePicker.DateChanged",
             set: coverage_310_set,
             clear: coverage_310_clear,
         },
         CoverageCase {
-            contract: "CalendarView.IsGroupLabelVisible",
+            contract: "CalendarView.IsTodayHighlighted",
             set: coverage_311_set,
             clear: coverage_311_clear,
         },
         CoverageCase {
-            contract: "CalendarView.IsEnabled",
+            contract: "CalendarView.IsGroupLabelVisible",
             set: coverage_312_set,
             clear: coverage_312_clear,
         },
         CoverageCase {
-            contract: "CalendarView.SelectedDatesChanged",
+            contract: "CalendarView.IsEnabled",
             set: coverage_313_set,
             clear: coverage_313_clear,
         },
         CoverageCase {
-            contract: "ListViewItem.Tag",
+            contract: "CalendarView.SelectedDatesChanged",
             set: coverage_314_set,
             clear: coverage_314_clear,
         },
         CoverageCase {
-            contract: "GridView.CanDragItems",
+            contract: "ListViewItem.Tag",
             set: coverage_315_set,
             clear: coverage_315_clear,
         },
         CoverageCase {
-            contract: "GridView.CanReorderItems",
+            contract: "GridView.CanDragItems",
             set: coverage_316_set,
             clear: coverage_316_clear,
         },
         CoverageCase {
-            contract: "GridView.AllowDrop",
+            contract: "GridView.CanReorderItems",
             set: coverage_317_set,
             clear: coverage_317_clear,
         },
         CoverageCase {
-            contract: "GridView.SelectedIndex",
+            contract: "GridView.AllowDrop",
             set: coverage_318_set,
             clear: coverage_318_clear,
         },
         CoverageCase {
-            contract: "GridView.SelectionChanged",
+            contract: "GridView.SelectedIndex",
             set: coverage_319_set,
             clear: coverage_319_clear,
         },
         CoverageCase {
-            contract: "GridView.DragItemsCompleted",
+            contract: "GridView.SelectionChanged",
             set: coverage_320_set,
             clear: coverage_320_clear,
         },
         CoverageCase {
-            contract: "GridViewItem.Tag",
+            contract: "GridView.DragItemsCompleted",
             set: coverage_321_set,
             clear: coverage_321_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.Document",
+            contract: "GridViewItem.Tag",
             set: coverage_322_set,
             clear: coverage_322_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.PlaceholderText",
+            contract: "RichEditBox.Document",
             set: coverage_323_set,
             clear: coverage_323_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.IsReadOnly",
+            contract: "RichEditBox.PlaceholderText",
             set: coverage_324_set,
             clear: coverage_324_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.IsEnabled",
+            contract: "RichEditBox.IsReadOnly",
             set: coverage_325_set,
             clear: coverage_325_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.TextChanged",
+            contract: "RichEditBox.IsEnabled",
             set: coverage_326_set,
             clear: coverage_326_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.Blocks",
+            contract: "RichEditBox.TextChanged",
             set: coverage_327_set,
             clear: coverage_327_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.IsTextSelectionEnabled",
+            contract: "RichTextBlock.Blocks",
             set: coverage_328_set,
             clear: coverage_328_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.TextWrapping",
+            contract: "RichTextBlock.IsTextSelectionEnabled",
             set: coverage_329_set,
             clear: coverage_329_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.FontSize",
+            contract: "RichTextBlock.TextWrapping",
             set: coverage_330_set,
             clear: coverage_330_clear,
+        },
+        CoverageCase {
+            contract: "RichTextBlock.FontSize",
+            set: coverage_331_set,
+            clear: coverage_331_clear,
         },
     ]
 }
@@ -3606,140 +3611,148 @@ fn coverage_308_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_309_set() -> View {
-    CalendarDatePicker::new().on_date_changed(|_| {}).into()
+    CalendarDatePicker::new()
+        .date(Some(DateTime::from_unix_secs(1_700_000_000)))
+        .into()
 }
 fn coverage_309_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_310_set() -> View {
-    CalendarView::new().is_today_highlighted(true).into()
+    CalendarDatePicker::new().on_date_changed(|_| {}).into()
 }
 fn coverage_310_clear() -> View {
-    CalendarView::new().into()
+    CalendarDatePicker::new().into()
 }
 fn coverage_311_set() -> View {
-    CalendarView::new().is_group_label_visible(true).into()
+    CalendarView::new().is_today_highlighted(true).into()
 }
 fn coverage_311_clear() -> View {
     CalendarView::new().into()
 }
 fn coverage_312_set() -> View {
-    CalendarView::new().is_enabled(true).into()
+    CalendarView::new().is_group_label_visible(true).into()
 }
 fn coverage_312_clear() -> View {
     CalendarView::new().into()
 }
 fn coverage_313_set() -> View {
-    CalendarView::new().on_selected_dates_changed(|| {}).into()
+    CalendarView::new().is_enabled(true).into()
 }
 fn coverage_313_clear() -> View {
     CalendarView::new().into()
 }
 fn coverage_314_set() -> View {
-    ListViewItem::new().tag("coverage").into()
+    CalendarView::new().on_selected_dates_changed(|| {}).into()
 }
 fn coverage_314_clear() -> View {
-    ListViewItem::new().into()
+    CalendarView::new().into()
 }
 fn coverage_315_set() -> View {
-    GridView::new().can_drag_items(true).into()
+    ListViewItem::new().tag("coverage").into()
 }
 fn coverage_315_clear() -> View {
-    GridView::new().into()
+    ListViewItem::new().into()
 }
 fn coverage_316_set() -> View {
-    GridView::new().can_reorder_items(true).into()
+    GridView::new().can_drag_items(true).into()
 }
 fn coverage_316_clear() -> View {
     GridView::new().into()
 }
 fn coverage_317_set() -> View {
-    GridView::new().allow_drop(true).into()
+    GridView::new().can_reorder_items(true).into()
 }
 fn coverage_317_clear() -> View {
     GridView::new().into()
 }
 fn coverage_318_set() -> View {
-    GridView::new().selected_index(Some(0)).into()
+    GridView::new().allow_drop(true).into()
 }
 fn coverage_318_clear() -> View {
     GridView::new().into()
 }
 fn coverage_319_set() -> View {
-    GridView::new().on_selection_changed(|_| {}).into()
+    GridView::new().selected_index(Some(0)).into()
 }
 fn coverage_319_clear() -> View {
     GridView::new().into()
 }
 fn coverage_320_set() -> View {
-    GridView::new().on_reordered(|_| {}).into()
+    GridView::new().on_selection_changed(|_| {}).into()
 }
 fn coverage_320_clear() -> View {
     GridView::new().into()
 }
 fn coverage_321_set() -> View {
-    GridViewItem::new().tag("coverage").into()
+    GridView::new().on_reordered(|_| {}).into()
 }
 fn coverage_321_clear() -> View {
-    GridViewItem::new().into()
+    GridView::new().into()
 }
 fn coverage_322_set() -> View {
-    RichEditBox::new().text("coverage").into()
+    GridViewItem::new().tag("coverage").into()
 }
 fn coverage_322_clear() -> View {
-    RichEditBox::new().into()
+    GridViewItem::new().into()
 }
 fn coverage_323_set() -> View {
-    RichEditBox::new().placeholder_text("coverage").into()
+    RichEditBox::new().text("coverage").into()
 }
 fn coverage_323_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_324_set() -> View {
-    RichEditBox::new().is_read_only(true).into()
+    RichEditBox::new().placeholder_text("coverage").into()
 }
 fn coverage_324_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_325_set() -> View {
-    RichEditBox::new().is_enabled(true).into()
+    RichEditBox::new().is_read_only(true).into()
 }
 fn coverage_325_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_326_set() -> View {
-    RichEditBox::new().on_text_changed(|_| {}).into()
+    RichEditBox::new().is_enabled(true).into()
 }
 fn coverage_326_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_327_set() -> View {
+    RichEditBox::new().on_text_changed(|_| {}).into()
+}
+fn coverage_327_clear() -> View {
+    RichEditBox::new().into()
+}
+fn coverage_328_set() -> View {
     RichTextBlock::new()
         .paragraphs(RichText::new([RichTextParagraph::new([
             RichTextInline::Run(RichTextRun::plain("coverage")),
         ])]))
         .into()
 }
-fn coverage_327_clear() -> View {
-    RichTextBlock::new().into()
-}
-fn coverage_328_set() -> View {
-    RichTextBlock::new().is_text_selection_enabled(true).into()
-}
 fn coverage_328_clear() -> View {
     RichTextBlock::new().into()
 }
 fn coverage_329_set() -> View {
-    RichTextBlock::new()
-        .text_wrapping(TextWrapping::Wrap)
-        .into()
+    RichTextBlock::new().is_text_selection_enabled(true).into()
 }
 fn coverage_329_clear() -> View {
     RichTextBlock::new().into()
 }
 fn coverage_330_set() -> View {
-    RichTextBlock::new().font_size(1.0).into()
+    RichTextBlock::new()
+        .text_wrapping(TextWrapping::Wrap)
+        .into()
 }
 fn coverage_330_clear() -> View {
+    RichTextBlock::new().into()
+}
+fn coverage_331_set() -> View {
+    RichTextBlock::new().font_size(1.0).into()
+}
+fn coverage_331_clear() -> View {
     RichTextBlock::new().into()
 }

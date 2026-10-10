@@ -1243,6 +1243,7 @@ pub enum PropertyValue {
     Icon(Icon),
     ImageSource(ImageSource),
     KeyAccelerators(KeyAccelerators),
+    OptionalDateTime(Option<DateTime>),
     OptionalF64(Option<f64>),
     OptionalBool(Option<bool>),
     ResourceOverrides(ResourceOverrides),

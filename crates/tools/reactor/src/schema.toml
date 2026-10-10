@@ -1760,11 +1760,18 @@ name = "IsCalendarOpen"
 [[objects.properties]]
 name = "IsEnabled"
 
+[[objects.properties]]
+name = "Date"
+value = "OptionalDateTime"
+controlled = "DateChanged"
+feedback = "exact"
+
 [[objects.relations]]
 name = "Header"
 
 [[objects.events]]
 name = "DateChanged"
+observes = "Date"
 payload = "NewDate"
 payload_adapter = "optional_datetime"
 

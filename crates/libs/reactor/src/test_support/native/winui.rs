@@ -553,6 +553,19 @@ impl WinUiAdapter {
         Ok(())
     }
 
+    pub fn calendar_date(&self, object: ObjectId) -> Result<Option<DateTime>, WinUiError> {
+        let Some(Handle::Generated(GeneratedHandle::CalendarDatePicker(handle))) =
+            self.handles.get(&object)
+        else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        match handle.value.Date() {
+            Ok(value) => Ok(Some(value)),
+            Err(error) if error.code().is_ok() => Ok(None),
+            Err(error) => Err(error.into()),
+        }
+    }
+
     pub fn simulate_pointer_released(
         &self,
         object: ObjectId,

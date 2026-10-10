@@ -2940,12 +2940,40 @@ impl GeneratedHandle {
             }
             ObjectType::CalendarDatePicker => {
                 let value = native::CalendarDatePicker::new()?;
+                let source_date_changed = value.clone();
+                let read_date_changed = move || {
+                    source_date_changed.Date().map(Some).or_else(|error| {
+                        if error.code().is_ok() {
+                            Ok(None)
+                        } else {
+                            Err(error)
+                        }
+                    })
+                };
                 let date_changed = Rc::new(RefCell::new(NativeOptionalDateTimeEvent::default()));
                 let event_for_callback = Rc::clone(&date_changed);
                 let event_queue_date_changed = Rc::clone(event_queue);
                 let revoker = value.DateChanged(move |_, args| {
-                    let dispatch = true;
-                    let observation = None;
+                    let observed = match read_date_changed() {
+                        Ok(value) => value,
+                        Err(error) => {
+                            report_error(error);
+                            return;
+                        }
+                    };
+                    let observation = Observation::SetProperty {
+                        object,
+                        property: Property {
+                            id: PropertyId::Date,
+                            value: PropertyValue::OptionalDateTime(observed),
+                        },
+                    };
+                    let dispatch = event_queue_date_changed.observe(
+                        object,
+                        EventId::DateChanged,
+                        observation.clone(),
+                    );
+                    let observation = dispatch.then_some(observation);
                     let args = args.unwrap();
                     let payload = match args.NewDate() {
                         Ok(value) => Some(value),
@@ -4730,6 +4758,20 @@ impl GeneratedHandle {
                 FeedbackExpectation::Exact(Property {
                     id: PropertyId::Color,
                     value: PropertyValue::Color(Color::rgb(255, 255, 255)),
+                }),
+            )),
+            (ObjectType::CalendarDatePicker, PropertyId::Date, Some(value)) => Some((
+                EventId::DateChanged,
+                FeedbackExpectation::Exact(Property {
+                    id: PropertyId::Date,
+                    value: value.clone(),
+                }),
+            )),
+            (ObjectType::CalendarDatePicker, PropertyId::Date, None) => Some((
+                EventId::DateChanged,
+                FeedbackExpectation::Exact(Property {
+                    id: PropertyId::Date,
+                    value: PropertyValue::OptionalDateTime(None),
                 }),
             )),
             (ObjectType::GridView, PropertyId::SelectedIndex, Some(value)) => Some((
@@ -8841,6 +8883,14 @@ impl GeneratedHandle {
                     .map_err(Into::into)
                     .and_then(|object| object.SetIsEnabled(*value).map_err(Into::into)),
             ),
+            (Self::CalendarDatePicker(object), PropertyId::Date, None) => {
+                Some(object.value.SetDate(None).map_err(Into::into))
+            }
+            (
+                Self::CalendarDatePicker(object),
+                PropertyId::Date,
+                Some(PropertyValue::OptionalDateTime(value)),
+            ) => Some(object.value.SetDate(*value).map_err(Into::into)),
             (Self::ContentDialog(object), PropertyId::PrimaryButtonText, None) => Some(
                 object
                     .value

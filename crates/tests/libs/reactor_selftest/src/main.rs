@@ -958,6 +958,34 @@ impl reactor::Component for Fixture {
             .simulate_calendar_date(calendar, reactor::DateTime::from_unix_secs(1_720_000_000))
             .unwrap();
         assert_eq!(calendar_runtime.dispatch_native_events().unwrap(), 0);
+        let controlled_date_calls = Rc::new(Cell::new(0));
+        let controlled_date = |date: Option<reactor::DateTime>| {
+            let calls = Rc::clone(&controlled_date_calls);
+            reactor::CalendarDatePicker::new()
+                .date(date)
+                .on_date_changed(move |_| calls.set(calls.get() + 1))
+        };
+        calendar_runtime
+            .update(controlled_date(Some(reactor::DateTime::from_unix_secs(
+                1_730_000_000,
+            ))))
+            .unwrap();
+        assert_eq!(
+            calendar_runtime.adapter().calendar_date(calendar).unwrap(),
+            Some(reactor::DateTime::from_unix_secs(1_730_000_000))
+        );
+        calendar_runtime.update(controlled_date(None)).unwrap();
+        assert_eq!(
+            calendar_runtime.adapter().calendar_date(calendar).unwrap(),
+            None
+        );
+        assert_eq!(calendar_runtime.dispatch_native_events().unwrap(), 0);
+        calendar_runtime
+            .adapter()
+            .simulate_calendar_date(calendar, reactor::DateTime::from_unix_secs(1_740_000_000))
+            .unwrap();
+        assert_eq!(calendar_runtime.dispatch_native_events().unwrap(), 1);
+        assert_eq!(controlled_date_calls.get(), 1);
         let pointer_value = reactor::PointerEventInfo {
             x: 12.5,
             y: 24.5,

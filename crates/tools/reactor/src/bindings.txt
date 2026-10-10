@@ -81,7 +81,7 @@ Microsoft::UI::Xaml::Controls::IBreadcrumbBar::{add_ItemClicked, put_ItemsSource
 Microsoft::UI::Xaml::Controls::IBreadcrumbBarItemClickedEventArgs::get_Item
 Microsoft::UI::Xaml::Controls::IBreadcrumbBarStatics::get_ItemsSourceProperty
 Microsoft::UI::Xaml::Controls::IButton::put_Flyout
-Microsoft::UI::Xaml::Controls::ICalendarDatePicker::{add_DateChanged, put_Date, put_Header, put_IsCalendarOpen, put_IsTodayHighlighted, put_PlaceholderText, remove_DateChanged}
+Microsoft::UI::Xaml::Controls::ICalendarDatePicker::{add_DateChanged, get_Date, put_Date, put_Header, put_IsCalendarOpen, put_IsTodayHighlighted, put_PlaceholderText, remove_DateChanged}
 Microsoft::UI::Xaml::Controls::ICalendarDatePickerDateChangedEventArgs::get_NewDate
 Microsoft::UI::Xaml::Controls::ICalendarDatePickerStatics::{get_IsCalendarOpenProperty, get_IsTodayHighlightedProperty, get_PlaceholderTextProperty}
 Microsoft::UI::Xaml::Controls::ICalendarView::{add_SelectedDatesChanged, put_IsGroupLabelVisible, put_IsTodayHighlighted, remove_SelectedDatesChanged}

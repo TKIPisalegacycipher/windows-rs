@@ -94,6 +94,113 @@ fn rich_edit_document_removal_clears_once_and_stays_omitted() {
 }
 
 #[test]
+fn calendar_date_is_a_controlled_property_that_clears_to_none() {
+    let date = DateTime::from_unix_secs(1_700_000_000);
+    let callback = Callback::new(|_: Option<DateTime>| {});
+    let date_property = |runtime: &Runtime<RecordingAdapter>| {
+        let object = runtime.graph().root().unwrap();
+        runtime
+            .graph()
+            .properties(object)
+            .unwrap()
+            .iter()
+            .find(|property| property.id == PropertyId::Date)
+            .map(|property| property.value.clone())
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            CalendarDatePicker::new()
+                .date(date)
+                .on_date_changed(callback.clone()),
+        )
+        .unwrap();
+    assert_eq!(
+        date_property(&runtime),
+        Some(PropertyValue::OptionalDateTime(Some(date)))
+    );
+
+    runtime
+        .update(
+            CalendarDatePicker::new()
+                .date(None)
+                .on_date_changed(callback.clone()),
+        )
+        .unwrap();
+    assert_eq!(
+        date_property(&runtime),
+        Some(PropertyValue::OptionalDateTime(None))
+    );
+
+    let object = runtime.graph().root().unwrap();
+    let mutations = runtime
+        .update(
+            CalendarDatePicker::new()
+                .date(date)
+                .on_date_changed(callback.clone()),
+        )
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object: changed, set, .. }
+            if *changed == object && set.as_ref() == [Property {
+                id: PropertyId::Date,
+                value: PropertyValue::OptionalDateTime(Some(date)),
+            }]
+    )));
+    let mutations = runtime
+        .update(CalendarDatePicker::new().on_date_changed(callback))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object: changed, clear, .. }
+            if *changed == object && clear.as_ref() == [PropertyId::Date]
+    )));
+    assert_eq!(date_property(&runtime), None);
+}
+
+#[test]
+fn calendar_date_pick_is_cleared_when_the_next_declaration_omits_date() {
+    let date = DateTime::from_unix_secs(1_700_000_000);
+    let callback = Callback::new(|_: Option<DateTime>| {});
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(CalendarDatePicker::new().on_date_changed(callback.clone()))
+        .unwrap();
+    let object = runtime.graph().root().unwrap();
+    runtime.adapter_mut().queue_native_event(
+        Some(Observation::SetProperty {
+            object,
+            property: Property {
+                id: PropertyId::Date,
+                value: PropertyValue::OptionalDateTime(Some(date)),
+            },
+        }),
+        None,
+    );
+    runtime.dispatch_native_events().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(object)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::Date,
+                value: PropertyValue::OptionalDateTime(Some(date)),
+            })
+    );
+
+    let mutations = runtime
+        .update(CalendarDatePicker::new().on_date_changed(callback))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object: changed, set, clear }
+            if *changed == object && set.is_empty() && clear.as_ref() == [PropertyId::Date]
+    )));
+}
+
+#[test]
 fn deferred_exact_feedback_suppresses_matching_observations_until_a_difference() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime.update(RichEditBox::new().text("Before")).unwrap();
