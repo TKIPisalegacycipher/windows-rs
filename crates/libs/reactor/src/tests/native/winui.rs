@@ -32,6 +32,7 @@ fn native_queue_preview_uses_current_callback_and_preserves_order() {
             menu: Menu::new([], first),
             revision: 1,
             flyout: None,
+            context_flyout: None,
             _revokers: Vec::new(),
         },
     );
@@ -853,6 +854,45 @@ fn button_menus_open_below_the_button() {
         );
     }
     assert_eq!(menu_placement(ObjectType::MenuBarItem), None);
+}
+
+#[test]
+fn menus_on_other_elements_become_context_flyouts() {
+    for kind in [ObjectType::Button, ObjectType::DropDownButton] {
+        assert_eq!(menu_host(kind), MenuHost::Button);
+    }
+    assert_eq!(menu_host(ObjectType::MenuBarItem), MenuHost::MenuBarItem);
+    for kind in [
+        ObjectType::TextBlock,
+        ObjectType::TextBox,
+        ObjectType::NavigationViewItem,
+    ] {
+        assert_eq!(menu_host(kind), MenuHost::Context);
+        assert_eq!(menu_placement(kind), None);
+    }
+}
+
+#[test]
+fn context_menus_remember_the_element_flyout_once() {
+    let unread =
+        || -> Result<Option<&str>, ()> { panic!("a replaced menu must not read the element") };
+    assert_eq!(
+        original_context_flyout(None, || Ok::<_, ()>(Some("text"))),
+        Ok(Some("text"))
+    );
+    assert_eq!(
+        original_context_flyout(None, || Ok::<_, ()>(None::<&str>)),
+        Ok(None)
+    );
+    assert_eq!(
+        original_context_flyout(None, || Err::<Option<&str>, _>(())),
+        Err(())
+    );
+    assert_eq!(
+        original_context_flyout(Some(Some("text")), unread),
+        Ok(Some("text"))
+    );
+    assert_eq!(original_context_flyout(Some(None), unread), Ok(None));
 }
 
 #[test]

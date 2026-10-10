@@ -492,10 +492,7 @@ impl RecordingAdapter {
                 } => {
                     self.require_object(*target)?;
                     let kind = self.objects.get(target).unwrap().kind;
-                    if !matches!(
-                        kind,
-                        ObjectType::Button | ObjectType::DropDownButton | ObjectType::MenuBarItem
-                    ) {
+                    if !menu_target(kind) {
                         return Err(AdapterError::InvalidReplacement(*target));
                     }
                     if menu.is_some()

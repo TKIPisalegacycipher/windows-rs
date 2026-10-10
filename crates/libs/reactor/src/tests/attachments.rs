@@ -510,19 +510,188 @@ fn command_bar_flyout_callback_updates_preserve_revision() {
 }
 
 #[test]
-fn menu_attachment_rejects_unsupported_targets_and_flyout_conflicts() {
-    let mut unsupported = Runtime::new(RecordingAdapter::default());
-    assert_eq!(
-        unsupported.update(
-            TextBlock::new()
-                .text("Target")
-                .menu(Menu::new([MenuItem::item("open", "Open")], |_| {}))
-        ),
-        Err(UpdateError::Graph(GraphError::InvalidAttachment(
-            ObjectType::TextBlock
+fn menu_attachment_sets_context_menus_on_other_targets() {
+    let clicked = Rc::new(RefCell::new(Vec::new()));
+    let capture = Rc::clone(&clicked);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(TextBlock::new().text("Target").menu(Menu::new(
+            [MenuItem::item("copy", "Copy")],
+            move |key| {
+                capture.borrow_mut().push(key);
+            },
         )))
+        .unwrap();
+    let target = runtime.graph().root().unwrap();
+    assert!(mutations.iter().any(|mutation| {
+        matches!(
+            mutation,
+            Mutation::SetMenu {
+                target: current,
+                menu: Some(_),
+                revision: 1,
+            } if *current == target
+        )
+    }));
+    assert_eq!(runtime.adapter().menu(target).unwrap().items.len(), 1);
+
+    runtime.adapter_mut().queue_menu_click(target, "copy");
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(&*clicked.borrow(), &[Key::from("copy")]);
+
+    let mutations = runtime
+        .update(TextBlock::new().text("Target").menu(Menu::new(
+            [
+                MenuItem::item("copy", "Copy"),
+                MenuItem::item("select", "Select all"),
+            ],
+            |_| {},
+        )))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| {
+        matches!(
+            mutation,
+            Mutation::SetMenu {
+                target: current,
+                menu: Some(_),
+                revision: 2,
+            } if *current == target
+        )
+    }));
+    assert_eq!(runtime.adapter().menu(target).unwrap().items.len(), 2);
+
+    let mutations = runtime.update(TextBlock::new().text("Target")).unwrap();
+    assert!(mutations.iter().any(|mutation| {
+        matches!(
+            mutation,
+            Mutation::SetMenu {
+                target: current,
+                menu: None,
+                ..
+            } if *current == target
+        )
+    }));
+    assert!(runtime.adapter().menu(target).is_none());
+}
+
+#[test]
+fn menu_attachment_nests_inside_another_menu_target() {
+    let clicked = Rc::new(RefCell::new(Vec::new()));
+    let menu = |folder: &'static str, label: &'static str| {
+        let capture = Rc::clone(&clicked);
+        Menu::new([MenuItem::item("favorite", label)], move |key| {
+            capture.borrow_mut().push((folder, key));
+        })
+    };
+    let inbox = menu("inbox", "Add to Favorites");
+    let archive = menu("archive", "Add to Favorites");
+    let view = |inbox: &Menu, archive: &Menu| {
+        NavigationView::new().keyed_menu_items([keyed(
+            "inbox",
+            NavigationViewItem::new()
+                .content("Inbox")
+                .keyed_menu_items([keyed(
+                    "archive",
+                    NavigationViewItem::new()
+                        .content("Archive")
+                        .menu(archive.clone()),
+                )])
+                .menu(inbox.clone()),
+        )])
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(view(&inbox, &archive)).unwrap();
+    let root = runtime.graph().root().unwrap();
+    let outer = runtime
+        .graph()
+        .children(root, RelationId::MenuItems)
+        .unwrap()[0];
+    let inner = runtime
+        .graph()
+        .children(outer, RelationId::MenuItems)
+        .unwrap()[0];
+    assert_eq!(runtime.adapter().menu(outer), Some(&inbox));
+    assert_eq!(runtime.adapter().menu(inner), Some(&archive));
+
+    runtime.adapter_mut().queue_menu_click(inner, "favorite");
+    runtime.adapter_mut().queue_menu_click(outer, "favorite");
+    assert_eq!(runtime.dispatch_native_events(), Ok(2));
+    assert_eq!(
+        &*clicked.borrow(),
+        &[
+            ("archive", Key::from("favorite")),
+            ("inbox", Key::from("favorite"))
+        ]
     );
 
+    let favorite = menu("archive", "Remove from Favorites");
+    let mutations = runtime.update(view(&inbox, &favorite)).unwrap();
+    let menus = mutations
+        .iter()
+        .filter_map(|mutation| match mutation {
+            Mutation::SetMenu {
+                target, revision, ..
+            } => Some((*target, *revision)),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(menus, [(inner, 2)]);
+    assert_eq!(runtime.adapter().menu(outer), Some(&inbox));
+    assert_eq!(runtime.adapter().menu(inner), Some(&favorite));
+
+    runtime
+        .update(
+            NavigationView::new().keyed_menu_items([keyed(
+                "inbox",
+                NavigationViewItem::new()
+                    .content("Inbox")
+                    .menu(inbox.clone()),
+            )]),
+        )
+        .unwrap();
+    assert_eq!(runtime.adapter().menu(outer), Some(&inbox));
+    assert!(runtime.adapter().menu(inner).is_none());
+}
+
+#[test]
+fn menu_attachment_rejects_unsupported_targets() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let menu = Menu::new([MenuItem::item("open", "Open")], |_| {});
+    for (kind, view) in [
+        (ObjectType::SplitButton, View::from(SplitButton::new())),
+        (ObjectType::AppBarButton, View::from(AppBarButton::new())),
+        (ObjectType::TeachingTip, View::from(TeachingTip::new())),
+    ] {
+        assert_eq!(
+            runtime.update(view.menu(menu.clone())),
+            Err(UpdateError::Graph(GraphError::InvalidAttachment(kind)))
+        );
+    }
+    for kind in [
+        ObjectType::DataItem,
+        ObjectType::TreeNode,
+        ObjectType::ToolTip,
+        ObjectType::ContentDialog,
+    ] {
+        assert_eq!(
+            runtime.update(View(DeclaredNode::Object(Declaration::new(kind))).menu(menu.clone())),
+            Err(UpdateError::Graph(GraphError::InvalidAttachment(kind)))
+        );
+    }
+    for kind in [
+        ObjectType::SplitButton,
+        ObjectType::AppBarButton,
+        ObjectType::TeachingTip,
+        ObjectType::ToolTip,
+        ObjectType::ContentDialog,
+        ObjectType::DataItem,
+    ] {
+        assert!(!menu_target(kind));
+    }
+}
+
+#[test]
+fn menu_attachment_rejects_flyout_conflicts() {
     let mut conflict = Runtime::new(RecordingAdapter::default());
     assert_eq!(
         conflict.update(

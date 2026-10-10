@@ -73,6 +73,20 @@ fn validate_menu_items(items: &[MenuItem], keys: &mut HashSet<Key>) -> Result<()
     Ok(())
 }
 
+/// Buttons and menu bar items own their menu; any other visual element shows it as its context
+/// flyout. Popup hosts and buttons whose flyout means something else are refused.
+pub(crate) fn menu_target(kind: ObjectType) -> bool {
+    object_category(kind) == ObjectCategory::Visual
+        && !matches!(
+            kind,
+            ObjectType::ToolTip
+                | ObjectType::ContentDialog
+                | ObjectType::TeachingTip
+                | ObjectType::SplitButton
+                | ObjectType::AppBarButton
+        )
+}
+
 fn validate_commands(
     commands: &[CommandBarCommand],
     keys: &mut HashSet<Key>,
@@ -165,10 +179,7 @@ fn validate_object(
             )?;
         }
         if let Some(menu) = &attachments.menu {
-            if !matches!(
-                declaration.kind,
-                ObjectType::Button | ObjectType::DropDownButton | ObjectType::MenuBarItem
-            ) {
+            if !menu_target(declaration.kind) {
                 return Err(GraphError::InvalidAttachment(declaration.kind));
             }
             validate_menu_items(&menu.menu.items, &mut HashSet::new())?;
