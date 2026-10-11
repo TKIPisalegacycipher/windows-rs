@@ -3473,23 +3473,42 @@ impl Planner<'_, '_> {
             )?;
         }
         let properties = declaration.properties.as_slice();
+        // A selector's `SelectedIndex` indexes its items: it is applied once they are reconciled
+        // (`reconcile_selected_index`), not here, where it would name an item of the old list.
+        let index_selection = selects_by_index(declaration.kind);
+        let mut deferred_index = None;
         if self.retained.get(object).unwrap().properties.as_slice() != properties {
             let previous = self.retained.get(object).unwrap().properties.clone();
-            let set = properties
+            let mut set = properties
                 .iter()
                 .filter(|property| {
                     previous.iter().find(|current| current.id == property.id) != Some(*property)
                 })
                 .cloned()
-                .collect::<Rc<[_]>>();
-            let clear = previous
+                .collect::<Vec<_>>();
+            let mut clear = previous
                 .iter()
                 .filter(|property| !properties.iter().any(|current| current.id == property.id))
                 .map(|property| property.id)
-                .collect::<Rc<[_]>>();
+                .collect::<Vec<_>>();
+            if index_selection {
+                if let Some(at) = set.iter().position(|p| p.id == PropertyId::SelectedIndex) {
+                    deferred_index = Some(Some(set.remove(at)));
+                } else if let Some(at) =
+                    clear.iter().position(|id| *id == PropertyId::SelectedIndex)
+                {
+                    clear.remove(at);
+                    deferred_index = Some(None);
+                }
+            }
             self.retained.get_mut(object).properties = declaration.properties.clone();
-            self.mutations
-                .push(Mutation::SetProperties { object, set, clear });
+            if !set.is_empty() || !clear.is_empty() {
+                self.mutations.push(Mutation::SetProperties {
+                    object,
+                    set: set.into(),
+                    clear: clear.into(),
+                });
+            }
         }
         let events = declaration.events.as_slice();
         if retained_events(&self.retained.get(object).unwrap().events) != events {
@@ -3513,11 +3532,56 @@ impl Planner<'_, '_> {
             self.mutations
                 .push(Mutation::SetEvents { object, set, clear });
         }
+        let items_from = self.mutations.len();
         self.reconcile_virtual_items(object, declaration)?;
         for contract in relation_contracts(declaration.kind) {
             self.reconcile_relation(object, declaration, contract)?;
         }
+        if index_selection {
+            self.reconcile_selected_index(object, properties, deferred_index, items_from);
+        }
         Ok(object)
+    }
+
+    /// Applies a selector's `SelectedIndex` after its items: the changed value, or the declared
+    /// one again when items were inserted, removed or moved since `items_from` (removing the
+    /// selected item drops or moves the native selection while the declared index can stay).
+    fn reconcile_selected_index(
+        &mut self,
+        object: ObjectId,
+        properties: &[Property],
+        changed: Option<Option<Property>>,
+        items_from: usize,
+    ) {
+        let items_changed = self.mutations[items_from..].iter().any(|mutation| {
+            matches!(
+                mutation,
+                Mutation::Insert { parent, .. }
+                    | Mutation::Remove { parent, .. }
+                    | Mutation::Reorder { parent, .. }
+                    if *parent == object
+            )
+        });
+        let declared = || {
+            properties
+                .iter()
+                .find(|property| property.id == PropertyId::SelectedIndex)
+                .cloned()
+        };
+        let (set, clear): (Vec<Property>, Vec<PropertyId>) = match changed {
+            Some(Some(property)) => (vec![property], Vec::new()),
+            Some(None) => (Vec::new(), vec![PropertyId::SelectedIndex]),
+            None if items_changed => (declared().into_iter().collect(), Vec::new()),
+            None => return,
+        };
+        if set.is_empty() && clear.is_empty() {
+            return;
+        }
+        self.mutations.push(Mutation::SetProperties {
+            object,
+            set: set.into(),
+            clear: clear.into(),
+        });
     }
 
     fn reconcile_relation(
@@ -4202,3 +4266,8 @@ impl Planner<'_, '_> {
 mod test_support;
 #[cfg(any(test, feature = "test"))]
 pub use test_support::*;
+
+/// Selectors whose `SelectedIndex` indexes their `Items`.
+fn selects_by_index(kind: ObjectType) -> bool {
+    matches!(kind, ObjectType::ListView | ObjectType::GridView)
+}
