@@ -620,6 +620,13 @@ impl WinUiAdapter {
         menu: Option<&Menu>,
         revision: u64,
     ) -> Result<(), WinUiError> {
+        if let (Some(menu), Some(current)) = (menu, self.menus.get_mut(&target))
+            && current.revision == revision
+            && current.menu.items == menu.items
+        {
+            current.menu = menu.clone();
+            return Ok(());
+        }
         let kind = self.kind(target)?;
         let host = menu_host(kind);
         let mut previous_context = None;

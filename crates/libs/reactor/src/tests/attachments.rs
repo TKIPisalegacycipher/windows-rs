@@ -442,6 +442,40 @@ fn menu_attachment_sets_context_menus_on_other_targets() {
 }
 
 #[test]
+fn menu_callback_change_keeps_the_menu_revision() {
+    let clicked = Rc::new(RefCell::new(Vec::new()));
+    let menu = |name: &'static str| {
+        let capture = Rc::clone(&clicked);
+        Menu::new([MenuItem::item("copy", "Copy")], move |key| {
+            capture.borrow_mut().push((name, key));
+        })
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(TextBlock::new().text("Target").menu(menu("first")))
+        .unwrap();
+    let target = runtime.graph().root().unwrap();
+
+    let mutations = runtime
+        .update(TextBlock::new().text("Target").menu(menu("second")))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| {
+        matches!(
+            mutation,
+            Mutation::SetMenu {
+                target: current,
+                menu: Some(_),
+                revision: 1,
+            } if *current == target
+        )
+    }));
+
+    runtime.adapter_mut().queue_menu_click(target, "copy");
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(&*clicked.borrow(), &[("second", Key::from("copy"))]);
+}
+
+#[test]
 fn menu_attachment_nests_inside_another_menu_target() {
     let clicked = Rc::new(RefCell::new(Vec::new()));
     let menu = |folder: &'static str, label: &'static str| {

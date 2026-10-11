@@ -2782,6 +2782,22 @@ impl Planner<'_, '_> {
             {
                 self.retained_attachments(target).menu = Some(previous);
             }
+            (Some(previous), Some(desired))
+                if !target_replaced && previous.menu.items == desired.menu.items =>
+            {
+                // Only the click callback changed: keep the revision so the native items, which
+                // may be on screen, stay live and dispatch to the new callback.
+                let revision = previous.revision;
+                self.retained_attachments(target).menu = Some(RetainedMenu {
+                    menu: desired.menu.clone(),
+                    revision,
+                });
+                self.mutations.push(Mutation::SetMenu {
+                    target,
+                    menu: Some(desired.menu.clone()),
+                    revision,
+                });
+            }
             (Some(previous), Some(desired)) => {
                 let revision = previous.revision.wrapping_add(1);
                 self.retained_attachments(target).menu = Some(RetainedMenu {
