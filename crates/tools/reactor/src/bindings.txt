@@ -102,7 +102,7 @@ Microsoft::UI::Xaml::Controls::IComboBoxStatics::{get_IsEditableProperty, get_Pl
 Microsoft::UI::Xaml::Controls::ICommandBar::{get_PrimaryCommands, get_SecondaryCommands}
 Microsoft::UI::Xaml::Controls::ICommandBarFlyout::{get_PrimaryCommands, get_SecondaryCommands}
 Microsoft::UI::Xaml::Controls::IContainerContentChangingEventArgs::{get_InRecycleQueue, get_Item, get_ItemContainer}
-Microsoft::UI::Xaml::Controls::IContentControl::put_Content
+Microsoft::UI::Xaml::Controls::IContentControl::{get_ContentTemplateRoot, put_Content}
 Microsoft::UI::Xaml::Controls::IContentDialog::{add_Closed, add_Opened, get_DefaultButton, Hide, put_CloseButtonText, put_DefaultButton, put_IsPrimaryButtonEnabled, put_IsSecondaryButtonEnabled, put_PrimaryButtonText, put_SecondaryButtonText, put_Title, remove_Closed, remove_Opened, ShowAsync}
 Microsoft::UI::Xaml::Controls::IContentDialogClosedEventArgs::get_Result
 Microsoft::UI::Xaml::Controls::IContentDialogStatics::{get_CloseButtonTextProperty, get_DefaultButtonProperty, get_IsPrimaryButtonEnabledProperty, get_IsSecondaryButtonEnabledProperty, get_PrimaryButtonTextProperty, get_SecondaryButtonTextProperty, get_TitleProperty}
@@ -139,7 +139,7 @@ Microsoft::UI::Xaml::Controls::IItemContainerStatics::get_IsSelectedProperty
 Microsoft::UI::Xaml::Controls::IItemsControl::{get_Items, put_ItemsSource, put_ItemTemplate}
 Microsoft::UI::Xaml::Controls::IItemsControlStatics::get_ItemsSourceProperty
 Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate}
-Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, add_ItemClick, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_IsItemClickEnabled, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted, remove_ItemClick}
+Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, add_ItemClick, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_IsItemClickEnabled, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted, remove_ItemClick, ScrollIntoView}
 Microsoft::UI::Xaml::Controls::IListViewBaseStatics::{get_CanDragItemsProperty, get_CanReorderItemsProperty, get_SelectionModeProperty}
 Microsoft::UI::Xaml::Controls::Image::CreateInstance
 Microsoft::UI::Xaml::Controls::ImageIcon::CreateInstance
@@ -364,8 +364,8 @@ Microsoft::UI::Xaml::IDragUIOverride::{put_Caption, put_IsCaptionVisible, put_Is
 Microsoft::UI::Xaml::IElementFactory::{}
 Microsoft::UI::Xaml::IElementFactoryGetArgs::get_Data
 Microsoft::UI::Xaml::IElementFactoryRecycleArgs::get_Element
-Microsoft::UI::Xaml::IFrameworkElement::{add_ActualThemeChanged, add_Loaded, add_SizeChanged, get_ActualHeight, get_ActualTheme, get_ActualWidth, get_IsLoaded, get_MaxHeight, get_MinHeight, get_MinWidth, get_Name, get_Resources, get_Tag, put_AllowFocusOnInteraction, put_Height, put_HorizontalAlignment, put_Margin, put_MaxHeight, put_MaxWidth, put_MinHeight, put_MinWidth, put_RequestedTheme, put_Style, put_Tag, put_VerticalAlignment, put_Width, remove_ActualThemeChanged, remove_Loaded, remove_SizeChanged}
-Microsoft::UI::Xaml::IFrameworkElementStatics::{get_AllowFocusOnInteractionProperty, get_HeightProperty, get_HorizontalAlignmentProperty, get_MarginProperty, get_MaxHeightProperty, get_MaxWidthProperty, get_MinHeightProperty, get_MinWidthProperty, get_TagProperty, get_VerticalAlignmentProperty, get_WidthProperty}
+Microsoft::UI::Xaml::IFrameworkElement::{add_ActualThemeChanged, add_Loaded, add_SizeChanged, get_ActualHeight, get_ActualTheme, get_ActualWidth, get_IsLoaded, get_MaxHeight, get_MinHeight, get_MinWidth, get_Name, get_Resources, get_Tag, put_AllowFocusOnInteraction, put_DataContext, put_Height, put_HorizontalAlignment, put_Margin, put_MaxHeight, put_MaxWidth, put_MinHeight, put_MinWidth, put_RequestedTheme, put_Style, put_Tag, put_VerticalAlignment, put_Width, remove_ActualThemeChanged, remove_Loaded, remove_SizeChanged}
+Microsoft::UI::Xaml::IFrameworkElementStatics::{get_AllowFocusOnInteractionProperty, get_DataContextProperty, get_HeightProperty, get_HorizontalAlignmentProperty, get_MarginProperty, get_MaxHeightProperty, get_MaxWidthProperty, get_MinHeightProperty, get_MinWidthProperty, get_TagProperty, get_VerticalAlignmentProperty, get_WidthProperty}
 Microsoft::UI::Xaml::Input::ICharacterReceivedRoutedEventArgs::{get_Character, get_KeyStatus, put_Handled}
 Microsoft::UI::Xaml::Input::IKeyboardAccelerator::{Invoked, put_Key, put_Modifiers, put_ScopeOwner}
 Microsoft::UI::Xaml::Input::IKeyboardAcceleratorInvokedEventArgs::put_Handled

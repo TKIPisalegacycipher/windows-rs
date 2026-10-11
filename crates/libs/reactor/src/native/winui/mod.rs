@@ -2411,6 +2411,60 @@ fn data_item_text(item: &IInspectable, key: &HSTRING) -> windows_core::Result<HS
         .Value()
 }
 
+/// Connects a ListView item container's content to its item, or disconnects it. The item
+/// template binds its presenter to the item's content element, and XAML keeps a recycled
+/// container bound to its last item, so the element stays that container's child. Binding the
+/// element in another container then silently fails and that container keeps showing its
+/// previous content. Disconnecting the container an item was shown in before (as another is
+/// prepared for it, or before the item is removed) releases the element; a prepared container is
+/// connected again to its new item. A recycled container is left connected: XAML may give it
+/// back to the same item without preparing it again.
+fn set_list_container_connected(
+    container: &native::DependencyObject,
+    connected: bool,
+) -> windows_core::Result<()> {
+    let Ok(root) = container
+        .cast::<native::IContentControl>()?
+        .ContentTemplateRoot()
+    else {
+        return Ok(());
+    };
+    if connected {
+        root.cast::<native::DependencyObject>()?
+            .ClearValue(&native::FrameworkElement::DataContextProperty()?)
+    } else {
+        root.cast::<native::IFrameworkElement>()?
+            .SetDataContext(None::<&IInspectable>)
+    }
+}
+
+/// Disconnects `container`, which an item was last prepared in, when its presenter still shows
+/// that item's content element, so that the container now preparing the item can show it.
+fn release_list_item_content(
+    container: &native::DependencyObject,
+    item: &IInspectable,
+    content_key: &HSTRING,
+) -> windows_core::Result<()> {
+    let Ok(root) = container
+        .cast::<native::IContentControl>()?
+        .ContentTemplateRoot()
+    else {
+        return Ok(());
+    };
+    let Ok(shown) = native::VisualTreeHelper::GetChild(&root, 0) else {
+        return Ok(());
+    };
+    let properties = item.cast::<IMap<HSTRING, IInspectable>>()?;
+    if !properties.HasKey(content_key)? {
+        return Ok(());
+    }
+    let content = properties.Lookup(content_key)?;
+    if shown.cast::<windows_core::IUnknown>()? == content.cast::<windows_core::IUnknown>()? {
+        set_list_container_connected(container, false)?;
+    }
+    Ok(())
+}
+
 /// The `DataItem` property map key holding the item's UI Automation id.
 const DATA_AUTOMATION_ID_KEY: &str = "WindowsReactorAutomationId";
 

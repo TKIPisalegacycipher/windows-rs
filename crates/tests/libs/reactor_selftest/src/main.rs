@@ -3632,6 +3632,61 @@ impl reactor::Component for Fixture {
                     .unwrap(),
                 default_colors
             );
+            // Every realized container presents its own item's content element: after
+            // containers are recycled by scrolling, and after keyed changes that remove realized
+            // rows and move kept ones (a header kept across a folder switch).
+            let assert_contents = |runtime: &reactor::Runtime<reactor::native::WinUiAdapter>| {
+                let matches = runtime.adapter().list_item_content_matches(list).unwrap();
+                assert!(!matches.is_empty());
+                assert!(
+                    matches.iter().all(|(_, matched)| *matched),
+                    "stale list item content: {matches:?}"
+                );
+            };
+            let rows = |keys: &[&str]| {
+                reactor::ListView::new().height(300.0).items(
+                    keys.iter()
+                        .map(|key| {
+                            let item = reactor::DataItem::new(*key, "Message")
+                                .content(reactor::TextBlock::new().text(*key));
+                            // Group headers carry container overrides, as in a message list.
+                            if key.starts_with('h') {
+                                item.container_resource_overrides(resources())
+                            } else {
+                                item
+                            }
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            };
+            let scrolled = (0..30)
+                .map(|index| format!("row-{index}"))
+                .collect::<Vec<_>>();
+            let scrolled = scrolled.iter().map(String::as_str).collect::<Vec<_>>();
+            list_names_runtime.update(rows(&scrolled)).unwrap();
+            assert_contents(list_names_runtime);
+            list_names_runtime
+                .adapter()
+                .scroll_list_into_view(list, 29)
+                .unwrap();
+            assert_contents(list_names_runtime);
+            list_names_runtime
+                .adapter()
+                .scroll_list_into_view(list, 0)
+                .unwrap();
+            assert_contents(list_names_runtime);
+            let first = [
+                "h0", "m27", "m20", "m28", "m25", "m32", "m2", "m5", "m1", "h1", "m7", "m15", "h3",
+                "m11", "m55",
+            ];
+            let second = [
+                "m22", "m40", "h3", "m38", "m59", "m29", "m25", "m3", "h0", "m50", "m46", "h1",
+                "m37", "m44", "m54", "h4", "h5", "m6", "m13", "m36", "m2", "m14", "h2",
+            ];
+            for keys in [&first[..], &second, &first] {
+                list_names_runtime.update(rows(keys)).unwrap();
+                assert_contents(list_names_runtime);
+            }
             list_names_runtime
                 .adapter()
                 .validate_graph(list_names_runtime.graph())

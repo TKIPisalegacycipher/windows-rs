@@ -257,10 +257,13 @@ impl WinUiAdapter {
                 }
                 Realization::Container => {
                     let values = self.items(parent)?;
-                    if values.GetAt(index32(index)?)? != self.inspectable(child)? {
+                    let item = self.inspectable(child)?;
+                    if values.GetAt(index32(index)?)? != item {
                         return Err(WinUiError::ChildNotFound(child));
                     }
-                    values.RemoveAt(index32(index)?)?;
+                    self.with_list_items_disconnected(parent, Some(&[item]), || {
+                        Ok(values.RemoveAt(index32(index)?)?)
+                    })?;
                 }
             }
             self.owners.remove(&child);
@@ -378,24 +381,41 @@ impl WinUiAdapter {
                             .collect::<Result<Vec<_>, _>>()?;
                         values.ReplaceAll(&children)?;
                     } else {
+                        // Check every move before disconnecting anything.
+                        let mut moved = Vec::with_capacity(moves.len());
                         for movement in moves {
                             let child = self.inspectable(movement.child)?;
+                            let before = movement
+                                .before
+                                .map(|before| self.inspectable(before))
+                                .transpose()?;
+                            for value in std::iter::once(&child).chain(before.as_ref()) {
+                                let mut index = 0;
+                                if !values.IndexOf(value, &mut index)? {
+                                    return Err(WinUiError::ChildNotFound(movement.child));
+                                }
+                            }
+                            moved.push((movement.child, child, before));
+                        }
+                        // No container is disconnected first: the one XAML prepares for a moved
+                        // item takes its content over (`ContainerContentChanging`), and one XAML
+                        // keeps for it would show nothing.
+                        for (object, child, before) in &moved {
                             let mut previous = 0;
-                            if !values.IndexOf(&child, &mut previous)? {
-                                return Err(WinUiError::ChildNotFound(movement.child));
+                            if !values.IndexOf(child, &mut previous)? {
+                                return Err(WinUiError::ChildNotFound(*object));
                             }
                             values.RemoveAt(previous)?;
-                            let index = if let Some(before) = movement.before {
-                                let before = self.inspectable(before)?;
+                            let index = if let Some(before) = before {
                                 let mut index = 0;
-                                if !values.IndexOf(&before, &mut index)? {
-                                    return Err(WinUiError::ChildNotFound(movement.child));
+                                if !values.IndexOf(before, &mut index)? {
+                                    return Err(WinUiError::ChildNotFound(*object));
                                 }
                                 index
                             } else {
                                 values.Size()?
                             };
-                            values.InsertAt(index, &child)?;
+                            values.InsertAt(index, child)?;
                         }
                     }
                 }
@@ -715,6 +735,57 @@ impl WinUiAdapter {
             }
         }
         Ok(())
+    }
+
+    /// Runs `mutate` on a ListView's items with the realized containers of `items` (all items when
+    /// `None`) disconnected first, so that their elements are free for the containers XAML
+    /// prepares next. If `mutate` fails the containers are connected again, since XAML will not
+    /// prepare them again for items that did not change.
+    fn with_list_items_disconnected(
+        &self,
+        parent: ObjectId,
+        items: Option<&[IInspectable]>,
+        mutate: impl FnOnce() -> Result<(), WinUiError>,
+    ) -> Result<(), WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&parent) else {
+            return mutate();
+        };
+        let mapping = list.value.cast::<native::IItemContainerMapping>()?;
+        let mut containers = Vec::new();
+        let mut realized = |container: windows_core::Result<native::DependencyObject>| {
+            match container {
+                Ok(container) => containers.push(container),
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(WinUiError::from(error)),
+            }
+            Ok(())
+        };
+        if let Some(items) = items {
+            for item in items {
+                realized(mapping.ContainerFromItem(item))?;
+            }
+        } else {
+            let count = list
+                .value
+                .cast::<native::IItemsControl>()?
+                .Items()?
+                .Size()?;
+            for index in 0..count {
+                realized(mapping.ContainerFromIndex(index as i32))?;
+            }
+        }
+        let result = containers
+            .iter()
+            .try_for_each(|container| set_list_container_connected(container, false))
+            .map_err(WinUiError::from)
+            .and_then(|()| mutate());
+        if result.is_err() {
+            // Best effort: the mutation's error is the one to report.
+            for container in &containers {
+                _ = set_list_container_connected(container, true);
+            }
+        }
+        result
     }
 
     fn set_data_text(&mut self, object: ObjectId, text: &str) -> Result<(), WinUiError> {

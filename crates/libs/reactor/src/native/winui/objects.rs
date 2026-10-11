@@ -206,20 +206,43 @@ impl WinUiAdapter {
                         },
                     )?;
                     let text_key = self.data_text_key.clone();
+                    let content_key = self.data_content_key.clone();
                     let item_min_height = Rc::new(Cell::new(None));
                     let container_min_height = Rc::clone(&item_min_height);
                     let data_items = Rc::clone(&self.data_items);
                     let container_resources = Rc::clone(&self.container_resources);
+                    // The container each item was last prepared in, by item identity.
+                    let hosts = RefCell::new(HashMap::<usize, native::DependencyObject>::new());
                     let _container_content_changing = value
                         .cast::<native::IListViewBase>()?
                         .ContainerContentChanging(move |_, args| {
                             let args = args.unwrap();
                             let result = args.InRecycleQueue().and_then(|recycled| {
+                                // A recycled container keeps its content: XAML can hand it back
+                                // to the same item without preparing it again, and a container
+                                // disconnected here would then show nothing (#433). The
+                                // container that shows the item next takes the content below.
                                 if recycled {
                                     return Ok(());
                                 }
-                                let container = args.ItemContainer()?.cast()?;
+                                let container: native::DependencyObject =
+                                    args.ItemContainer()?.cast()?;
                                 let item = args.Item()?;
+                                let id = item.cast::<windows_core::IUnknown>()?.as_raw() as usize;
+                                {
+                                    let mut hosts = hosts.borrow_mut();
+                                    hosts.retain(|key, host| *key == id || *host != container);
+                                    if let Some(previous) = hosts.insert(id, container.clone())
+                                        && previous != container
+                                    {
+                                        release_list_item_content(&previous, &item, &content_key)?;
+                                    }
+                                }
+                                // Connect next: applying resource overrides below may apply the
+                                // template again, and the new template root must bind to the item
+                                // this container now shows.
+                                set_list_container_connected(&container, false)?;
+                                set_list_container_connected(&container, true)?;
                                 name_list_container(&container, &item, &text_key)?;
                                 set_list_container_resources(
                                     &container,
