@@ -102,8 +102,8 @@ Microsoft::UI::Xaml::Controls::IContentControl::put_Content
 Microsoft::UI::Xaml::Controls::IContentDialog::{add_Closed, Hide, put_CloseButtonText, put_DefaultButton, put_IsPrimaryButtonEnabled, put_IsSecondaryButtonEnabled, put_PrimaryButtonText, put_SecondaryButtonText, put_Title, remove_Closed, ShowAsync}
 Microsoft::UI::Xaml::Controls::IContentDialogClosedEventArgs::get_Result
 Microsoft::UI::Xaml::Controls::IContentDialogStatics::{get_CloseButtonTextProperty, get_DefaultButtonProperty, get_IsPrimaryButtonEnabledProperty, get_IsSecondaryButtonEnabledProperty, get_PrimaryButtonTextProperty, get_SecondaryButtonTextProperty, get_TitleProperty}
-Microsoft::UI::Xaml::Controls::IControl::{get_IsEnabled, put_Background, put_BorderBrush, put_BorderThickness, put_HorizontalContentAlignment, put_IsEnabled, put_VerticalContentAlignment}
-Microsoft::UI::Xaml::Controls::IControlStatics::{get_BackgroundProperty, get_BorderBrushProperty, get_BorderThicknessProperty, get_HorizontalContentAlignmentProperty, get_IsEnabledProperty, get_VerticalContentAlignmentProperty}
+Microsoft::UI::Xaml::Controls::IControl::{get_IsEnabled, put_Background, put_BorderBrush, put_BorderThickness, put_HorizontalContentAlignment, put_IsEnabled, put_Template, put_VerticalContentAlignment}
+Microsoft::UI::Xaml::Controls::IControlStatics::{get_BackgroundProperty, get_BorderBrushProperty, get_BorderThicknessProperty, get_HorizontalContentAlignmentProperty, get_IsEnabledProperty, get_TemplateProperty, get_VerticalContentAlignmentProperty}
 Microsoft::UI::Xaml::Controls::IDatePicker::{add_SelectedDateChanged, put_DayVisible, put_Header, put_MonthVisible, put_YearVisible, remove_SelectedDateChanged}
 Microsoft::UI::Xaml::Controls::IDatePickerSelectedValueChangedEventArgs::get_NewDate
 Microsoft::UI::Xaml::Controls::IDatePickerStatics::{get_DayVisibleProperty, get_MonthVisibleProperty, get_YearVisibleProperty}
@@ -264,6 +264,7 @@ Microsoft::UI::Xaml::Controls::PivotItem::CreateInstance
 Microsoft::UI::Xaml::Controls::Primitives::FlyoutPlacementMode
 Microsoft::UI::Xaml::Controls::Primitives::IButtonBase::{add_Click, remove_Click}
 Microsoft::UI::Xaml::Controls::Primitives::IFlyoutBase::{add_Closed, get_IsOpen, Hide, put_Placement, put_ShouldConstrainToRootBounds, put_XamlRoot, remove_Closed, ShowAt}
+Microsoft::UI::Xaml::Controls::Primitives::IListViewItemPresenter::get_PointerOverBackground
 Microsoft::UI::Xaml::Controls::Primitives::IRangeBase::{add_ValueChanged, get_Maximum, get_Minimum, get_Value, put_Maximum, put_Minimum, put_Value, remove_ValueChanged}
 Microsoft::UI::Xaml::Controls::Primitives::IRangeBaseStatics::{get_MaximumProperty, get_MinimumProperty, get_ValueProperty}
 Microsoft::UI::Xaml::Controls::Primitives::IRangeBaseValueChangedEventArgs::get_NewValue
@@ -393,11 +394,12 @@ Microsoft::UI::Xaml::Media::Imaging::IBitmapSource::SetSourceAsync
 Microsoft::UI::Xaml::Media::Imaging::ISvgImageSource::{add_Opened, add_OpenFailed, put_UriSource, remove_Opened, remove_OpenFailed}
 Microsoft::UI::Xaml::Media::Imaging::SvgImageSource::CreateInstance
 Microsoft::UI::Xaml::Media::IMicaBackdrop::put_Kind
-Microsoft::UI::Xaml::Media::ISolidColorBrush::put_Color
+Microsoft::UI::Xaml::Media::ISolidColorBrush::{get_Color, put_Color}
 Microsoft::UI::Xaml::Media::MicaBackdrop::CreateInstance
 Microsoft::UI::Xaml::Media::SolidColorBrush::CreateInstance
 Microsoft::UI::Xaml::Media::Stretch
 Microsoft::UI::Xaml::Media::SystemBackdrop::{}
+Microsoft::UI::Xaml::Media::VisualTreeHelper::GetChild
 Microsoft::UI::Xaml::ResourceDictionary::{}
 Microsoft::UI::Xaml::ScalarTransition::CreateInstance
 Microsoft::UI::Xaml::Shapes::Ellipse::CreateInstance

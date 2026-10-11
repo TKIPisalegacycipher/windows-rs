@@ -3225,6 +3225,16 @@ impl DataItem {
         );
         Self(declaration)
     }
+    pub fn container_resource_overrides(
+        mut self,
+        container_resource_overrides: ResourceOverrides,
+    ) -> Self {
+        self.0 = self.0.property(
+            PropertyId::ContainerResources,
+            PropertyValue::ResourceOverrides(container_resource_overrides),
+        );
+        self
+    }
     /// Rejects values outside this relation's generated type contract.
     ///
     /// ```compile_fail

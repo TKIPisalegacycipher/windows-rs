@@ -677,6 +677,11 @@ name = "Text"
 value = "String"
 required = true
 
+[[objects.properties]]
+name = "ContainerResources"
+value = "ResourceOverrides"
+method = "container_resource_overrides"
+
 [[objects.relations]]
 name = "Content"
 

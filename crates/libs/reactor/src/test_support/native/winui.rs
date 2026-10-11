@@ -749,6 +749,45 @@ impl WinUiAdapter {
         Ok(heights)
     }
 
+    /// Lays out a ListView and returns the pointer-over fill of each realized item container's
+    /// presenter, when it is a solid color.
+    pub fn list_item_pointer_over_colors(
+        &self,
+        object: ObjectId,
+    ) -> Result<Vec<Option<Color>>, WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        list.value.cast::<native::IUIElement>()?.UpdateLayout()?;
+        let containers = list.value.cast::<native::IItemContainerMapping>()?;
+        let count = list
+            .value
+            .cast::<native::IItemsControl>()?
+            .Items()?
+            .Size()?;
+        let mut colors = Vec::new();
+        for index in 0..count {
+            match containers.ContainerFromIndex(index as i32) {
+                Ok(container) => {
+                    let presenter = native::VisualTreeHelper::GetChild(&container, 0)?
+                        .cast::<native::IListViewItemPresenter>()?;
+                    colors.push(
+                        presenter
+                            .PointerOverBackground()?
+                            .cast::<native::ISolidColorBrush>()
+                            .ok()
+                            .map(|brush| brush.Color())
+                            .transpose()?
+                            .map(|color| Color::argb(color.a, color.r, color.g, color.b)),
+                    );
+                }
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(colors)
+    }
+
     pub fn list_view_state(
         &self,
         object: ObjectId,

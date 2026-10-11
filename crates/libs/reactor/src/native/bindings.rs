@@ -2638,6 +2638,16 @@ impl Control {
             .and_then(|| windows_core::imp::Type::from_abi(result__))
         })
     }
+    pub(crate) fn TemplateProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IControlStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).TemplateProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
     pub(crate) fn HorizontalContentAlignmentProperty() -> windows_core::Result<DependencyProperty> {
         Self::IControlStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
@@ -2715,6 +2725,34 @@ impl windows_core::RuntimeName for Control {
 }
 unsafe impl Send for Control {}
 unsafe impl Sync for Control {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ControlTemplate(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    ControlTemplate,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(ControlTemplate, FrameworkTemplate, DependencyObject);
+impl windows_core::RuntimeType for ControlTemplate {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, IControlTemplate>();
+}
+unsafe impl windows_core::Interface for ControlTemplate {
+    type Vtable = <IControlTemplate as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <IControlTemplate as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for ControlTemplate {
+    type Target = IControlTemplate;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for ControlTemplate {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.ControlTemplate";
+}
+unsafe impl Send for ControlTemplate {}
+unsafe impl Sync for ControlTemplate {}
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct CorePhysicalKeyStatus {
@@ -8669,6 +8707,18 @@ impl IControl {
             .ok()
         }
     }
+    pub(crate) fn SetTemplate<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<ControlTemplate>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetTemplate)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetHorizontalContentAlignment(
         &self,
         value: HorizontalAlignment,
@@ -8759,7 +8809,10 @@ pub struct IControl_Vtbl {
     TabNavigation: usize,
     SetTabNavigation: usize,
     Template: usize,
-    SetTemplate: usize,
+    pub SetTemplate: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     Padding: usize,
     SetPadding: usize,
     HorizontalContentAlignment: usize,
@@ -8816,7 +8869,10 @@ pub struct IControlStatics_Vtbl {
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
     TabNavigationProperty: usize,
-    TemplateProperty: usize,
+    pub TemplateProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     PaddingProperty: usize,
     pub HorizontalContentAlignmentProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
@@ -8839,6 +8895,19 @@ pub struct IControlStatics_Vtbl {
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    IControlTemplate,
+    IControlTemplate_Vtbl,
+    0x3a192751_2106_547a_aca0_f15ae8926ea0
+);
+impl windows_core::RuntimeType for IControlTemplate {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IControlTemplate_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
 }
 windows_core::imp::define_interface!(
     ICoreWebView2,
@@ -13069,6 +13138,51 @@ pub struct IListViewItemFactory_Vtbl {
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    IListViewItemPresenter,
+    IListViewItemPresenter_Vtbl,
+    0x81012623_d987_5582_bc28_755a95caaf1c
+);
+impl windows_core::RuntimeType for IListViewItemPresenter {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl IListViewItemPresenter {
+    pub(crate) fn PointerOverBackground(&self) -> windows_core::Result<Brush> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).PointerOverBackground)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+}
+#[repr(C)]
+pub struct IListViewItemPresenter_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    SelectionCheckMarkVisualEnabled: usize,
+    SetSelectionCheckMarkVisualEnabled: usize,
+    CheckHintBrush: usize,
+    SetCheckHintBrush: usize,
+    CheckSelectingBrush: usize,
+    SetCheckSelectingBrush: usize,
+    CheckBrush: usize,
+    SetCheckBrush: usize,
+    DragBackground: usize,
+    SetDragBackground: usize,
+    DragForeground: usize,
+    SetDragForeground: usize,
+    FocusBorderBrush: usize,
+    SetFocusBorderBrush: usize,
+    PlaceholderBackground: usize,
+    SetPlaceholderBackground: usize,
+    pub PointerOverBackground: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
 }
@@ -18198,6 +18312,16 @@ impl windows_core::RuntimeType for ISolidColorBrush {
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
 impl ISolidColorBrush {
+    pub(crate) fn Color(&self) -> windows_core::Result<Color> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Color)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
     pub(crate) fn SetColor(&self, value: Color) -> windows_core::Result<()> {
         unsafe {
             (windows_core::Interface::vtable(self).SetColor)(
@@ -18211,7 +18335,8 @@ impl ISolidColorBrush {
 #[repr(C)]
 pub struct ISolidColorBrush_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
-    Color: usize,
+    pub Color:
+        unsafe extern "system" fn(*mut core::ffi::c_void, *mut Color) -> windows_core::HRESULT,
     pub SetColor: unsafe extern "system" fn(*mut core::ffi::c_void, Color) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(ISpan, ISpan_Vtbl, 0x91b93d4d_4e28_57b9_bffb_3566c2a3c2a1);
@@ -23085,6 +23210,42 @@ impl windows_core::RuntimeType for IVisual {
 #[repr(C)]
 pub struct IVisual_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    IVisualTreeHelper,
+    IVisualTreeHelper_Vtbl,
+    0x5f69ac1e_6504_5e3f_a11c_87684c1db814
+);
+impl windows_core::RuntimeType for IVisualTreeHelper {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IVisualTreeHelper_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    IVisualTreeHelperStatics,
+    IVisualTreeHelperStatics_Vtbl,
+    0x5aece43c_7651_5bb5_855c_2198496e455e
+);
+impl windows_core::RuntimeType for IVisualTreeHelperStatics {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IVisualTreeHelperStatics_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    FindElementsInHostCoordinatesPoint: usize,
+    FindElementsInHostCoordinatesRect: usize,
+    FindAllElementsInHostCoordinatesPoint: usize,
+    FindAllElementsInHostCoordinatesRect: usize,
+    pub GetChild: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        i32,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     IWebView2,
@@ -32758,6 +32919,63 @@ impl windows_core::RuntimeName for Visual {
 }
 unsafe impl Send for Visual {}
 unsafe impl Sync for Visual {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VisualTreeHelper(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    VisualTreeHelper,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl VisualTreeHelper {
+    pub(crate) fn GetChild<P0>(
+        reference: P0,
+        childindex: i32,
+    ) -> windows_core::Result<DependencyObject>
+    where
+        P0: windows_core::Param<DependencyObject>,
+    {
+        Self::IVisualTreeHelperStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).GetChild)(
+                windows_core::Interface::as_raw(this),
+                reference.param().abi(),
+                childindex,
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    fn IVisualTreeHelperStatics<
+        R,
+        F: FnOnce(&IVisualTreeHelperStatics) -> windows_core::Result<R>,
+    >(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<VisualTreeHelper, IVisualTreeHelperStatics> =
+            windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
+impl windows_core::RuntimeType for VisualTreeHelper {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, IVisualTreeHelper>();
+}
+unsafe impl windows_core::Interface for VisualTreeHelper {
+    type Vtable = <IVisualTreeHelper as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <IVisualTreeHelper as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for VisualTreeHelper {
+    type Target = IVisualTreeHelper;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for VisualTreeHelper {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Media.VisualTreeHelper";
+}
+unsafe impl Send for VisualTreeHelper {}
+unsafe impl Sync for VisualTreeHelper {}
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct WINDOWPLACEMENT {
