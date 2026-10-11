@@ -2295,6 +2295,31 @@ fn data_item_text(item: &IInspectable, key: &HSTRING) -> windows_core::Result<HS
         .Value()
 }
 
+/// Connects a ListView item container's content to its item, or disconnects it. The item
+/// template binds its presenter to the item's content element, and XAML keeps a recycled
+/// container bound to its last item, so the element stays that container's child. Binding the
+/// element in another container then silently fails and that container keeps showing its
+/// previous content. Disconnecting a container as it is recycled, or before its item is removed or
+/// moved, releases the element; a prepared container is connected again to its new item.
+fn set_list_container_connected(
+    container: &native::DependencyObject,
+    connected: bool,
+) -> windows_core::Result<()> {
+    let Ok(root) = container
+        .cast::<native::IContentControl>()?
+        .ContentTemplateRoot()
+    else {
+        return Ok(());
+    };
+    if connected {
+        root.cast::<native::DependencyObject>()?
+            .ClearValue(&native::FrameworkElement::DataContextProperty()?)
+    } else {
+        root.cast::<native::IFrameworkElement>()?
+            .SetDataContext(None::<&IInspectable>)
+    }
+}
+
 /// Names a ListView item container after its `DataItem`, since the item template's content does
 /// not name the container for UI Automation.
 fn name_list_container(

@@ -182,10 +182,14 @@ impl WinUiAdapter {
                         .ContainerContentChanging(move |_, args| {
                             let args = args.unwrap();
                             let result = args.InRecycleQueue().and_then(|recycled| {
+                                let container = args.ItemContainer()?.cast()?;
+                                // Connect first: applying resource overrides below may apply the
+                                // template again, and the new template root must bind to the item
+                                // this container now shows.
+                                set_list_container_connected(&container, !recycled)?;
                                 if recycled {
                                     return Ok(());
                                 }
-                                let container = args.ItemContainer()?.cast()?;
                                 let item = args.Item()?;
                                 name_list_container(&container, &item, &text_key)?;
                                 set_list_container_resources(

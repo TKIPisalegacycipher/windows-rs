@@ -788,6 +788,63 @@ impl WinUiAdapter {
         Ok(colors)
     }
 
+    /// Scrolls a ListView so that the item at `index` is realized, then lays it out.
+    pub fn scroll_list_into_view(&self, object: ObjectId, index: u32) -> Result<(), WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        let item = list
+            .value
+            .cast::<native::IItemsControl>()?
+            .Items()?
+            .GetAt(index)?;
+        list.value
+            .cast::<native::IListViewBase>()?
+            .ScrollIntoView(&item)?;
+        list.value.cast::<native::IUIElement>()?.UpdateLayout()?;
+        Ok(())
+    }
+
+    /// Lays out a ListView and returns, for each realized item container, its index and whether
+    /// the container presents its item's content.
+    pub fn list_item_content_matches(
+        &self,
+        object: ObjectId,
+    ) -> Result<Vec<(u32, bool)>, WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        list.value.cast::<native::IUIElement>()?.UpdateLayout()?;
+        let containers = list.value.cast::<native::IItemContainerMapping>()?;
+        let items = list.value.cast::<native::IItemsControl>()?.Items()?;
+        let mut matches = Vec::new();
+        for index in 0..items.Size()? {
+            match containers.ContainerFromIndex(index as i32) {
+                Ok(container) => {
+                    let expected = items
+                        .GetAt(index)?
+                        .cast::<IMap<HSTRING, IInspectable>>()?
+                        .Lookup(&self.data_content_key)?;
+                    // The element the presenter shows, not only its Content value: a presenter
+                    // keeps its previous child when XAML rejects new content.
+                    // The element the presenter shows, not only its Content value: a presenter
+                    // keeps its previous child when XAML rejects new content.
+                    let presenter = container
+                        .cast::<native::IContentControl>()?
+                        .ContentTemplateRoot()?;
+                    let presented = native::VisualTreeHelper::GetChild(&presenter, 0)
+                        .ok()
+                        .map(|child| com_identity(&child))
+                        .transpose()?;
+                    matches.push((index, presented == Some(com_identity(&expected)?)));
+                }
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(matches)
+    }
+
     pub fn list_view_state(
         &self,
         object: ObjectId,
