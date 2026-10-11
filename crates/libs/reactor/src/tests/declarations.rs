@@ -1614,3 +1614,28 @@ fn navigation_view_item_background_follows_the_theme_and_updates() {
             if *object == item && set.is_empty() && clear.as_ref() == [PropertyId::Background]
     )));
 }
+
+#[test]
+fn menu_item_icon_applies_to_items_and_submenus() {
+    let icon = Icon::font("\u{E8B7}").foreground(ThemeBrush::Resource("FolderBrush"));
+    assert!(matches!(
+        MenuItem::item("a", "A").icon(icon.clone()),
+        MenuItem::Item { icon: Some(value), .. } if value == icon
+    ));
+    assert!(matches!(
+        MenuItem::submenu("m", "M", [MenuItem::item("a", "A")]).icon(Symbol::Folder),
+        MenuItem::Submenu { icon: Some(value), .. } if value == Icon::symbol(Symbol::Folder)
+    ));
+    assert!(matches!(
+        MenuItem::item("a", "A"),
+        MenuItem::Item { icon: None, .. }
+    ));
+    assert_eq!(
+        MenuItem::separator("s").icon(icon.clone()),
+        MenuItem::separator("s")
+    );
+    assert_ne!(
+        MenuItem::item("a", "A").icon(icon),
+        MenuItem::item("a", "A").icon(Icon::font("\u{E8B7}").foreground(ThemeBrush::Accent))
+    );
+}

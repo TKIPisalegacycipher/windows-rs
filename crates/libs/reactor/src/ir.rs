@@ -22,6 +22,8 @@ pub enum GraphError {
     DuplicateReference,
     DuplicateWindowTitleBar,
     InvalidAttachment(ObjectType),
+    /// A menu item's icon is an image, which menus cannot display.
+    InvalidMenuIcon(Key),
     ExitTransitionUnsupported,
     InvalidRelation(ObjectType, RelationId),
     MissingChild(RelationId, ObjectId),
@@ -57,11 +59,29 @@ impl DeclarationValidator {
     }
 }
 
+/// Menu icons are drawn from icon fonts, symbols, bitmaps and path data. An image icon needs an
+/// image source that outlives the flyout, which menus do not own.
+fn validate_menu_icon(key: &Key, icon: Option<&Icon>) -> Result<(), GraphError> {
+    match icon {
+        Some(icon) if icon.is_image() => Err(GraphError::InvalidMenuIcon(key.clone())),
+        _ => Ok(()),
+    }
+}
+
 fn validate_menu_items(items: &[MenuItem], keys: &mut HashSet<Key>) -> Result<(), GraphError> {
     for item in items {
         let (key, children) = match item {
-            MenuItem::Item { key, .. } | MenuItem::Separator { key } => (key, None),
-            MenuItem::Submenu { key, items, .. } => (key, Some(items.as_slice())),
+            MenuItem::Item { key, icon, .. } => {
+                validate_menu_icon(key, icon.as_ref())?;
+                (key, None)
+            }
+            MenuItem::Separator { key } => (key, None),
+            MenuItem::Submenu {
+                key, icon, items, ..
+            } => {
+                validate_menu_icon(key, icon.as_ref())?;
+                (key, Some(items.as_slice()))
+            }
         };
         if !keys.insert(key.clone()) {
             return Err(GraphError::DuplicateKey(key.clone()));

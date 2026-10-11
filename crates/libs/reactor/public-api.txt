@@ -203,17 +203,20 @@ pub windows_reactor::ListViewSelectionMode::Single
 #[non_exhaustive] pub enum windows_reactor::MenuItem
 #[non_exhaustive] pub windows_reactor::MenuItem::Item
 pub windows_reactor::MenuItem::Item::enabled: bool
+pub windows_reactor::MenuItem::Item::icon: core::option::Option<windows_reactor::Icon>
 pub windows_reactor::MenuItem::Item::key: windows_reactor::Key
 pub windows_reactor::MenuItem::Item::label: alloc::rcs::rc::Rc<str>
 pub windows_reactor::MenuItem::Item::swatch: core::option::Option<windows_reactor::ThemeBrush>
 pub windows_reactor::MenuItem::Separator
 pub windows_reactor::MenuItem::Separator::key: windows_reactor::Key
 #[non_exhaustive] pub windows_reactor::MenuItem::Submenu
+pub windows_reactor::MenuItem::Submenu::icon: core::option::Option<windows_reactor::Icon>
 pub windows_reactor::MenuItem::Submenu::items: alloc::rcs::rc::Rc<alloc::vec::Vec<Self>>
 pub windows_reactor::MenuItem::Submenu::key: windows_reactor::Key
 pub windows_reactor::MenuItem::Submenu::label: alloc::rcs::rc::Rc<str>
 impl windows_reactor::MenuItem
 pub fn windows_reactor::MenuItem::disabled(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>) -> Self
+pub fn windows_reactor::MenuItem::icon(self, impl core::convert::Into<windows_reactor::Icon>) -> Self
 pub fn windows_reactor::MenuItem::item(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>) -> Self
 pub fn windows_reactor::MenuItem::separator(impl core::convert::Into<windows_reactor::Key>) -> Self
 pub fn windows_reactor::MenuItem::submenu(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>, impl core::iter::traits::collect::IntoIterator<Item = Self>) -> Self

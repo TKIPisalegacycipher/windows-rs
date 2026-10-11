@@ -691,6 +691,34 @@ fn menu_attachment_rejects_unsupported_targets() {
 }
 
 #[test]
+fn menu_attachment_rejects_image_icons() {
+    let image = Icon::image_uri("https://example.com/icon.png").unwrap();
+    for items in [
+        vec![MenuItem::item("open", "Open").icon(image.clone())],
+        vec![MenuItem::submenu("more", "More", [MenuItem::item("a", "A")]).icon(image.clone())],
+        vec![MenuItem::submenu(
+            "more",
+            "More",
+            [MenuItem::item("open", "Open").icon(image)],
+        )],
+    ] {
+        let mut runtime = Runtime::new(RecordingAdapter::default());
+        let result = runtime.update(Button::new().menu(Menu::new(items, |_| {})));
+        assert!(matches!(
+            result,
+            Err(UpdateError::Graph(GraphError::InvalidMenuIcon(_)))
+        ));
+    }
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(Button::new().menu(Menu::new(
+            [MenuItem::item("open", "Open").icon(Icon::symbol(Symbol::Folder))],
+            |_| {},
+        )))
+        .unwrap();
+}
+
+#[test]
 fn menu_attachment_rejects_flyout_conflicts() {
     let mut conflict = Runtime::new(RecordingAdapter::default());
     assert_eq!(

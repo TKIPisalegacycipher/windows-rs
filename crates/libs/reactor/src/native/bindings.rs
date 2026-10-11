@@ -13921,6 +13921,18 @@ impl IMenuFlyoutSubItem {
             .ok()
         }
     }
+    pub(crate) fn SetIcon<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<IconElement>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetIcon)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
 }
 #[repr(C)]
 pub struct IMenuFlyoutSubItem_Vtbl {
@@ -13931,6 +13943,11 @@ pub struct IMenuFlyoutSubItem_Vtbl {
     ) -> windows_core::HRESULT,
     Text: usize,
     pub SetText: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    Icon: usize,
+    pub SetIcon: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,

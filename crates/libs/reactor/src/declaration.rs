@@ -120,6 +120,10 @@ pub(crate) enum IconValue {
 }
 
 impl Icon {
+    pub(crate) fn is_image(&self) -> bool {
+        matches!(self.value(), IconValue::Image(_))
+    }
+
     pub fn symbol(symbol: Symbol) -> Self {
         Self::new(IconValue::Symbol(symbol))
     }
@@ -966,6 +970,7 @@ pub enum MenuItem {
         key: Key,
         label: Rc<str>,
         enabled: bool,
+        icon: Option<Icon>,
         swatch: Option<ThemeBrush>,
     },
     Separator {
@@ -975,6 +980,7 @@ pub enum MenuItem {
     Submenu {
         key: Key,
         label: Rc<str>,
+        icon: Option<Icon>,
         items: Rc<Vec<Self>>,
     },
 }
@@ -985,6 +991,7 @@ impl MenuItem {
             key: key.into(),
             label: label.into(),
             enabled: true,
+            icon: None,
             swatch: None,
         }
     }
@@ -994,8 +1001,18 @@ impl MenuItem {
             key: key.into(),
             label: label.into(),
             enabled: false,
+            icon: None,
             swatch: None,
         }
+    }
+
+    /// Shows `icon` in a command item's or submenu's icon slot. A theme brush foreground follows
+    /// the menu's light or dark theme. Has no effect on separators; a swatch takes the slot's place.
+    pub fn icon(mut self, icon: impl Into<Icon>) -> Self {
+        if let Self::Item { icon: slot, .. } | Self::Submenu { icon: slot, .. } = &mut self {
+            *slot = Some(icon.into());
+        }
+        self
     }
 
     /// Shows a round swatch of `brush` in a command item's icon slot, such as beside a color
@@ -1024,6 +1041,7 @@ impl MenuItem {
         Self::Submenu {
             key: key.into(),
             label: label.into(),
+            icon: None,
             items: Rc::new(items.into_iter().collect()),
         }
     }

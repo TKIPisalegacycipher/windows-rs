@@ -343,12 +343,13 @@ fn build_menu_items(
                 key,
                 label,
                 enabled,
+                icon,
                 swatch,
             } => {
                 let item = MenuFlyoutItem::new()?;
                 item.SetText(label)?;
-                if let Some(brush) = swatch {
-                    item.SetIcon(&menu_swatch(*brush)?)?;
+                if let Some(icon) = menu_icon(icon.as_ref(), *swatch)? {
+                    item.SetIcon(&icon)?;
                 }
                 item.cast::<IControl>()?.SetIsEnabled(*enabled)?;
                 let callback = callback.clone();
@@ -357,9 +358,14 @@ fn build_menu_items(
                 item.cast()?
             }
             MenuItem::Separator { .. } => MenuFlyoutSeparator::new()?.cast()?,
-            MenuItem::Submenu { label, items, .. } => {
+            MenuItem::Submenu {
+                label, icon, items, ..
+            } => {
                 let item = MenuFlyoutSubItem::new()?;
                 item.SetText(label)?;
+                if let Some(icon) = menu_icon(icon.as_ref(), None)? {
+                    item.SetIcon(&icon)?;
+                }
                 build_menu_items(items, &item.Items()?, revokers, callback)?;
                 item.cast()?
             }
