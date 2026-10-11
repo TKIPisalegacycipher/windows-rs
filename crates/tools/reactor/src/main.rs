@@ -193,6 +193,7 @@ enum PropertyAdapter {
     RichEditText,
     RichTextBlocks,
     SelectionIndex,
+    SystemCursor,
     ThemeBrush,
     ThemeTransitions,
     Uri,
@@ -217,6 +218,7 @@ impl PropertyAdapter {
             Self::ResourceStyle => "ButtonStyle",
             Self::RichTextBlocks => "RichText",
             Self::SelectionIndex => "SelectionIndex",
+            Self::SystemCursor => "InputSystemCursorShape",
             Self::ThemeBrush => "Brush",
             Self::ThemeTransitions => "ThemeTransitions",
         }
@@ -1934,6 +1936,23 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                  .and_then(|property| element.ClearValue(&property).map_err(Into::into)))),\n",
                 property.name, property.name
             ));
+        } else if property.adapter == Some(PropertyAdapter::SystemCursor) {
+            let arms = visual_property_variants(property, metadata)
+                .iter()
+                .map(|variant| format!("\"{variant}\" => native::{}::{variant},", property.value))
+                .collect::<String>();
+            output.push_str(&format!(
+                "(PropertyId::{0}, None) => \
+                 Some(element.cast::<native::IUIElementProtected>().map_err(Into::into)\
+                 .and_then(|element| element.SetProtectedCursor(None::<&native::InputCursor>)\
+                 .map_err(Into::into))),\n\
+                 (PropertyId::{0}, Some(PropertyValue::Enum {{ kind: \"{1}\", variant }})) => \
+                 Some(native::InputSystemCursor::Create(match *variant {{ {arms} \
+                 _ => unreachable!(\"validated enum variant\") }})\
+                 .and_then(|cursor| element.cast::<native::IUIElementProtected>()?\
+                 .SetProtectedCursor(&cursor)).map_err(Into::into)),\n",
+                property.name, property.value
+            ));
         } else {
             emit_native_property_arms(
                 &mut output,
@@ -2711,6 +2730,22 @@ fn emit_native_property_arms(
     ));
 }
 
+fn visual_property_variants<'a>(
+    property: &VisualProperty,
+    metadata: &'a tool_reactor_metadata::MetadataResolver,
+) -> &'a [String] {
+    if property.adapter == Some(PropertyAdapter::SystemCursor) {
+        return metadata
+            .enum_variants("Microsoft.UI.Input", "InputSystemCursorShape")
+            .unwrap();
+    }
+    let owner = property.owner.rsplit('.').next().unwrap();
+    metadata
+        .enum_info(owner, &format!("put_{}", property.name))
+        .unwrap()
+        .1
+}
+
 fn has_local_property(object: &Object, name: &str) -> bool {
     object
         .properties
@@ -2938,10 +2973,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
         let value = if is_builtin_value(&property.value) {
             format!("ValueType::{}", property.value)
         } else {
-            let owner = property.owner.rsplit('.').next().unwrap();
-            let (_, variants) = metadata
-                .enum_info(owner, &format!("put_{}", property.name))
-                .unwrap();
+            let variants = visual_property_variants(property, metadata);
             format!(
                 "ValueType::Enum {{ kind: \"{}\", variants: &[{}] }}",
                 property.value,
@@ -3156,10 +3188,7 @@ fn generate_declarations(
         if is_builtin_value(&property.value) {
             continue;
         }
-        let owner = property.owner.rsplit('.').next().unwrap();
-        let (_, variants) = metadata
-            .enum_info(owner, &format!("put_{}", property.name))
-            .unwrap();
+        let variants = visual_property_variants(property, metadata);
         if let Some(previous) = enums.insert(property.value.as_str(), variants.to_vec()) {
             assert_eq!(previous, variants, "conflicting enum definitions");
         }
@@ -4025,6 +4054,7 @@ fn live_property_sample(
         "AutomationHeadingLevel" => "AutomationHeadingLevel::Level1".to_string(),
         "ContentDialogButton" => "ContentDialogButton::Primary".to_string(),
         "HorizontalAlignment" => "HorizontalAlignment::Center".to_string(),
+        "InputSystemCursorShape" => "InputSystemCursorShape::SizeWestEast".to_string(),
         "InfoBarSeverity" => "InfoBarSeverity::Informational".to_string(),
         "ListViewSelectionMode" => "ListViewSelectionMode::Single".to_string(),
         "NavigationViewBackButtonVisible" => "NavigationViewBackButtonVisible::Visible".to_string(),

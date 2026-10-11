@@ -130,6 +130,11 @@ name = "IsHitTestVisible"
 owner = "Microsoft.UI.Xaml.UIElement"
 
 [[visual_properties]]
+name = "Cursor"
+owner = "Microsoft.UI.Xaml.UIElement"
+adapter = "system_cursor"
+
+[[visual_properties]]
 name = "Transitions"
 owner = "Microsoft.UI.Xaml.UIElement"
 adapter = "theme_transitions"
