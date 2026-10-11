@@ -594,10 +594,14 @@ impl WinUiAdapter {
                 self.container_resources.borrow_mut().items.remove(&object);
             }
             Handle::Generated(GeneratedHandle::ContentDialog(dialog)) => {
-                self.event_queue
+                let hide = self
+                    .event_queue
                     .content_dialogs
                     .borrow_mut()
                     .retire(object, *dialog)?;
+                if let Some(value) = hide {
+                    value.Hide()?;
+                }
             }
             _ => {}
         }

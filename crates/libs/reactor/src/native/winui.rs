@@ -545,11 +545,14 @@ impl NativeContentDialogScheduler {
             .retain(|root| root.schedule.active.is_some() || !root.schedule.queue.is_empty());
     }
 
+    /// Retires a released dialog. Returns the dialog to `Hide()` (once the scheduler is no longer
+    /// borrowed) when it is still shown: its host is gone, so it must not stay up over the window
+    /// with live buttons. Its `Closed` is suppressed, as `reset` does.
     fn retire(
         &mut self,
         dialog: ObjectId,
         handle: GeneratedContentDialog,
-    ) -> Result<bool, WinUiError> {
+    ) -> Result<Option<native::ContentDialog>, WinUiError> {
         let state = self
             .dialogs
             .get_mut(&dialog)
@@ -558,15 +561,19 @@ impl NativeContentDialogScheduler {
         state.owner = None;
         state.loaded = None;
         state.desired_open = false;
-        let pending = state.pending_generation.is_some();
+        let pending = state.pending_generation;
+        if let Some(generation) = pending {
+            state.suppress_generation = Some(generation);
+        }
+        let value = state.value.clone();
         let _ = state;
         self.remove_from_queues(dialog);
-        if pending {
+        if pending.is_some() {
             self.dialogs.get_mut(&dialog).unwrap().retained_handle = Some(handle);
-            Ok(true)
+            Ok(Some(value))
         } else {
             self.dialogs.remove(&dialog);
-            Ok(false)
+            Ok(None)
         }
     }
 
