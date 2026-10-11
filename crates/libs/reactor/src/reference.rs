@@ -326,6 +326,17 @@ impl ElementRef<ScrollViewer> {
     }
 }
 
+impl ElementRef<Button> {
+    /// Enqueues closing the flyout attached to the currently published button with `flyout_with`,
+    /// such as after a command inside the flyout runs. Closing a flyout that is not open does
+    /// nothing. Menus and command bar flyouts close themselves when a command is invoked and are
+    /// not affected.
+    #[must_use]
+    pub fn request_hide_flyout(&self) -> bool {
+        self.enqueue(|object, _, _| ImperativeRequest::HideFlyout { object })
+    }
+}
+
 impl ElementRef<Grid> {
     #[must_use]
     pub fn observe_composition_host(
@@ -693,6 +704,9 @@ pub enum ImperativeRequest {
     ChangeView {
         object: ObjectId,
         vertical_offset: f64,
+    },
+    HideFlyout {
+        object: ObjectId,
     },
 }
 

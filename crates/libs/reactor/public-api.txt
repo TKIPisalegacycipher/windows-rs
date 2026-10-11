@@ -1438,6 +1438,8 @@ pub struct windows_reactor::ElementObservation(_)
 impl core::ops::drop::Drop for windows_reactor::ElementObservation
 pub fn windows_reactor::ElementObservation::drop(&mut self)
 pub struct windows_reactor::ElementRef<T>
+impl windows_reactor::ElementRef<windows_reactor::Button>
+pub fn windows_reactor::ElementRef<windows_reactor::Button>::request_hide_flyout(&self) -> bool
 impl windows_reactor::ElementRef<windows_reactor::Grid>
 pub fn windows_reactor::ElementRef<windows_reactor::Grid>::observe_composition_host(&self, impl core::ops::function::Fn(windows_reactor::CompositionHostEvent) + 'static) -> windows_reactor::ElementObservation
 pub fn windows_reactor::ElementRef<windows_reactor::Grid>::request_set_child_visual(&self, core::option::Option<windows_core::unknown::IUnknown>, impl core::ops::function::Fn(core::result::Result<(), windows_reactor::IntegrationError>) + 'static) -> bool
