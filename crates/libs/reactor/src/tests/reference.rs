@@ -100,6 +100,36 @@ fn scroll_viewer_reference_queues_vertical_offset() {
 }
 
 #[test]
+fn button_reference_queues_flyout_hide() {
+    let reference = ElementRef::<Button>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    assert!(!reference.request_hide_flyout());
+
+    let button = || {
+        Button::new()
+            .content("Account")
+            .element_ref(&reference)
+            .flyout_with(Flyout::text("Rows"))
+    };
+    runtime.update(button()).unwrap();
+    let object = reference.get().unwrap();
+    assert!(reference.request_hide_flyout());
+    runtime.dispatch_native_events().unwrap();
+    assert_eq!(
+        runtime.adapter().imperatives(),
+        [ImperativeRequest::HideFlyout { object }]
+    );
+
+    runtime.update(Button::new().content("Account")).unwrap();
+    runtime.dispatch_native_events().unwrap();
+    assert!(!reference.request_hide_flyout());
+    assert_eq!(
+        runtime.adapter().imperatives(),
+        [ImperativeRequest::HideFlyout { object }]
+    );
+}
+
+#[test]
 fn scroll_viewer_vertical_offset_must_be_finite() {
     for offset in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
         assert!(

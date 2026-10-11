@@ -699,6 +699,11 @@ impl Adapter for WinUiAdapter {
                 };
                 control.ChangeViewWithOptionalAnimation(None, Some(vertical_offset), None, true)?;
             }
+            ImperativeRequest::HideFlyout { object } => {
+                if let Some((flyout, _, _)) = self.flyouts.get(&object) {
+                    flyout.cast::<native::IFlyoutBase>()?.Hide()?;
+                }
+            }
         }
         Ok(())
     }

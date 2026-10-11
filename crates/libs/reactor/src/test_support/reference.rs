@@ -19,7 +19,8 @@ impl ImperativeRequest {
             | Self::ObserveCompositionHost { object, .. }
             | Self::RevokeObservation { object, .. }
             | Self::SetCompositionChildVisual { object, .. }
-            | Self::ChangeView { object, .. } => *object,
+            | Self::ChangeView { object, .. }
+            | Self::HideFlyout { object } => *object,
         }
     }
 }

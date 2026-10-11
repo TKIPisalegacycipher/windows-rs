@@ -56,6 +56,8 @@ struct Fixture {
     content_dialog_waits: usize,
     flyout_activated: bool,
     flyout_shown: bool,
+    flyout_hide_requested: bool,
+    flyout_ref: reactor::ElementRef<reactor::Button>,
     flyout_runtime: Option<reactor::Runtime<reactor::native::WinUiAdapter>>,
     flyout_window: Option<reactor::native::NativeWindow>,
     menu_activated: bool,
@@ -1808,10 +1810,17 @@ impl reactor::Component for Fixture {
             .create_window(encoded_image_root)
             .unwrap();
         let mut flyout_runtime = reactor::Runtime::new(reactor::native::WinUiAdapter::default());
+        let flyout_ref = reactor::ElementRef::<reactor::Button>::new();
         flyout_runtime
-            .update(reactor::Button::new().content("Flyout target").flyout_with(
-                reactor::Flyout::text("Flyout content").placement(reactor::FlyoutPlacement::Bottom),
-            ))
+            .update(
+                reactor::Button::new()
+                    .content("Flyout target")
+                    .element_ref(&flyout_ref)
+                    .flyout_with(
+                        reactor::Flyout::text("Flyout content")
+                            .placement(reactor::FlyoutPlacement::Bottom),
+                    ),
+            )
             .unwrap();
         let flyout_root = flyout_runtime.graph().root().unwrap();
         let flyout_window = flyout_runtime.adapter().create_window(flyout_root).unwrap();
@@ -2956,6 +2965,8 @@ impl reactor::Component for Fixture {
             content_dialog_waits: 0,
             flyout_activated: false,
             flyout_shown: false,
+            flyout_hide_requested: false,
+            flyout_ref,
             flyout_runtime: Some(flyout_runtime),
             flyout_window: Some(flyout_window),
             menu_activated: false,
@@ -3142,7 +3153,7 @@ impl reactor::Component for Fixture {
                 return;
             }
         }
-        if let Some(flyout_runtime) = self.flyout_runtime.as_ref() {
+        if let Some(flyout_runtime) = self.flyout_runtime.as_mut() {
             if !self.flyout_activated {
                 self.flyout_window.as_ref().unwrap().activate().unwrap();
                 self.flyout_activated = true;
@@ -3156,7 +3167,9 @@ impl reactor::Component for Fixture {
                     Self::schedule(context);
                     return;
                 }
-            } else if !flyout_runtime.adapter().is_flyout_open(target).unwrap() {
+            } else if !self.flyout_hide_requested
+                && !flyout_runtime.adapter().is_flyout_open(target).unwrap()
+            {
                 self.popup_waits += 1;
                 assert!(
                     self.popup_waits < LIVE_EVENT_TIMEOUT_TICKS,
@@ -3165,8 +3178,28 @@ impl reactor::Component for Fixture {
                 Self::schedule(context);
                 return;
             }
+            if !self.flyout_hide_requested {
+                if !flyout_runtime.adapter().is_flyout_open(target).unwrap() {
+                    Self::schedule(context);
+                    return;
+                }
+                self.popup_waits = 0;
+                self.flyout_hide_requested = true;
+                assert!(self.flyout_ref.request_hide_flyout());
+                flyout_runtime.dispatch_native_events().unwrap();
+                Self::schedule(context);
+                return;
+            }
+            if flyout_runtime.adapter().is_flyout_open(target).unwrap() {
+                self.popup_waits += 1;
+                if self.popup_waits >= LIVE_EVENT_TIMEOUT_TICKS {
+                    eprintln!("real WinUI flyout did not close on request");
+                    std::process::exit(1);
+                }
+                Self::schedule(context);
+                return;
+            }
             self.popup_waits = 0;
-            flyout_runtime.adapter().hide_flyout(target).unwrap();
             self.flyout_window.take().unwrap().close().unwrap();
             self.flyout_runtime.take();
         }
