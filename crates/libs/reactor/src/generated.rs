@@ -1681,6 +1681,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::Icon,
         }),
+        (ObjectType::NavigationViewItem, PropertyId::Background) => Some(PropertyContract {
+            id,
+            value: ValueType::Brush,
+        }),
         (ObjectType::SplitView, PropertyId::OpenPaneLength) => Some(PropertyContract {
             id,
             value: ValueType::F64,
@@ -2615,6 +2619,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::NavigationViewItem, PropertyId::IsExpanded) => 30,
         (ObjectType::NavigationViewItem, PropertyId::Tag) => 31,
         (ObjectType::NavigationViewItem, PropertyId::Icon) => 32,
+        (ObjectType::NavigationViewItem, PropertyId::Background) => 33,
         (ObjectType::SplitView, PropertyId::OpenPaneLength) => 28,
         (ObjectType::SplitView, PropertyId::CompactPaneLength) => 29,
         (ObjectType::SplitView, PropertyId::DisplayMode) => 30,

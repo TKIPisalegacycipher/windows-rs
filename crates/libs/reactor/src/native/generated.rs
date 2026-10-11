@@ -478,6 +478,10 @@ fn theme_style_info(
             ],
         )),
         ObjectType::Grid => Some(("Grid", &[(PropertyId::Background, "Background")])),
+        ObjectType::NavigationViewItem => Some((
+            "NavigationViewItem",
+            &[(PropertyId::Background, "Background")],
+        )),
         ObjectType::Rectangle => Some((
             "Rectangle",
             &[(PropertyId::Fill, "Fill"), (PropertyId::Stroke, "Stroke")],
@@ -5759,6 +5763,29 @@ impl GeneratedHandle {
             ) => Some(
                 icon_element(value, image_source)
                     .and_then(|icon| object.SetIcon(&icon).map_err(Into::into)),
+            ),
+            (Self::NavigationViewItem(object), PropertyId::Background, None) => Some(
+                object
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::Control::BackgroundProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::NavigationViewItem(object),
+                PropertyId::Background,
+                Some(PropertyValue::Brush(Brush::Solid(value))),
+            ) => Some(
+                object
+                    .cast::<native::IControl>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        solid_color_brush(*value)
+                            .and_then(|brush| object.SetBackground(&brush).map_err(Into::into))
+                    }),
             ),
             (Self::SplitView(object), PropertyId::OpenPaneLength, None) => Some(
                 object

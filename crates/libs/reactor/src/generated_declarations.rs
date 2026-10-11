@@ -4144,6 +4144,13 @@ impl NavigationViewItem {
             .property(PropertyId::Icon, PropertyValue::Icon(icon.into()));
         self
     }
+    pub fn background(mut self, background: impl Into<Brush>) -> Self {
+        self.0 = self.0.property(
+            PropertyId::Background,
+            PropertyValue::Brush(background.into()),
+        );
+        self
+    }
     visual_methods!();
     /// Rejects values outside this relation's generated type contract.
     ///

@@ -1566,3 +1566,51 @@ fn icon_foregrounds_are_part_of_the_icon_value() {
         }]
     );
 }
+
+#[test]
+fn navigation_view_item_background_follows_the_theme_and_updates() {
+    let background = |key| Property {
+        id: PropertyId::Background,
+        value: PropertyValue::Brush(Brush::Theme(ThemeBrush::Resource(key))),
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            NavigationViewItem::new()
+                .content(TextBlock::new().text("Inbox"))
+                .background(ThemeBrush::Resource("NavigationViewItemBackgroundSelected")),
+        )
+        .unwrap();
+    let item = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(item)
+            .unwrap()
+            .contains(&background("NavigationViewItemBackgroundSelected"))
+    );
+
+    let mutations = runtime
+        .update(
+            NavigationViewItem::new()
+                .content(TextBlock::new().text("Inbox"))
+                .background(ThemeBrush::Resource("SubtleFillColorSecondaryBrush")),
+        )
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == item
+                && clear.is_empty()
+                && set.as_ref() == [background("SubtleFillColorSecondaryBrush")]
+    )));
+
+    let mutations = runtime
+        .update(NavigationViewItem::new().content(TextBlock::new().text("Inbox")))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == item && set.is_empty() && clear.as_ref() == [PropertyId::Background]
+    )));
+}

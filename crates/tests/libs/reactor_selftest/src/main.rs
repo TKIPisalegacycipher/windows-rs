@@ -2770,7 +2770,8 @@ impl reactor::Component for Fixture {
                         "second",
                         reactor::NavigationViewItem::new()
                             .tag("nav-second")
-                            .is_selected(true),
+                            .is_selected(true)
+                            .background(reactor::ThemeBrush::Accent),
                     ),
                     reactor::keyed(
                         "first",
@@ -2791,7 +2792,10 @@ impl reactor::Component for Fixture {
                         "second",
                         reactor::NavigationViewItem::new()
                             .tag("nav-second")
-                            .is_selected(false),
+                            .is_selected(false)
+                            .background(reactor::ThemeBrush::Resource(
+                                "SubtleFillColorSecondaryBrush",
+                            )),
                     ),
                 ]
             };
