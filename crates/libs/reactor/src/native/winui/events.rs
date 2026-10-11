@@ -174,19 +174,24 @@ impl WinUiAdapter {
         Ok(tags)
     }
 
+    /// What a drag's data offers: files, else text, else something only `other` accepts.
+    fn data_kind(data: &native::DataPackageView) -> Result<DragKind, WinUiError> {
+        Ok(if data.Contains("Shell IDList Array")? {
+            DragKind::StorageItems
+        } else if data.Contains("Text")? {
+            DragKind::Text
+        } else {
+            DragKind::Other
+        })
+    }
+
     fn drag_kind(
         args: Ref<native::DragEventArgs>,
         policy: &Rc<RefCell<Option<Rc<DragDropPolicy>>>>,
     ) -> Result<DragKind, WinUiError> {
         let args = args.unwrap();
         let data = args.DataView()?;
-        let kind = if data.Contains("Shell IDList Array")? {
-            DragKind::StorageItems
-        } else if data.Contains("Text")? {
-            DragKind::Text
-        } else {
-            DragKind::Unsupported
-        };
+        let kind = Self::data_kind(&data)?;
         let policy = policy.borrow();
         let action = policy.as_ref().and_then(|policy| policy.action(kind));
         args.SetAcceptedOperation(action.map_or(native::DataPackageOperation::None, |action| {
@@ -214,13 +219,7 @@ impl WinUiAdapter {
         let args = args.unwrap();
         let deferral = args.GetDeferral()?;
         let data = args.DataView()?;
-        let kind = if data.Contains("Shell IDList Array")? {
-            DragKind::StorageItems
-        } else if data.Contains("Text")? {
-            DragKind::Text
-        } else {
-            DragKind::Unsupported
-        };
+        let kind = Self::data_kind(&data)?;
         let action = policy
             .borrow()
             .as_ref()
@@ -310,6 +309,12 @@ impl WinUiAdapter {
                     callback.cancel();
                     deferral.Complete()?;
                     return Err(error.into());
+                }
+            }
+            DragKind::Other => {
+                *result.lock().unwrap() = Some(Ok(DroppedData::Other));
+                if callback.invoke().is_err() {
+                    deferral.Complete()?;
                 }
             }
             DragKind::Unsupported => unreachable!(),

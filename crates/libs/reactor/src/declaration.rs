@@ -1528,6 +1528,9 @@ pub struct FocusEventInfo {
 pub enum DragKind {
     StorageItems,
     Text,
+    /// Data with neither files nor text, such as an app's own drag (virtual files, private
+    /// formats). Accepted through `DragDropPolicy::other`; the drop carries no payload.
+    Other,
     Unsupported,
 }
 
@@ -1562,6 +1565,7 @@ impl DragDropAction {
 pub struct DragDropPolicy {
     pub storage_items: Option<DragDropAction>,
     pub text: Option<DragDropAction>,
+    pub other: Option<DragDropAction>,
 }
 
 impl DragDropPolicy {
@@ -1579,10 +1583,17 @@ impl DragDropPolicy {
         self
     }
 
+    /// Accepts drags carrying neither files nor text (`DragKind::Other`).
+    pub fn other(mut self, action: impl Into<Option<DragDropAction>>) -> Self {
+        self.other = action.into();
+        self
+    }
+
     pub(crate) fn action(&self, kind: DragKind) -> Option<&DragDropAction> {
         match kind {
             DragKind::StorageItems => self.storage_items.as_ref(),
             DragKind::Text => self.text.as_ref(),
+            DragKind::Other => self.other.as_ref(),
             DragKind::Unsupported => None,
         }
     }
@@ -1598,6 +1609,8 @@ pub struct DroppedStorageItem {
 pub enum DroppedData {
     StorageItems(Vec<DroppedStorageItem>),
     Text(String),
+    /// A `DragKind::Other` drop: accepted, with no payload read.
+    Other,
     Unsupported,
 }
 

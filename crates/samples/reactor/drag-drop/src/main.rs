@@ -45,7 +45,7 @@ impl Component for DragDrop {
                             .join(", ")
                     )),
                     DroppedData::Text(text) => Some(text),
-                    DroppedData::Unsupported => None,
+                    DroppedData::Other | DroppedData::Unsupported => None,
                 };
             }
         }
@@ -58,7 +58,7 @@ impl Component for DragDrop {
             None => Color::rgb(255, 255, 255),
             Some(DragKind::StorageItems) => Color::rgb(92, 202, 221),
             Some(DragKind::Text) => Color::rgb(155, 219, 90),
-            Some(DragKind::Unsupported) => Color::rgb(255, 180, 180),
+            Some(DragKind::Other | DragKind::Unsupported) => Color::rgb(255, 180, 180),
         };
 
         Border::new()

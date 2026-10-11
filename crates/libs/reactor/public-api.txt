@@ -119,10 +119,12 @@ pub windows_reactor::DragDropOperation::Copy
 pub windows_reactor::DragDropOperation::Link
 pub windows_reactor::DragDropOperation::Move
 pub enum windows_reactor::DragKind
+pub windows_reactor::DragKind::Other
 pub windows_reactor::DragKind::StorageItems
 pub windows_reactor::DragKind::Text
 pub windows_reactor::DragKind::Unsupported
 pub enum windows_reactor::DroppedData
+pub windows_reactor::DroppedData::Other
 pub windows_reactor::DroppedData::StorageItems(alloc::vec::Vec<windows_reactor::DroppedStorageItem>)
 pub windows_reactor::DroppedData::Text(alloc::string::String)
 pub windows_reactor::DroppedData::Unsupported
@@ -1382,10 +1384,12 @@ impl windows_reactor::DragDropAction
 pub fn windows_reactor::DragDropAction::caption(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub fn windows_reactor::DragDropAction::new(windows_reactor::DragDropOperation) -> Self
 pub struct windows_reactor::DragDropPolicy
+pub windows_reactor::DragDropPolicy::other: core::option::Option<windows_reactor::DragDropAction>
 pub windows_reactor::DragDropPolicy::storage_items: core::option::Option<windows_reactor::DragDropAction>
 pub windows_reactor::DragDropPolicy::text: core::option::Option<windows_reactor::DragDropAction>
 impl windows_reactor::DragDropPolicy
 pub fn windows_reactor::DragDropPolicy::new() -> Self
+pub fn windows_reactor::DragDropPolicy::other(self, impl core::convert::Into<core::option::Option<windows_reactor::DragDropAction>>) -> Self
 pub fn windows_reactor::DragDropPolicy::storage_items(self, impl core::convert::Into<core::option::Option<windows_reactor::DragDropAction>>) -> Self
 pub fn windows_reactor::DragDropPolicy::text(self, impl core::convert::Into<core::option::Option<windows_reactor::DragDropAction>>) -> Self
 pub struct windows_reactor::DropDownButton(_)

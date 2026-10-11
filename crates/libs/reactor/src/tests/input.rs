@@ -306,6 +306,16 @@ fn drag_drop_policy_and_payloads_round_trip_through_recording_protocol() {
 }
 
 #[test]
+fn drag_drop_policy_accepts_other_data_only_when_asked() {
+    let move_other = DragDropAction::new(DragDropOperation::Move).caption("Move");
+    let policy = DragDropPolicy::new().text(DragDropAction::new(DragDropOperation::Copy));
+    assert_eq!(policy.action(DragKind::Other), None);
+    let policy = policy.other(move_other.clone());
+    assert_eq!(policy.action(DragKind::Other), Some(&move_other));
+    assert_eq!(policy.action(DragKind::Unsupported), None);
+}
+
+#[test]
 fn pointer_motion_events_use_the_shared_typed_payload() {
     let received = Rc::new(RefCell::new(Vec::new()));
     let callback = |event| {
