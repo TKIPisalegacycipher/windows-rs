@@ -3230,6 +3230,53 @@ impl GeneratedHandle {
             (PropertyId::IsHitTestVisible, Some(PropertyValue::Bool(value))) => {
                 Some(element.SetIsHitTestVisible(*value).map_err(Into::into))
             }
+            (PropertyId::Cursor, None) => Some(
+                element
+                    .cast::<native::IUIElementProtected>()
+                    .map_err(Into::into)
+                    .and_then(|element| {
+                        element
+                            .SetProtectedCursor(None::<&native::InputCursor>)
+                            .map_err(Into::into)
+                    }),
+            ),
+            (
+                PropertyId::Cursor,
+                Some(PropertyValue::Enum {
+                    kind: "InputSystemCursorShape",
+                    variant,
+                }),
+            ) => Some(
+                native::InputSystemCursor::Create(match *variant {
+                    "Arrow" => native::InputSystemCursorShape::Arrow,
+                    "Cross" => native::InputSystemCursorShape::Cross,
+                    "Hand" => native::InputSystemCursorShape::Hand,
+                    "Help" => native::InputSystemCursorShape::Help,
+                    "IBeam" => native::InputSystemCursorShape::IBeam,
+                    "SizeAll" => native::InputSystemCursorShape::SizeAll,
+                    "SizeNortheastSouthwest" => {
+                        native::InputSystemCursorShape::SizeNortheastSouthwest
+                    }
+                    "SizeNorthSouth" => native::InputSystemCursorShape::SizeNorthSouth,
+                    "SizeNorthwestSoutheast" => {
+                        native::InputSystemCursorShape::SizeNorthwestSoutheast
+                    }
+                    "SizeWestEast" => native::InputSystemCursorShape::SizeWestEast,
+                    "UniversalNo" => native::InputSystemCursorShape::UniversalNo,
+                    "UpArrow" => native::InputSystemCursorShape::UpArrow,
+                    "Wait" => native::InputSystemCursorShape::Wait,
+                    "Pin" => native::InputSystemCursorShape::Pin,
+                    "Person" => native::InputSystemCursorShape::Person,
+                    "AppStarting" => native::InputSystemCursorShape::AppStarting,
+                    _ => unreachable!("validated enum variant"),
+                })
+                .and_then(|cursor| {
+                    element
+                        .cast::<native::IUIElementProtected>()?
+                        .SetProtectedCursor(&cursor)
+                })
+                .map_err(Into::into),
+            ),
             (PropertyId::Transitions, Some(PropertyValue::ThemeTransitions(values))) => {
                 Some((|| {
                     let collection = native::TransitionCollection::new()?;

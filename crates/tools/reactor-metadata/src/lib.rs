@@ -620,6 +620,13 @@ impl MetadataResolver {
         }
     }
 
+    /// Returns the variants of the named enum.
+    pub fn enum_variants(&self, namespace: &str, name: &str) -> Option<&[String]> {
+        self.enum_variants
+            .get(&(namespace.to_string(), name.to_string()))
+            .map(Vec::as_slice)
+    }
+
     pub fn enum_path(&self, class_name: &str, method_name: &str) -> Option<String> {
         let mref = self
             .lookup

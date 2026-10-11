@@ -369,3 +369,34 @@ fn hit_testing_records_set_and_clear() {
                 && clear.as_ref() == [PropertyId::IsHitTestVisible]
     )));
 }
+
+#[test]
+fn cursor_records_set_and_clear() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(Border::new().cursor(InputSystemCursorShape::SizeWestEast))
+        .unwrap();
+    let border = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(border)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::Cursor,
+                value: PropertyValue::Enum {
+                    kind: "InputSystemCursorShape",
+                    variant: "SizeWestEast",
+                },
+            })
+    );
+
+    let mutations = runtime.update(Border::new()).unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == border
+                && set.is_empty()
+                && clear.as_ref() == [PropertyId::Cursor]
+    )));
+}
