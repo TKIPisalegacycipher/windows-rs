@@ -965,6 +965,10 @@ name = "Content"
 name = "Icon"
 adapter = "icon_element"
 
+[[objects.properties]]
+name = "Background"
+adapter = "theme_brush"
+
 [[objects.relations]]
 name = "MenuItems"
 identity = "Keyed"
