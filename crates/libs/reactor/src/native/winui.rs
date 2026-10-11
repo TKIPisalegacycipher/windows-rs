@@ -1416,6 +1416,18 @@ fn load_encoded_bitmap(
     Ok(())
 }
 
+/// The element for a menu item's icon slot: its swatch if it has one, otherwise its icon.
+pub(crate) fn menu_icon(
+    icon: Option<&Icon>,
+    swatch: Option<ThemeBrush>,
+) -> windows_core::Result<Option<native::IconElement>> {
+    match (swatch, icon) {
+        (Some(brush), _) => menu_swatch(brush).map(Some),
+        (None, Some(icon)) => Ok(Some(icon_element(icon)?)),
+        (None, None) => Ok(None),
+    }
+}
+
 /// A menu item's round color swatch: a 10 px circle centered in the 16 px icon slot. It is loaded
 /// from XAML so that the fill is a `{ThemeResource}` and follows the active theme.
 pub(crate) fn menu_swatch(brush: ThemeBrush) -> windows_core::Result<native::IconElement> {
@@ -1443,12 +1455,13 @@ fn build_menu_items(
                 key,
                 label,
                 enabled,
+                icon,
                 swatch,
             } => {
                 let item = native::MenuFlyoutItem::new()?;
                 item.SetText(label)?;
-                if let Some(brush) = swatch {
-                    item.SetIcon(&menu_swatch(*brush)?)?;
+                if let Some(icon) = menu_icon(icon.as_ref(), *swatch)? {
+                    item.SetIcon(&icon)?;
                 }
                 item.cast::<native::IControl>()?.SetIsEnabled(*enabled)?;
                 let clicked_key = key.clone();
@@ -1468,9 +1481,14 @@ fn build_menu_items(
                 item.cast()?
             }
             MenuItem::Separator { .. } => native::MenuFlyoutSeparator::new()?.cast()?,
-            MenuItem::Submenu { label, items, .. } => {
+            MenuItem::Submenu {
+                label, icon, items, ..
+            } => {
                 let item = native::MenuFlyoutSubItem::new()?;
                 item.SetText(label)?;
+                if let Some(icon) = menu_icon(icon.as_ref(), None)? {
+                    item.SetIcon(&icon)?;
+                }
                 build_menu_items(
                     items,
                     &item.Items()?,

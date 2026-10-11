@@ -144,7 +144,7 @@ Microsoft::UI::Xaml::Controls::IMenuBarItem::{get_Items, put_Title}
 Microsoft::UI::Xaml::Controls::IMenuBarItemStatics::get_TitleProperty
 Microsoft::UI::Xaml::Controls::IMenuFlyout::get_Items
 Microsoft::UI::Xaml::Controls::IMenuFlyoutItem::{add_Click, put_Icon, put_Text, remove_Click}
-Microsoft::UI::Xaml::Controls::IMenuFlyoutSubItem::{get_Items, put_Text}
+Microsoft::UI::Xaml::Controls::IMenuFlyoutSubItem::{get_Items, put_Icon, put_Text}
 Microsoft::UI::Xaml::Controls::INavigationView::{add_DisplayModeChanged, add_SelectionChanged, get_FooterMenuItems, get_IsPaneOpen, get_MenuItems, get_SelectedItem, put_AlwaysShowHeader, put_Header, put_IsPaneOpen, put_IsPaneToggleButtonVisible, put_IsSettingsVisible, put_OpenPaneLength, put_PaneFooter, put_SelectedItem, remove_DisplayModeChanged, remove_SelectionChanged}
 Microsoft::UI::Xaml::Controls::INavigationView2::{get_IsBackEnabled, get_IsPaneVisible, get_PaneHeader, put_IsBackButtonVisible, put_IsBackEnabled, put_IsPaneVisible, put_PaneCustomContent, put_PaneDisplayMode, put_PaneHeader, put_PaneTitle}
 Microsoft::UI::Xaml::Controls::INavigationViewDisplayModeChangedEventArgs::get_DisplayMode

@@ -1934,13 +1934,17 @@ impl reactor::Component for Fixture {
                     .content("Menu target")
                     .menu(reactor::Menu::new(
                         [
-                            reactor::MenuItem::item("open", "Open"),
+                            reactor::MenuItem::item("open", "Open").icon(
+                                reactor::Icon::font("\u{E8E5}")
+                                    .foreground(reactor::ThemeBrush::Accent),
+                            ),
                             reactor::MenuItem::separator("separator"),
                             reactor::MenuItem::submenu(
                                 "share",
                                 "Share",
                                 [reactor::MenuItem::item("email", "Email")],
-                            ),
+                            )
+                            .icon(reactor::Symbol::Share),
                         ],
                         |_| {},
                     )),
