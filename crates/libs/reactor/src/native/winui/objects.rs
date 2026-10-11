@@ -184,6 +184,8 @@ impl WinUiAdapter {
                     let text_key = self.data_text_key.clone();
                     let item_min_height = Rc::new(Cell::new(None));
                     let container_min_height = Rc::clone(&item_min_height);
+                    let data_items = Rc::clone(&self.data_items);
+                    let container_resources = Rc::clone(&self.container_resources);
                     let _container_content_changing = value
                         .cast::<native::IListViewBase>()?
                         .ContainerContentChanging(move |_, args| {
@@ -193,7 +195,14 @@ impl WinUiAdapter {
                                     return Ok(());
                                 }
                                 let container = args.ItemContainer()?.cast()?;
-                                name_list_container(&container, &args.Item()?, &text_key)?;
+                                let item = args.Item()?;
+                                name_list_container(&container, &item, &text_key)?;
+                                set_list_container_resources(
+                                    &container,
+                                    &item,
+                                    &data_items,
+                                    &container_resources,
+                                )?;
                                 set_list_container_min_height(
                                     &container,
                                     container_min_height.get(),
@@ -375,6 +384,9 @@ impl WinUiAdapter {
                 {
                     break 'apply self.set_data_text(object, "");
                 }
+                if property == PropertyId::ContainerResources {
+                    break 'apply self.set_container_resources(object, None);
+                }
                 break 'apply match (self.handle(object)?, property) {
                     (Handle::TextBox(value), PropertyId::Text) => {
                         Self::set_text_box_text(value, "")
@@ -539,6 +551,11 @@ impl WinUiAdapter {
                 {
                     break 'apply self.set_data_text(object, text);
                 }
+                if let (PropertyId::ContainerResources, PropertyValue::ResourceOverrides(value)) =
+                    (property.id, &property.value)
+                {
+                    break 'apply self.set_container_resources(object, Some(value));
+                }
                 let tree_node_texts = Rc::clone(&self.tree_node_texts);
                 break 'apply match (self.handle(object)?, property.id, &property.value) {
                     (Handle::TextBox(value), PropertyId::Text, PropertyValue::String(text)) => {
@@ -656,6 +673,7 @@ impl WinUiAdapter {
             }
             Handle::Data(value) => {
                 self.data_items.borrow_mut().remove(&com_identity(&value)?);
+                self.container_resources.borrow_mut().items.remove(&object);
             }
             Handle::Generated(GeneratedHandle::ContentDialog(dialog)) => {
                 self.event_queue

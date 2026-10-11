@@ -3534,6 +3534,63 @@ impl reactor::Component for Fixture {
                     .unwrap(),
                 default_heights
             );
+            let default_colors = list_names_runtime
+                .adapter()
+                .list_item_pointer_over_colors(list)
+                .unwrap();
+            let marked = reactor::Color::rgb(1, 2, 3);
+            assert!(default_colors.iter().all(|color| *color != Some(marked)));
+            let resources = || {
+                reactor::ResourceOverrides::new().set("ListViewItemBackgroundPointerOver", marked)
+            };
+            let item = |key: &str, text: &str, marked: bool| {
+                let item = reactor::DataItem::new(key, text);
+                if marked {
+                    item.container_resource_overrides(resources())
+                } else {
+                    item
+                }
+            };
+            // A new item is marked as its container is prepared; a realized one is updated.
+            list_names_runtime
+                .update(reactor::ListView::new().items([
+                    item("first", "Renamed", true),
+                    item("second", "Second", false),
+                    item("third", "Third", true),
+                ]))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_pointer_over_colors(list)
+                    .unwrap(),
+                [Some(marked), default_colors[1], Some(marked)]
+            );
+            // Moving the overrides to another item removes them from the first.
+            list_names_runtime
+                .update(reactor::ListView::new().items([
+                    item("first", "Renamed", false),
+                    item("second", "Second", true),
+                    item("third", "Third", true),
+                ]))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_pointer_over_colors(list)
+                    .unwrap(),
+                [default_colors[0], Some(marked), Some(marked)]
+            );
+            list_names_runtime
+                .update(Self::named_list("Renamed"))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_pointer_over_colors(list)
+                    .unwrap(),
+                default_colors
+            );
             list_names_runtime
                 .adapter()
                 .validate_graph(list_names_runtime.graph())

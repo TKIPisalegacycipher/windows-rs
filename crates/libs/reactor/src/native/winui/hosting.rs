@@ -153,28 +153,7 @@ impl WinUiAdapter {
         }
         for (key, value) in resources.values() {
             let key = windows_reference::IReference::from(key);
-            let value: IInspectable = match value {
-                ResourceValue::Color(value) => solid_color_brush(*value)?.into(),
-                ResourceValue::Thickness(value) => {
-                    windows_reference::IReference::from(native::Thickness {
-                        left: value.left,
-                        top: value.top,
-                        right: value.right,
-                        bottom: value.bottom,
-                    })
-                    .into()
-                }
-                ResourceValue::CornerRadius(value) => {
-                    windows_reference::IReference::from(native::CornerRadius {
-                        top_left: value.top_left,
-                        top_right: value.top_right,
-                        bottom_right: value.bottom_right,
-                        bottom_left: value.bottom_left,
-                    })
-                    .into()
-                }
-            };
-            map.Insert(&key, &value)?;
+            map.Insert(&key, &resource_value(value)?)?;
         }
         if desired.is_empty() {
             self.resource_override_keys.remove(&object);

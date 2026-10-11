@@ -307,6 +307,60 @@ fn list_view_properties_update_and_clear() {
 }
 
 #[test]
+fn data_item_container_resource_overrides_update_and_clear() {
+    let resources =
+        ResourceOverrides::new().set("ListViewItemBackgroundPointerOver", Color::transparent());
+    let list = |item: DataItem| ListView::new().items([item]);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(list(
+            DataItem::new("header", "Today").container_resource_overrides(resources.clone()),
+        ))
+        .unwrap();
+    let list_view = runtime.graph().root().unwrap();
+    let item = runtime
+        .graph()
+        .children(list_view, RelationId::Items)
+        .unwrap()[0];
+    assert!(
+        runtime
+            .graph()
+            .properties(item)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::ContainerResources,
+                value: PropertyValue::ResourceOverrides(resources),
+            })
+    );
+
+    let changed =
+        ResourceOverrides::new().set("ListViewItemBackgroundPressed", Color::transparent());
+    let mutations = runtime
+        .update(list(
+            DataItem::new("header", "Today").container_resource_overrides(changed.clone()),
+        ))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == item && clear.is_empty() && set.as_ref() == [Property {
+                id: PropertyId::ContainerResources,
+                value: PropertyValue::ResourceOverrides(changed.clone()),
+            }]
+    )));
+
+    let mutations = runtime
+        .update(list(DataItem::new("header", "Today")))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == item && set.is_empty()
+                && clear.as_ref() == [PropertyId::ContainerResources]
+    )));
+}
+
+#[test]
 fn list_view_item_min_height_updates_clears_and_rejects_invalid_values() {
     for value in [-1.0, f64::NAN, f64::INFINITY] {
         assert!(std::panic::catch_unwind(|| ListView::new().item_min_height(value)).is_err());

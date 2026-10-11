@@ -595,6 +595,51 @@ impl WinUiAdapter {
         }
     }
 
+    fn set_container_resources(
+        &mut self,
+        object: ObjectId,
+        resources: Option<&ResourceOverrides>,
+    ) -> Result<(), WinUiError> {
+        let Handle::Data(value) = self.handle(object)? else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        let item = value.cast::<IInspectable>()?;
+        {
+            let mut container_resources = self.container_resources.borrow_mut();
+            match resources {
+                Some(resources) => {
+                    container_resources
+                        .keys
+                        .extend(resources.values().map(|(key, _)| key.to_string()));
+                    container_resources.items.insert(object, resources.clone());
+                }
+                None => {
+                    container_resources.items.remove(&object);
+                }
+            }
+        }
+        if let Some((parent, RelationId::Items)) = self.owners.get(&object).copied()
+            && let Some(Handle::ListView(list)) = self.handles.get(&parent)
+        {
+            // Update a realized container; the others are updated when the list prepares them.
+            match list
+                .value
+                .cast::<native::IItemContainerMapping>()?
+                .ContainerFromItem(&item)
+            {
+                Ok(container) => set_list_container_resources(
+                    &container,
+                    &item,
+                    &self.data_items,
+                    &self.container_resources,
+                )?,
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(())
+    }
+
     fn set_data_text(&mut self, object: ObjectId, text: &str) -> Result<(), WinUiError> {
         let content_key = self.data_content_key.clone();
         let text_key = self.data_text_key.clone();

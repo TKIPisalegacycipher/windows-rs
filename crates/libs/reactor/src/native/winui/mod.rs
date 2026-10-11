@@ -1756,6 +1756,15 @@ pub struct WinUiAdapter {
     pending_focus_states: Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
     tree_node_texts: Rc<RefCell<HashMap<usize, Rc<str>>>>,
     data_items: Rc<RefCell<HashMap<usize, ObjectId>>>,
+    container_resources: Rc<RefCell<ContainerResources>>,
+}
+
+/// The resource overrides that `DataItem`s request for their ListView item containers.
+#[derive(Default)]
+struct ContainerResources {
+    items: HashMap<ObjectId, ResourceOverrides>,
+    /// Every key ever requested, so a recycled container drops the previous item's overrides.
+    keys: HashSet<String>,
 }
 
 struct NativeRetirement {
@@ -1799,6 +1808,7 @@ impl Default for WinUiAdapter {
             pending_focus_states: Rc::new(RefCell::new(HashMap::new())),
             tree_node_texts: Rc::new(RefCell::new(HashMap::new())),
             data_items: Rc::new(RefCell::new(HashMap::new())),
+            container_resources: Rc::new(RefCell::new(ContainerResources::default())),
         }
     }
 }
@@ -2317,6 +2327,100 @@ fn name_list_container(
     key: &HSTRING,
 ) -> windows_core::Result<()> {
     native::AutomationProperties::SetName(container, &data_item_text(item, key)?.to_string_lossy())
+}
+
+/// The native value of a resource override.
+fn resource_value(value: &ResourceValue) -> windows_core::Result<IInspectable> {
+    Ok(match value {
+        ResourceValue::Color(value) => solid_color_brush(*value)?.into(),
+        ResourceValue::Thickness(value) => windows_reference::IReference::from(native::Thickness {
+            left: value.left,
+            top: value.top,
+            right: value.right,
+            bottom: value.bottom,
+        })
+        .into(),
+        ResourceValue::CornerRadius(value) => {
+            windows_reference::IReference::from(native::CornerRadius {
+                top_left: value.top_left,
+                top_right: value.top_right,
+                bottom_right: value.bottom_right,
+                bottom_left: value.bottom_left,
+            })
+            .into()
+        }
+    })
+}
+
+/// The resource key under which a ListView item container records the overrides it was given.
+const CONTAINER_RESOURCES_KEY: &str = "WindowsReactorContainerResources";
+
+/// Applies a `DataItem`'s container resource overrides to the container now showing it, removing
+/// any that another item left on a recycled container.
+fn set_list_container_resources(
+    container: &native::DependencyObject,
+    item: &IInspectable,
+    data_items: &RefCell<HashMap<usize, ObjectId>>,
+    resources: &RefCell<ContainerResources>,
+) -> windows_core::Result<()> {
+    let resources = resources.borrow();
+    let overrides = data_items
+        .borrow()
+        .get(&com_identity(item)?)
+        .and_then(|object| resources.items.get(object))
+        .cloned()
+        .unwrap_or_default();
+    if resources.keys.is_empty() {
+        return Ok(());
+    }
+    let map = container
+        .cast::<native::IFrameworkElement>()?
+        .Resources()?
+        .cast::<IMap<IInspectable, IInspectable>>()?;
+    // The container records the overrides it was given, so that a container prepared again for
+    // the same overrides (a header row recycled into another header row) is left alone.
+    let marker = windows_reference::IReference::from(CONTAINER_RESOURCES_KEY);
+    let applied = if map.HasKey(&marker)? {
+        map.Lookup(&marker)?
+            .cast::<windows_reference::IReference<HSTRING>>()?
+            .Value()?
+    } else {
+        HSTRING::new()
+    };
+    let desired = if overrides.values().next().is_none() {
+        HSTRING::new()
+    } else {
+        HSTRING::from(format!("{overrides:?}"))
+    };
+    if applied == desired {
+        return Ok(());
+    }
+    for key in &resources.keys {
+        if !overrides.values().any(|(desired, _)| desired == key) {
+            let key = windows_reference::IReference::from(key.as_str());
+            if map.HasKey(&key)? {
+                map.Remove(&key)?;
+            }
+        }
+    }
+    for (key, value) in overrides.values() {
+        map.Insert(
+            &windows_reference::IReference::from(key),
+            &resource_value(value)?,
+        )?;
+    }
+    if desired.is_empty() {
+        map.Remove(&marker)?;
+    } else {
+        let value: IInspectable = windows_reference::IReference::from(desired).into();
+        map.Insert(&marker, &value)?;
+    }
+    // The container's template resolved its theme resources when it was applied, so apply the
+    // template from its style again to pick up the changed overrides.
+    container
+        .cast::<native::IControl>()?
+        .SetTemplate(None::<&native::ControlTemplate>)?;
+    container.ClearValue(&native::Control::TemplateProperty()?)
 }
 
 /// Applies a ListView's item minimum height to one of its containers; clearing restores the
