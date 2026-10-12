@@ -1,4 +1,5 @@
 use super::*;
+use crate::Mutation;
 
 fn page(mounted: bool, grid: &ElementRef<Grid>, web: &ElementRef<WebView2>) -> View {
     let page = StackPanel::new()
@@ -135,6 +136,125 @@ fn retirement_and_replacement_release_adapter_state() {
                     finished.set(true);
                     app.exit().unwrap();
                     phase.set(2);
+                }
+                _ => {}
+            }
+        })?;
+        timer.Start()?;
+        Ok((timer, tick))
+    });
+    result.unwrap();
+    assert!(completed.get());
+}
+
+fn dialogs_page(a_open: bool) -> View {
+    let dialog = |open: bool| {
+        ContentDialog::new()
+            .title("Dialog")
+            .close_button_text("Cancel")
+            .is_open(open)
+    };
+    Grid::new()
+        .keyed_children([
+            keyed(
+                "a",
+                Button::new().content("A").content_dialog(dialog(a_open)),
+            ),
+            keyed(
+                "b",
+                Button::new().content("B").content_dialog(dialog(false)),
+            ),
+        ])
+        .into()
+}
+
+#[test]
+#[ignore = "requires an interactive WinUI desktop"]
+fn content_dialog_destroyed_while_shown_is_hidden() {
+    // WinUI supports one Application lifetime per process.
+    if std::env::var_os("REACTOR_LIFECYCLE_TEST_CHILD").is_none() {
+        let status = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "native::winui::tests::lifecycle::content_dialog_destroyed_while_shown_is_hidden",
+                "--ignored",
+                "--nocapture",
+            ])
+            .env("REACTOR_LIFECYCLE_TEST_CHILD", "1")
+            .status()
+            .unwrap();
+        assert!(status.success());
+        return;
+    }
+    let completed = Rc::new(Cell::new(false));
+    let finished = Rc::clone(&completed);
+    let result = App::run_with(move |app| {
+        let mut runtime = Runtime::new(WinUiAdapter::default());
+        runtime.update(dialogs_page(true)).unwrap();
+        let root = runtime.graph().root().unwrap();
+        let window = runtime.adapter_mut().create_window(root).unwrap();
+        window.activate().unwrap();
+        let timer = native::DispatcherQueue::GetForCurrentThread()?.CreateTimer()?;
+        timer.SetInterval(TimeSpan::try_from(Duration::from_millis(100)).unwrap())?;
+        let runtime = RefCell::new(runtime);
+        let window = RefCell::new(Some(window));
+        let phase = Cell::new(0);
+        let ticks = Cell::new(0);
+        let shown = RefCell::new(None);
+        let app = app.clone();
+        let tick = timer.Tick(move |_, _| {
+            ticks.set(ticks.get() + 1);
+            assert!(
+                ticks.get() < 100,
+                "content dialog test timed out at phase {}",
+                phase.get()
+            );
+            let mut runtime = runtime.borrow_mut();
+            runtime.dispatch_native_events().unwrap();
+            let children = runtime
+                .graph()
+                .children(root, RelationId::Children)
+                .unwrap()
+                .to_vec();
+            match phase.get() {
+                // Let dialog "a" show.
+                0..10 => phase.set(phase.get() + 1),
+                10 => {
+                    let (a, b) = (children[0], children[1]);
+                    let shown_dialog = runtime.graph().content_dialog(a).unwrap().0;
+                    let other = runtime.graph().content_dialog(b).unwrap().0;
+                    // The reconciler hides a dialog before releasing it; an adapter fed a release
+                    // of a shown dialog (here through an owner swap) must hide it too.
+                    runtime
+                        .adapter_mut()
+                        .apply(&[
+                            Mutation::SetContentDialog {
+                                owner: b,
+                                dialog: None,
+                            },
+                            Mutation::SetContentDialog {
+                                owner: a,
+                                dialog: Some(other),
+                            },
+                            Mutation::Destroy {
+                                object: shown_dialog,
+                            },
+                        ])
+                        .unwrap();
+                    *shown.borrow_mut() = Some(shown_dialog);
+                    phase.set(11);
+                }
+                11 => {
+                    let dialog = shown.borrow().unwrap();
+                    let dialogs = &runtime.adapter().event_queue.content_dialogs;
+                    // Released once its Closed arrives.
+                    if dialogs.borrow().dialogs.contains_key(&dialog) {
+                        return;
+                    }
+                    window.borrow_mut().take().unwrap().close().unwrap();
+                    finished.set(true);
+                    app.exit().unwrap();
+                    phase.set(12);
                 }
                 _ => {}
             }

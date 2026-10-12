@@ -548,8 +548,9 @@ impl NativeContentDialogScheduler {
     }
 
     /// Retires a released dialog. Returns the dialog to `Hide()` (once the scheduler is no longer
-    /// borrowed) when it is still shown: its host is gone, so it must not stay up over the window
-    /// with live buttons. Its `Closed` is suppressed, as `reset` does.
+    /// borrowed) when it is still shown, so it does not stay up over the window with live
+    /// buttons. The reconciler closes a dialog before releasing it; an owner swap applied to the
+    /// adapter directly does not. Its `Closed` is suppressed, as `reset` does.
     fn retire(
         &mut self,
         dialog: ObjectId,

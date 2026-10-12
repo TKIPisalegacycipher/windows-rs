@@ -636,8 +636,10 @@ impl WinUiAdapter {
                     .content_dialogs
                     .borrow_mut()
                     .retire(object, *dialog)?;
+                // Best effort, as `reset` hides: the handle is already gone, and a reconciled release
+                // was already hidden by `SetContentDialogOpen`.
                 if let Some(value) = hide {
-                    value.Hide()?;
+                    _ = value.Hide();
                 }
             }
             _ => {}
