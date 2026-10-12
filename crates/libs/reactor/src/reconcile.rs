@@ -3124,10 +3124,12 @@ impl Planner<'_, '_> {
             object,
             kind: declaration.kind,
         });
-        if !declaration.properties.as_slice().is_empty() {
+        let (properties, selected_index) =
+            split_selected_index(declaration.kind, declaration.properties.as_slice());
+        if !properties.is_empty() {
             self.mutations.push(Mutation::SetProperties {
                 object,
-                set: Rc::from(declaration.properties.as_slice()),
+                set: properties.into(),
                 clear: Rc::from([]),
             });
         }
@@ -3148,6 +3150,7 @@ impl Planner<'_, '_> {
         for contract in relation_contracts(declaration.kind) {
             self.mount_relation(object, declaration, contract)?;
         }
+        self.set_selected_index(object, selected_index);
         if let Some(height) = declaration.window_title_bar {
             self.retained.set_window_title_bar(object, height)?;
             self.mutations
@@ -3237,17 +3240,12 @@ impl Planner<'_, '_> {
             object,
             kind: declaration.kind,
         });
-        if !self
-            .retained
-            .get(object)
-            .unwrap()
-            .properties
-            .as_slice()
-            .is_empty()
-        {
+        let (properties, selected_index) =
+            split_selected_index(declaration.kind, declaration.properties.as_slice());
+        if !properties.is_empty() {
             self.mutations.push(Mutation::SetProperties {
                 object,
-                set: Rc::from(self.retained.get(object).unwrap().properties.as_slice()),
+                set: properties.into(),
                 clear: Rc::from([]),
             });
         }
@@ -3268,6 +3266,7 @@ impl Planner<'_, '_> {
         for contract in relation_contracts(declaration.kind) {
             self.mount_relation(object, declaration, contract)?;
         }
+        self.set_selected_index(object, selected_index);
         if let Some(height) = declaration.window_title_bar {
             self.mutations
                 .push(Mutation::SetWindowTitleBar { object, height });
@@ -3543,9 +3542,22 @@ impl Planner<'_, '_> {
         Ok(object)
     }
 
+    /// Applies a mounted selector's `SelectedIndex` (`split_selected_index`) after its items.
+    fn set_selected_index(&mut self, object: ObjectId, selected_index: Option<Property>) {
+        if let Some(property) = selected_index {
+            self.mutations.push(Mutation::SetProperties {
+                object,
+                set: Rc::from([property]),
+                clear: Rc::from([]),
+            });
+        }
+    }
+
     /// Applies a selector's `SelectedIndex` after its items: the changed value, or the declared
     /// one again when items were inserted, removed or moved since `items_from` (removing the
     /// selected item drops or moves the native selection while the declared index can stay).
+    /// A GridView item retiring with an exit transition stays in the native items until its
+    /// retirement completes, so an index past it names the native item one earlier.
     fn reconcile_selected_index(
         &mut self,
         object: ObjectId,
@@ -4270,4 +4282,18 @@ pub use test_support::*;
 /// Selectors whose `SelectedIndex` indexes their `Items`.
 fn selects_by_index(kind: ObjectType) -> bool {
     matches!(kind, ObjectType::ListView | ObjectType::GridView)
+}
+
+/// An object's properties to apply when it is created, and apart from them an index selector's
+/// `SelectedIndex`, which is applied after the items it indexes.
+fn split_selected_index(
+    kind: ObjectType,
+    properties: &[Property],
+) -> (Vec<Property>, Option<Property>) {
+    let index_selection = selects_by_index(kind);
+    let (selected, rest): (Vec<_>, Vec<_>) = properties
+        .iter()
+        .cloned()
+        .partition(|property| index_selection && property.id == PropertyId::SelectedIndex);
+    (rest, selected.into_iter().next())
 }

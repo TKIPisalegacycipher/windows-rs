@@ -869,6 +869,50 @@ fn removals_and_index_sets(mutations: &UpdateStats, list: ObjectId) -> (Vec<usiz
     (removals, index_sets)
 }
 
+/// Positions of the list's item inserts and of its `SelectedIndex` sets in `mutations`.
+fn inserts_and_index_sets(mutations: &UpdateStats, list: ObjectId) -> (Vec<usize>, Vec<usize>) {
+    let inserts = mutations
+        .iter()
+        .enumerate()
+        .filter(
+            |(_, mutation)| matches!(mutation, Mutation::Insert { parent, .. } if *parent == list),
+        )
+        .map(|(at, _)| at)
+        .collect();
+    (inserts, removals_and_index_sets(mutations, list).1)
+}
+
+#[test]
+fn list_view_selected_index_is_set_after_the_items_it_mounts_with() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(list_view_with(&["a", "b", "c"], Some(1)))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let (inserts, index_sets) = inserts_and_index_sets(&mutations, list);
+    assert_eq!(inserts.len(), 3);
+    assert_eq!(index_sets.len(), 1);
+    assert!(index_sets[0] > inserts[2]);
+}
+
+#[test]
+fn list_view_selected_index_is_set_after_the_items_it_replaces_with() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(Border::new().content(Button::new().content("Button")))
+        .unwrap();
+    let root = runtime.graph().root().unwrap();
+    let target = runtime.graph().child(root, RelationId::Content).unwrap();
+
+    let mutations = runtime
+        .update_subtree(target, list_view_with(&["a", "b", "c"], Some(1)))
+        .unwrap();
+    let (inserts, index_sets) = inserts_and_index_sets(&mutations, target);
+    assert_eq!(inserts.len(), 3);
+    assert_eq!(index_sets.len(), 1);
+    assert!(index_sets[0] > inserts[2]);
+}
+
 #[test]
 fn list_view_selected_index_is_set_after_the_items_it_indexes() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
