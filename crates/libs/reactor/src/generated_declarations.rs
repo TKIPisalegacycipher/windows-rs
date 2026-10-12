@@ -3391,6 +3391,13 @@ impl DataItem {
         );
         self
     }
+    pub fn automation_id(mut self, automation_id: impl AsRef<str>) -> Self {
+        self.0 = self.0.property(
+            PropertyId::AutomationId,
+            PropertyValue::String(Rc::from(automation_id.as_ref())),
+        );
+        self
+    }
     /// Rejects values outside this relation's generated type contract.
     ///
     /// ```compile_fail
@@ -6866,6 +6873,13 @@ impl ContentDialog {
         self.0 = self
             .0
             .property(PropertyId::DefaultButton, default_button.property_value());
+        self
+    }
+    pub fn automation_id(mut self, automation_id: impl AsRef<str>) -> Self {
+        self.0 = self.0.property(
+            PropertyId::AutomationId,
+            PropertyValue::String(Rc::from(automation_id.as_ref())),
+        );
         self
     }
     /// Rejects values outside this relation's generated type contract.

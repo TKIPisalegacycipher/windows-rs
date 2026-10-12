@@ -523,7 +523,7 @@ impl Fixture {
 
     fn named_list(first: &str) -> reactor::ListView {
         reactor::ListView::new().items([
-            reactor::DataItem::new("first", first),
+            reactor::DataItem::new("first", first).automation_id("row-first"),
             reactor::DataItem::new("second", "Second")
                 .content(reactor::TextBlock::new().text("Second content")),
         ])
@@ -3351,6 +3351,13 @@ impl reactor::Component for Fixture {
                 return;
             }
             self.popup_waits = 0;
+            assert_eq!(
+                menu_runtime
+                    .adapter()
+                    .menu_item_automation_ids(target)
+                    .unwrap(),
+                ["open", "", "share"]
+            );
             menu_runtime.adapter().hide_menu(target).unwrap();
             self.menu_window.take().unwrap().close().unwrap();
             self.menu_runtime.take();
@@ -3529,6 +3536,13 @@ impl reactor::Component for Fixture {
                 return;
             }
             assert_eq!(names, ["First", "Second"]);
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_automation_ids(list)
+                    .unwrap(),
+                ["row-first", ""]
+            );
             list_names_runtime
                 .update(Self::named_list("Renamed"))
                 .unwrap();

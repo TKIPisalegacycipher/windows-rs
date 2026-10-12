@@ -709,6 +709,10 @@ name = "ContainerResources"
 value = "ResourceOverrides"
 method = "container_resource_overrides"
 
+[[objects.properties]]
+name = "AutomationId"
+adapter = "automation_id"
+
 [[objects.relations]]
 name = "Content"
 
@@ -1908,6 +1912,10 @@ adapter = "inspectable_string"
 
 [[objects.properties]]
 name = "DefaultButton"
+
+[[objects.properties]]
+name = "AutomationId"
+adapter = "automation_id"
 
 [[objects.relations]]
 name = "Content"

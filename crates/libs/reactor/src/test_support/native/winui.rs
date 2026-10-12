@@ -768,6 +768,31 @@ impl WinUiAdapter {
         Ok(names)
     }
 
+    /// Lays out a ListView and returns the automation ids of its realized item containers.
+    pub fn list_item_automation_ids(&self, object: ObjectId) -> Result<Vec<String>, WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        list.value.cast::<native::IUIElement>()?.UpdateLayout()?;
+        let containers = list.value.cast::<native::IItemContainerMapping>()?;
+        let count = list
+            .value
+            .cast::<native::IItemsControl>()?
+            .Items()?
+            .Size()?;
+        let mut ids = Vec::new();
+        for index in 0..count {
+            match containers.ContainerFromIndex(index as i32) {
+                Ok(container) => {
+                    ids.push(native::AutomationProperties::GetAutomationId(&container)?);
+                }
+                Err(error) if error.code().is_ok() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(ids)
+    }
+
     /// Lays out a ListView and returns the minimum heights of its realized item containers.
     pub fn list_item_min_heights(&self, object: ObjectId) -> Result<Vec<f64>, WinUiError> {
         let Some(Handle::ListView(list)) = self.handles.get(&object) else {
@@ -1183,6 +1208,26 @@ impl WinUiAdapter {
             .cast::<native::FrameworkElement>()?;
         flyout.ShowAt(&target)?;
         Ok(flyout.IsOpen()?)
+    }
+
+    /// The automation ids of a button or context menu's top-level items.
+    pub fn menu_item_automation_ids(&self, target: ObjectId) -> Result<Vec<String>, WinUiError> {
+        let menu = self
+            .menus
+            .get(&target)
+            .ok_or(WinUiError::InvalidObject(target))?;
+        let items = menu
+            .flyout
+            .as_ref()
+            .ok_or(WinUiError::InvalidObject(target))?
+            .Items()?;
+        let mut ids = Vec::new();
+        for index in 0..items.Size()? {
+            ids.push(native::AutomationProperties::GetAutomationId(
+                &items.GetAt(index)?,
+            )?);
+        }
+        Ok(ids)
     }
 
     pub fn is_menu_open(&self, target: ObjectId) -> Result<bool, WinUiError> {

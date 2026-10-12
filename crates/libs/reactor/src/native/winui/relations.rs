@@ -730,16 +730,38 @@ impl WinUiAdapter {
             properties.Insert(&content_key, &text)?;
         }
         let item = value.cast::<IInspectable>()?;
+        self.rename_list_container(object, &item, &text_key)
+    }
+
+    fn set_data_automation_id(&mut self, object: ObjectId, id: &str) -> Result<(), WinUiError> {
+        let text_key = self.data_text_key.clone();
+        let Handle::Data(value) = self.handle(object)? else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        let properties = value.cast::<IMap<HSTRING, IInspectable>>()?;
+        let id: IInspectable = windows_reference::IReference::from(HSTRING::from(id)).into();
+        properties.Insert(&HSTRING::from(DATA_AUTOMATION_ID_KEY), &id)?;
+        let item = value.cast::<IInspectable>()?;
+        self.rename_list_container(object, &item, &text_key)
+    }
+
+    /// Names the realized container showing a list's `DataItem` again; the others are named when
+    /// the list prepares them.
+    fn rename_list_container(
+        &self,
+        object: ObjectId,
+        item: &IInspectable,
+        text_key: &HSTRING,
+    ) -> Result<(), WinUiError> {
         if let Some((parent, RelationId::Items)) = self.owners.get(&object).copied()
             && let Some(Handle::ListView(list)) = self.handles.get(&parent)
         {
-            // Rename a realized container; the others are named when the list prepares them.
             match list
                 .value
                 .cast::<native::IItemContainerMapping>()?
-                .ContainerFromItem(&item)
+                .ContainerFromItem(item)
             {
-                Ok(container) => name_list_container(&container, &item, &text_key)?,
+                Ok(container) => name_list_container(&container, item, text_key)?,
                 Err(error) if error.code().is_ok() => {}
                 Err(error) => return Err(error.into()),
             }

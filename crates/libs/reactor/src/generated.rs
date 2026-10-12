@@ -1563,6 +1563,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::ResourceOverrides,
         }),
+        (ObjectType::DataItem, PropertyId::AutomationId) => Some(PropertyContract {
+            id,
+            value: ValueType::String,
+        }),
         (ObjectType::HyperlinkButton, PropertyId::NavigateUri) => Some(PropertyContract {
             id,
             value: ValueType::String,
@@ -2434,6 +2438,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
                 variants: &["None", "Primary", "Secondary", "Close"],
             },
         }),
+        (ObjectType::ContentDialog, PropertyId::AutomationId) => Some(PropertyContract {
+            id,
+            value: ValueType::String,
+        }),
         (ObjectType::CalendarView, PropertyId::IsTodayHighlighted) => Some(PropertyContract {
             id,
             value: ValueType::Bool,
@@ -2616,6 +2624,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::ListView, PropertyId::IsEnabled) => 35,
         (ObjectType::DataItem, PropertyId::Text) => 29,
         (ObjectType::DataItem, PropertyId::ContainerResources) => 30,
+        (ObjectType::DataItem, PropertyId::AutomationId) => 31,
         (ObjectType::HyperlinkButton, PropertyId::NavigateUri) => 29,
         (ObjectType::HyperlinkButton, PropertyId::IsEnabled) => 30,
         (ObjectType::RepeatButton, PropertyId::IsEnabled) => 29,
@@ -2787,6 +2796,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::ContentDialog, PropertyId::IsSecondaryButtonEnabled) => 33,
         (ObjectType::ContentDialog, PropertyId::Title) => 34,
         (ObjectType::ContentDialog, PropertyId::DefaultButton) => 35,
+        (ObjectType::ContentDialog, PropertyId::AutomationId) => 36,
         (ObjectType::CalendarView, PropertyId::IsTodayHighlighted) => 29,
         (ObjectType::CalendarView, PropertyId::IsGroupLabelVisible) => 30,
         (ObjectType::CalendarView, PropertyId::IsEnabled) => 31,

@@ -418,6 +418,11 @@ impl WinUiAdapter {
                 if property == PropertyId::ContainerResources {
                     break 'apply self.set_container_resources(object, None);
                 }
+                if property == PropertyId::AutomationId
+                    && matches!(self.handles.get(&object), Some(Handle::Data(_)))
+                {
+                    break 'apply self.set_data_automation_id(object, "");
+                }
                 break 'apply match (self.handle(object)?, property) {
                     (Handle::TextBox(value), PropertyId::Text) => {
                         Self::set_text_box_text(value, "")
@@ -581,6 +586,12 @@ impl WinUiAdapter {
                     (property.id, &property.value)
                 {
                     break 'apply self.set_container_resources(object, Some(value));
+                }
+                if property.id == PropertyId::AutomationId
+                    && matches!(self.handles.get(&object), Some(Handle::Data(_)))
+                    && let PropertyValue::String(id) = &property.value
+                {
+                    break 'apply self.set_data_automation_id(object, id);
                 }
                 let tree_node_texts = Rc::clone(&self.tree_node_texts);
                 break 'apply match (self.handle(object)?, property.id, &property.value) {

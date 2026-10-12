@@ -365,6 +365,50 @@ fn data_item_container_resource_overrides_update_and_clear() {
 }
 
 #[test]
+fn data_item_automation_id_updates_and_clears() {
+    let list = |item: DataItem| ListView::new().items([item]);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(list(DataItem::new("m1", "Hello").automation_id("Row.m1")))
+        .unwrap();
+    let list_view = runtime.graph().root().unwrap();
+    let item = runtime
+        .graph()
+        .children(list_view, RelationId::Items)
+        .unwrap()[0];
+    assert!(
+        runtime
+            .graph()
+            .properties(item)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::AutomationId,
+                value: PropertyValue::String("Row.m1".into()),
+            })
+    );
+
+    let mutations = runtime
+        .update(list(DataItem::new("m1", "Hello").automation_id("Row.m2")))
+        .unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == item && clear.is_empty() && set.as_ref() == [Property {
+                id: PropertyId::AutomationId,
+                value: PropertyValue::String("Row.m2".into()),
+            }]
+    )));
+
+    let mutations = runtime.update(list(DataItem::new("m1", "Hello"))).unwrap();
+    assert!(mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { object, set, clear }
+            if *object == item && set.is_empty()
+                && clear.as_ref() == [PropertyId::AutomationId]
+    )));
+}
+
+#[test]
 fn list_view_item_min_height_updates_clears_and_rejects_invalid_values() {
     for value in [-1.0, f64::NAN, f64::INFINITY] {
         assert!(std::panic::catch_unwind(|| ListView::new().item_min_height(value)).is_err());
