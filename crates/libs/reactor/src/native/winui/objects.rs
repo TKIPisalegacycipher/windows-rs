@@ -289,6 +289,16 @@ impl WinUiAdapter {
         });
         let clear = sorted_clear.as_deref().unwrap_or(clear);
         let set = sorted_set.as_deref().unwrap_or(set);
+        if matches!(kind, ObjectType::ListView | ObjectType::GridView) {
+            if set
+                .iter()
+                .any(|property| property.id == PropertyId::SelectedIndex)
+            {
+                self.controlled_index_selectors.insert(object);
+            } else if clear.contains(&PropertyId::SelectedIndex) {
+                self.controlled_index_selectors.remove(&object);
+            }
+        }
         for property in clear.iter().copied() {
             if property == PropertyId::Source {
                 self.release_image(object);
@@ -592,6 +602,7 @@ impl WinUiAdapter {
     fn release_object(&mut self, object: ObjectId, handle: Handle) -> Result<(), WinUiError> {
         self.release_image(object);
         self.resource_override_keys.remove(&object);
+        self.controlled_index_selectors.remove(&object);
         self.style_states.remove(&object);
         self.virtual_items.remove(&object);
         self.observations

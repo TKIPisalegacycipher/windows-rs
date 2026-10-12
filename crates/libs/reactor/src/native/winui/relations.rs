@@ -428,7 +428,7 @@ impl WinUiAdapter {
         let index_selection = matches!(
             (self.kind(owner)?, relation),
             (ObjectType::ListView | ObjectType::GridView, RelationId::Items)
-        );
+        ) && self.controlled_index_selectors.contains(&owner);
         let Some(event) = selection
             .map(|selection| selection.event)
             .or(index_selection.then_some(EventId::SelectionChanged))
