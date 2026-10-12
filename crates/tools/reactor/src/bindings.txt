@@ -128,13 +128,14 @@ Microsoft::UI::Xaml::Controls::IInfoBadge::put_Value
 Microsoft::UI::Xaml::Controls::IInfoBadgeStatics::get_ValueProperty
 Microsoft::UI::Xaml::Controls::IInfoBar::{add_Closed, put_IsClosable, put_IsOpen, put_Message, put_Severity, put_Title, remove_Closed}
 Microsoft::UI::Xaml::Controls::IInfoBarStatics::{get_IsClosableProperty, get_IsOpenProperty, get_MessageProperty, get_SeverityProperty, get_TitleProperty}
+Microsoft::UI::Xaml::Controls::IItemClickEventArgs::get_ClickedItem
 Microsoft::UI::Xaml::Controls::IItemContainer::{get_IsSelected, put_IsSelected}
 Microsoft::UI::Xaml::Controls::IItemContainerMapping::{ContainerFromIndex, ContainerFromItem}
 Microsoft::UI::Xaml::Controls::IItemContainerStatics::get_IsSelectedProperty
 Microsoft::UI::Xaml::Controls::IItemsControl::{get_Items, put_ItemsSource, put_ItemTemplate}
 Microsoft::UI::Xaml::Controls::IItemsControlStatics::get_ItemsSourceProperty
 Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate}
-Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted, ScrollIntoView}
+Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, add_ItemClick, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_IsItemClickEnabled, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted, remove_ItemClick, ScrollIntoView}
 Microsoft::UI::Xaml::Controls::IListViewBaseStatics::{get_CanDragItemsProperty, get_CanReorderItemsProperty, get_SelectionModeProperty}
 Microsoft::UI::Xaml::Controls::Image::CreateInstance
 Microsoft::UI::Xaml::Controls::ImageIcon::CreateInstance

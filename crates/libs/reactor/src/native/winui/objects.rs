@@ -172,6 +172,30 @@ impl WinUiAdapter {
                             ),
                             Err(error) => report_error(error.into()),
                         })?;
+                    let item_click = Rc::new(RefCell::new(NativeKeysEvent::default()));
+                    let item_click_event = Rc::clone(&item_click);
+                    let item_click_queue = Rc::clone(&self.event_queue);
+                    let click_data_items = Rc::clone(&self.data_items);
+                    let _item_click = value.cast::<native::IListViewBase>()?.ItemClick(
+                        move |_, args| {
+                            let result = args
+                                .unwrap()
+                                .ClickedItem()
+                                .map_err(WinUiError::from)
+                                .and_then(|item| {
+                                    Self::dispatch_clicked_item(
+                                        &item_click_event,
+                                        &item_click_queue,
+                                        object,
+                                        &item,
+                                        &click_data_items,
+                                    )
+                                });
+                            if let Err(error) = result {
+                                report_error(error.into());
+                            }
+                        },
+                    )?;
                     let text_key = self.data_text_key.clone();
                     let item_min_height = Rc::new(Cell::new(None));
                     let container_min_height = Rc::clone(&item_min_height);
@@ -212,7 +236,9 @@ impl WinUiAdapter {
                         selection_changed,
                         drag_items_completed,
                         selected_keys_changed,
+                        item_click,
                         _selection_changed,
+                        _item_click,
                         _drag_items_completed,
                         _container_content_changing,
                         item_min_height,

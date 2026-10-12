@@ -671,6 +671,10 @@ adapter = "string_list"
 name = "SelectedKeysChanged"
 adapter = "item_keys"
 
+[[objects.events]]
+name = "ItemClick"
+adapter = "item_keys"
+
 [[objects]]
 name = "DataItem"
 category = "Data"

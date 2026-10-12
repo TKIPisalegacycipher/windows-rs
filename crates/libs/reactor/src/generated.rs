@@ -303,6 +303,7 @@ pub enum EventId {
     IsCheckedChanged,
     IsExpandedChanged,
     IsPaneOpenChanged,
+    ItemClick,
     ItemClicked,
     ItemInvoked,
     KeyUp,
@@ -686,6 +687,10 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
             },
             EventContract {
                 id: EventId::SelectedKeysChanged,
+                value: ValueType::Keys,
+            },
+            EventContract {
+                id: EventId::ItemClick,
                 value: ValueType::Keys,
             },
         ],

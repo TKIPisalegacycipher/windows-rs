@@ -159,6 +159,35 @@ impl WinUiAdapter {
         Ok(())
     }
 
+    /// Queues the data item that was clicked (or invoked with Enter or Space), for the runtime to
+    /// report as its key.
+    fn dispatch_clicked_item(
+        event: &Rc<RefCell<NativeKeysEvent>>,
+        event_queue: &Rc<NativeEventQueue>,
+        object: ObjectId,
+        clicked: &IInspectable,
+        data_items: &RefCell<HashMap<usize, ObjectId>>,
+    ) -> Result<(), WinUiError> {
+        let event = event.borrow();
+        if event.callback.is_none() {
+            return Ok(());
+        }
+        let Some(item) = data_items.borrow().get(&com_identity(clicked)?).copied() else {
+            return Ok(());
+        };
+        event_queue.queue(
+            None,
+            Some(QueuedEvent {
+                object,
+                event: EventId::ItemClick,
+                revision: event.revision,
+                payload: EventPayload::Items(vec![item]),
+            }),
+        );
+        Self::schedule_event_wake(event_queue);
+        Ok(())
+    }
+
     fn tab_item_tags(source: &native::ITabView) -> Result<Vec<String>, WinUiError> {
         let items = source.TabItems()?;
         let mut tags = Vec::with_capacity(items.Size()? as usize);
@@ -708,6 +737,16 @@ impl WinUiAdapter {
                             native_event.revision = native_event.revision.wrapping_add(1);
                             native_event.callback = None;
                         }
+                        EventId::ItemClick => {
+                            let mut native_event = value.item_click.borrow_mut();
+                            native_event.revision = native_event.revision.wrapping_add(1);
+                            native_event.callback = None;
+                            // Clicks, Enter and Space raise ItemClick only while this is on.
+                            value
+                                .value
+                                .cast::<native::IListViewBase>()?
+                                .SetIsItemClickEnabled(false)?;
+                        }
                         _ => return Err(WinUiError::InvalidEvent(object, *event)),
                     }
                 }
@@ -727,6 +766,15 @@ impl WinUiAdapter {
                             let mut native_event = value.selected_keys_changed.borrow_mut();
                             native_event.revision = native_event.revision.wrapping_add(1);
                             native_event.callback = Some(callback.clone());
+                        }
+                        (EventId::ItemClick, EventValue::Keys(callback)) => {
+                            let mut native_event = value.item_click.borrow_mut();
+                            native_event.revision = native_event.revision.wrapping_add(1);
+                            native_event.callback = Some(callback.clone());
+                            value
+                                .value
+                                .cast::<native::IListViewBase>()?
+                                .SetIsItemClickEnabled(true)?;
                         }
                         _ => return Err(WinUiError::InvalidEvent(object, event.id)),
                     }

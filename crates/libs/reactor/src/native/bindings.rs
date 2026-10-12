@@ -12258,6 +12258,35 @@ pub struct IInputSystemCursorStatics_Vtbl {
     ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
+    IItemClickEventArgs,
+    IItemClickEventArgs_Vtbl,
+    0x1cf87a70_6348_57ec_9eac_fa0565adc60f
+);
+impl windows_core::RuntimeType for IItemClickEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl IItemClickEventArgs {
+    pub(crate) fn ClickedItem(&self) -> windows_core::Result<windows_core::IInspectable> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).ClickedItem)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+}
+#[repr(C)]
+pub struct IItemClickEventArgs_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub ClickedItem: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
     IItemContainer,
     IItemContainer_Vtbl,
     0x6332a67f_7fd9_53c7_afd8_cfa1237cf6d1
@@ -13031,6 +13060,45 @@ impl IListViewBase {
             .ok()
         }
     }
+    pub(crate) fn SetIsItemClickEnabled(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetIsItemClickEnabled)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
+    pub(crate) fn ItemClick<F>(
+        &self,
+        handler: F,
+    ) -> windows_core::Result<windows_core::EventRevoker>
+    where
+        F: Fn(windows_core::Ref<windows_core::IInspectable>, windows_core::Ref<ItemClickEventArgs>)
+            + 'static,
+    {
+        let handler: ItemClickEventHandler = {
+            let com = windows_core::imp::DelegateBox::<ItemClickEventHandler, F>::new(
+                &ItemClickEventHandlerBox::<F>::VTABLE,
+                handler,
+            );
+            unsafe { core::mem::transmute(windows_core::imp::box_new(com)) }
+        };
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            let token__ = (windows_core::Interface::vtable(self).ItemClick)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Interface::as_raw(&handler),
+                &mut result__,
+            )
+            .map(|| result__)?;
+            Ok(windows_core::EventRevoker::new(
+                self.clone(),
+                token__,
+                windows_core::Interface::vtable(self).RemoveItemClick,
+            ))
+        }
+    }
     pub(crate) fn DragItemsCompleted<F>(
         &self,
         handler: F,
@@ -13138,7 +13206,8 @@ pub struct IListViewBase_Vtbl {
     pub SetCanReorderItems:
         unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     IsItemClickEnabled: usize,
-    SetIsItemClickEnabled: usize,
+    pub SetIsItemClickEnabled:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     DataFetchSize: usize,
     SetDataFetchSize: usize,
     IncrementalLoadingThreshold: usize,
@@ -13154,8 +13223,13 @@ pub struct IListViewBase_Vtbl {
     SetIsMultiSelectCheckBoxEnabled: usize,
     SingleSelectionFollowsFocus: usize,
     SetSingleSelectionFollowsFocus: usize,
-    ItemClick: usize,
-    RemoveItemClick: usize,
+    pub ItemClick: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut i64,
+    ) -> windows_core::HRESULT,
+    pub RemoveItemClick:
+        unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
     DragItemsStarting: usize,
     RemoveDragItemsStarting: usize,
     pub DragItemsCompleted: unsafe extern "system" fn(
@@ -24853,6 +24927,86 @@ impl windows_core::RuntimeType for InputSystemCursorShape {
     const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
         b"enum(Microsoft.UI.Input.InputSystemCursorShape;i4)",
     );
+}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ItemClickEventArgs(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    ItemClickEventArgs,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(ItemClickEventArgs, RoutedEventArgs);
+impl windows_core::RuntimeType for ItemClickEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, IItemClickEventArgs>();
+}
+unsafe impl windows_core::Interface for ItemClickEventArgs {
+    type Vtable = <IItemClickEventArgs as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <IItemClickEventArgs as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for ItemClickEventArgs {
+    type Target = IItemClickEventArgs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for ItemClickEventArgs {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.ItemClickEventArgs";
+}
+unsafe impl Send for ItemClickEventArgs {}
+unsafe impl Sync for ItemClickEventArgs {}
+windows_core::imp::define_interface!(
+    ItemClickEventHandler,
+    ItemClickEventHandler_Vtbl,
+    0xa3903624_3393_566c_a6b9_a6b4b3e301c3
+);
+impl windows_core::RuntimeType for ItemClickEventHandler {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ItemClickEventHandler_Vtbl {
+    base__: windows_core::IUnknown_Vtbl,
+    Invoke: unsafe extern "system" fn(
+        this: *mut core::ffi::c_void,
+        sender: *mut core::ffi::c_void,
+        e: *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+struct ItemClickEventHandlerBox<
+    F: Fn(windows_core::Ref<windows_core::IInspectable>, windows_core::Ref<ItemClickEventArgs>)
+        + 'static,
+>(core::marker::PhantomData<(fn() -> F,)>);
+impl<
+    F: Fn(windows_core::Ref<windows_core::IInspectable>, windows_core::Ref<ItemClickEventArgs>)
+        + 'static,
+> ItemClickEventHandlerBox<F>
+{
+    const VTABLE: ItemClickEventHandler_Vtbl = ItemClickEventHandler_Vtbl {
+        base__: windows_core::IUnknown_Vtbl {
+            QueryInterface:
+                windows_core::imp::DelegateBox::<ItemClickEventHandler, F>::QueryInterface,
+            AddRef: windows_core::imp::DelegateBox::<ItemClickEventHandler, F>::AddRef,
+            Release: windows_core::imp::DelegateBox::<ItemClickEventHandler, F>::Release,
+        },
+        Invoke: Self::Invoke,
+    };
+    unsafe extern "system" fn Invoke(
+        this: *mut core::ffi::c_void,
+        sender: *mut core::ffi::c_void,
+        e: *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT {
+        unsafe {
+            let this = &mut *(this as *mut *mut core::ffi::c_void
+                as *mut windows_core::imp::DelegateBox<ItemClickEventHandler, F>);
+            (this.invoke)(
+                core::mem::transmute_copy(&sender),
+                core::mem::transmute_copy(&e),
+            );
+            windows_core::HRESULT(0)
+        }
+    }
 }
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
