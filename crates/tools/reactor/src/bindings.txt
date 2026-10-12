@@ -33,7 +33,7 @@ Microsoft::UI::Windowing::TitleBarHeightOption::{Standard, Tall}
 Microsoft::UI::Windowing::TitleBarTheme::{Dark, Light, UseDefaultAppMode}
 Microsoft::UI::Xaml::Application::{CreateInstance, Current, Exit, Start}
 Microsoft::UI::Xaml::ApplicationInitializationCallback
-Microsoft::UI::Xaml::Automation::AutomationProperties::{GetName, HeadingLevelProperty, SetAutomationId, SetHeadingLevel, SetName}
+Microsoft::UI::Xaml::Automation::AutomationProperties::{GetName, HeadingLevelProperty, LiveSettingProperty, SetAutomationId, SetHeadingLevel, SetLiveSetting, SetName}
 Microsoft::UI::Xaml::Automation::ExpandCollapseState::Expanded
 Microsoft::UI::Xaml::Automation::Peers::FrameworkElementAutomationPeer::CreatePeerForElement
 Microsoft::UI::Xaml::Automation::Peers::IAutomationPeer::GetPattern

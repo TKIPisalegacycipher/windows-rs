@@ -3017,6 +3017,40 @@ impl GeneratedHandle {
                             .and_then(|property| element.ClearValue(&property).map_err(Into::into))
                     }),
             ),
+            (
+                PropertyId::AutomationLiveSetting,
+                Some(PropertyValue::Enum {
+                    kind: "AutomationLiveSetting",
+                    variant,
+                }),
+            ) => Some(
+                element
+                    .cast::<native::FrameworkElement>()
+                    .map_err(Into::into)
+                    .and_then(|element| {
+                        let _ = native::AutomationLiveSetting::Off;
+                        native::AutomationProperties::SetLiveSetting(
+                            &element,
+                            match *variant {
+                                "Off" => native::AutomationLiveSetting::Off,
+                                "Polite" => native::AutomationLiveSetting::Polite,
+                                "Assertive" => native::AutomationLiveSetting::Assertive,
+                                _ => unreachable!("validated enum variant"),
+                            },
+                        )
+                        .map_err(Into::into)
+                    }),
+            ),
+            (PropertyId::AutomationLiveSetting, None) => Some(
+                element
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|element| {
+                        native::AutomationProperties::LiveSettingProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| element.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
             _ => None,
         }
     }

@@ -4222,6 +4222,7 @@ fn live_property_sample(
         "Thickness" => "Thickness::uniform(1.0)".to_string(),
         "Vector2" => "1.0, -1.0".to_string(),
         "AutomationHeadingLevel" => "AutomationHeadingLevel::Level1".to_string(),
+        "AutomationLiveSetting" => "AutomationLiveSetting::Polite".to_string(),
         "HorizontalAlignment" => "HorizontalAlignment::Center".to_string(),
         "InputSystemCursorShape" => "InputSystemCursorShape::SizeWestEast".to_string(),
         "InfoBarSeverity" => "InfoBarSeverity::Informational".to_string(),
