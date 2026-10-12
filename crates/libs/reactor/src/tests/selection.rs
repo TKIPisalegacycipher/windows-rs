@@ -610,6 +610,59 @@ fn list_view_selected_keys_follow_selection_order_and_reject_stale_items() {
 }
 
 #[test]
+fn list_view_item_click_delivers_the_clicked_key() {
+    let log = Rc::new(RefCell::new(Vec::new()));
+    let clicked = {
+        let log = Rc::clone(&log);
+        Callback::new(move |value: Vec<Key>| log.borrow_mut().push(format!("{value:?}")))
+    };
+    let items = || {
+        [
+            DataItem::new("first", "First"),
+            DataItem::new(2u64, "Second"),
+        ]
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            ListView::new()
+                .items(items())
+                .on_item_click(clicked.clone()),
+        )
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let children = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    assert!(
+        event_contracts(ObjectType::ListView).contains(&EventContract {
+            id: EventId::ItemClick,
+            value: ValueType::Keys,
+        })
+    );
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        list,
+        EventId::ItemClick,
+        EventValue::Keys(clicked.clone()),
+        EventPayload::Items(vec![children[1]]),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 1);
+    assert_eq!(*log.borrow(), [format!("{:?}", [Key::from(2u64)])]);
+
+    runtime.update(ListView::new().items(items())).unwrap();
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        list,
+        EventId::ItemClick,
+        EventValue::Keys(clicked),
+        EventPayload::Items(vec![children[0]]),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 0);
+    assert_eq!(log.borrow().len(), 1);
+}
+
+#[test]
 fn tree_view_selection_mode_and_item_invocation_replace_remove_and_reject_stale_events() {
     let first = Rc::new(RefCell::new(Vec::new()));
     let first_callback = {
