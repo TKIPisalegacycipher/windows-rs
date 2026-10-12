@@ -1584,6 +1584,10 @@ impl DragDropPolicy {
     }
 
     /// Accepts drags carrying neither files nor text (`DragKind::Other`).
+    ///
+    /// This matches any such data, including other apps' drags (virtual files such as a mail
+    /// attachment, bitmaps, private formats), and the drop reads no payload. Set it only while the
+    /// app's own drag is in progress, and check that drag state again in `on_drop`.
     pub fn other(mut self, action: impl Into<Option<DragDropAction>>) -> Self {
         self.other = action.into();
         self

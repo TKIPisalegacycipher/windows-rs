@@ -342,8 +342,10 @@ impl WinUiAdapter {
             }
             DragKind::Other => {
                 *result.lock().unwrap() = Some(Ok(DroppedData::Other));
-                if callback.invoke().is_err() {
+                if let Err(error) = callback.invoke() {
+                    callback.cancel();
                     deferral.Complete()?;
+                    return Err(error.into());
                 }
             }
             DragKind::Unsupported => unreachable!(),
