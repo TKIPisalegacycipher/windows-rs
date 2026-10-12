@@ -1451,6 +1451,17 @@ pub(crate) fn menu_swatch_xaml(brush: ThemeBrush) -> String {
     )
 }
 
+/// Gives a menu item its key as its UI Automation id, so tests can find it without its label.
+fn set_menu_automation_id(item: &impl Interface, key: &Key) -> windows_core::Result<()> {
+    match key.automation_text() {
+        Some(id) => native::AutomationProperties::SetAutomationId(
+            &item.cast::<native::DependencyObject>()?,
+            &id,
+        ),
+        None => Ok(()),
+    }
+}
+
 fn build_menu_items(
     items: &[MenuItem],
     output: &IVector<native::MenuFlyoutItemBase>,
@@ -1470,6 +1481,7 @@ fn build_menu_items(
             } => {
                 let item = native::MenuFlyoutItem::new()?;
                 item.SetText(label)?;
+                set_menu_automation_id(&item, key)?;
                 if let Some(icon) = menu_icon(icon.as_ref(), *swatch)? {
                     item.SetIcon(&icon)?;
                 }
@@ -1492,10 +1504,14 @@ fn build_menu_items(
             }
             MenuItem::Separator { .. } => native::MenuFlyoutSeparator::new()?.cast()?,
             MenuItem::Submenu {
-                label, icon, items, ..
+                key,
+                label,
+                icon,
+                items,
             } => {
                 let item = native::MenuFlyoutSubItem::new()?;
                 item.SetText(label)?;
+                set_menu_automation_id(&item, key)?;
                 if let Some(icon) = menu_icon(icon.as_ref(), None)? {
                     item.SetIcon(&icon)?;
                 }
@@ -2334,14 +2350,22 @@ fn set_list_container_connected(
     }
 }
 
-/// Names a ListView item container after its `DataItem`, since the item template's content does
-/// not name the container for UI Automation.
+/// The `DataItem` property map key holding the item's UI Automation id.
+const DATA_AUTOMATION_ID_KEY: &str = "WindowsReactorAutomationId";
+
+/// Names a ListView item container after its `DataItem` and gives it the item's automation id,
+/// since the item template's content does not name the container for UI Automation.
 fn name_list_container(
     container: &native::DependencyObject,
     item: &IInspectable,
     key: &HSTRING,
 ) -> windows_core::Result<()> {
-    native::AutomationProperties::SetName(container, &data_item_text(item, key)?.to_string_lossy())
+    native::AutomationProperties::SetName(
+        container,
+        &data_item_text(item, key)?.to_string_lossy(),
+    )?;
+    let id = data_item_text(item, &HSTRING::from(DATA_AUTOMATION_ID_KEY))?;
+    native::AutomationProperties::SetAutomationId(container, &id.to_string_lossy())
 }
 
 /// The native value of a resource override.

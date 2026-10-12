@@ -1317,6 +1317,7 @@ impl core::ops::drop::Drop for windows_reactor::ComponentTimer
 pub fn windows_reactor::ComponentTimer::drop(&mut self)
 pub struct windows_reactor::ContentDialog(_, _)
 impl windows_reactor::ContentDialog
+pub fn windows_reactor::ContentDialog::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ContentDialog::close_button_text(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ContentDialog::content(self, impl core::convert::Into<windows_reactor::View>) -> Self
 pub fn windows_reactor::ContentDialog::default_button(self, windows_reactor::ContentDialogButton) -> Self
@@ -1348,6 +1349,7 @@ impl core::convert::From<windows_reactor::CornerRadius> for windows_reactor::Res
 pub fn windows_reactor::ResourceValue::from(windows_reactor::CornerRadius) -> Self
 pub struct windows_reactor::DataItem(_)
 impl windows_reactor::DataItem
+pub fn windows_reactor::DataItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::DataItem::container_resource_overrides(self, windows_reactor::ResourceOverrides) -> Self
 pub fn windows_reactor::DataItem::content(self, impl core::convert::Into<windows_reactor::View>) -> Self
 pub fn windows_reactor::DataItem::new(impl core::convert::Into<windows_reactor::Key>, impl core::convert::AsRef<str>) -> Self

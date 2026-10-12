@@ -1249,6 +1249,16 @@ impl Key {
         }
     }
 
+    /// The key as UI Automation id text: a string as is, an integer in decimal. Component paths
+    /// have none.
+    pub(crate) fn automation_text(&self) -> Option<String> {
+        match &self.0 {
+            KeyKind::String(value) => Some(value.to_string()),
+            KeyKind::Integer(value) => Some(value.to_string()),
+            KeyKind::Path(_) => None,
+        }
+    }
+
     pub(crate) fn component_path(path: &[ComponentPathSegment]) -> Self {
         debug_assert!(!path.is_empty());
         Self(KeyKind::Path(path.into()))

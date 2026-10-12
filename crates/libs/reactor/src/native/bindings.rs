@@ -689,6 +689,23 @@ windows_core::imp::interface_hierarchy!(
     windows_core::IInspectable
 );
 impl AutomationProperties {
+    pub(crate) fn GetAutomationId<P0>(element: P0) -> windows_core::Result<String>
+    where
+        P0: windows_core::Param<DependencyObject>,
+    {
+        Self::IAutomationPropertiesStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).GetAutomationId)(
+                windows_core::Interface::as_raw(this),
+                element.param().abi(),
+                &mut result__,
+            )
+            .map(|| {
+                let hstring: windows_core::HSTRING = core::mem::transmute(result__);
+                hstring.to_string_lossy()
+            })
+        })
+    }
     pub(crate) fn SetAutomationId<P0>(element: P0, value: &str) -> windows_core::Result<()>
     where
         P0: windows_core::Param<DependencyObject>,
@@ -6194,7 +6211,11 @@ pub struct IAutomationPropertiesStatics_Vtbl {
     GetAccessKey: usize,
     SetAccessKey: usize,
     AutomationIdProperty: usize,
-    GetAutomationId: usize,
+    pub GetAutomationId: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub SetAutomationId: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,

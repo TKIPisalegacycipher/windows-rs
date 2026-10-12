@@ -422,3 +422,36 @@ fn content_dialog_default_button_updates_and_clears() {
         .unwrap();
     assert_eq!(&**clear, [PropertyId::DefaultButton]);
 }
+
+#[test]
+fn content_dialog_automation_id_updates_and_clears() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(Button::new().content_dialog(ContentDialog::new().automation_id("Dialog.Remove")))
+        .unwrap();
+    let owner = runtime.graph().root().unwrap();
+    let dialog = runtime.graph().content_dialog(owner).unwrap().0;
+    let set = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == dialog => Some(set),
+            _ => None,
+        })
+        .unwrap();
+    assert!(set.contains(&Property {
+        id: PropertyId::AutomationId,
+        value: PropertyValue::String("Dialog.Remove".into()),
+    }));
+
+    let mutations = runtime
+        .update(Button::new().content_dialog(ContentDialog::new()))
+        .unwrap();
+    let clear = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, clear, .. } if *object == dialog => Some(clear),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(&**clear, [PropertyId::AutomationId]);
+}

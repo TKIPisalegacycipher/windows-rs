@@ -169,6 +169,7 @@ impl std::fmt::Display for Validation {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 enum PropertyAdapter {
+    AutomationId,
     DropPolicy,
     GridColumns,
     GridRows,
@@ -208,7 +209,11 @@ impl PropertyAdapter {
             Self::ImageUri => "ImageSource",
             Self::ImplicitOpacityTransition | Self::ImplicitScaleTransition => "Duration",
             Self::ImplicitScale | Self::ItemContainerMinHeight => "F64",
-            Self::InspectableString | Self::PathData | Self::RichEditText | Self::Uri => "String",
+            Self::AutomationId
+            | Self::InspectableString
+            | Self::PathData
+            | Self::RichEditText
+            | Self::Uri => "String",
             Self::InspectableStringList => "StringList",
             Self::KeyAccelerators => "KeyAccelerators",
             Self::NativeColor => "Color",
@@ -237,7 +242,7 @@ impl PropertyAdapter {
 
     /// Applied by the handwritten adapter rather than through a native property.
     fn is_handwritten(self) -> bool {
-        matches!(self, Self::ItemContainerMinHeight)
+        matches!(self, Self::AutomationId | Self::ItemContainerMinHeight)
     }
 
     fn has_managed_state(self) -> bool {
@@ -2141,6 +2146,12 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
     );
     for object in &objects {
         for property in &object.properties {
+            if property
+                .adapter
+                .is_some_and(PropertyAdapter::is_handwritten)
+            {
+                continue;
+            }
             if matches!(
                 property.adapter,
                 Some(PropertyAdapter::PointerCapture | PropertyAdapter::PointerFocus)
