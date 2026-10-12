@@ -665,6 +665,22 @@ impl windows_core::RuntimeType for AutomationHeadingLevel {
     );
 }
 #[repr(transparent)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct AutomationLiveSetting(pub i32);
+impl AutomationLiveSetting {
+    pub const Off: Self = Self(0);
+    pub const Polite: Self = Self(1);
+    pub const Assertive: Self = Self(2);
+}
+impl windows_core::imp::TypeKind for AutomationLiveSetting {
+    type TypeKind = windows_core::imp::CopyType;
+}
+impl windows_core::RuntimeType for AutomationLiveSetting {
+    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
+        b"enum(Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting;i4)",
+    );
+}
+#[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AutomationProperties(windows_core::IUnknown);
 windows_core::imp::interface_hierarchy!(
@@ -712,6 +728,32 @@ impl AutomationProperties {
                 windows_core::Interface::as_raw(this),
                 element.param().abi(),
                 core::mem::transmute_copy(&windows_core::HSTRING::from(value)),
+            )
+            .ok()
+        })
+    }
+    pub(crate) fn LiveSettingProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IAutomationPropertiesStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).LiveSettingProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn SetLiveSetting<P0>(
+        element: P0,
+        value: AutomationLiveSetting,
+    ) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<DependencyObject>,
+    {
+        Self::IAutomationPropertiesStatics(|this| unsafe {
+            (windows_core::Interface::vtable(this).SetLiveSetting)(
+                windows_core::Interface::as_raw(this),
+                element.param().abi(),
+                value,
             )
             .ok()
         })
@@ -6184,9 +6226,16 @@ pub struct IAutomationPropertiesStatics_Vtbl {
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
-    LiveSettingProperty: usize,
+    pub LiveSettingProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     GetLiveSetting: usize,
-    SetLiveSetting: usize,
+    pub SetLiveSetting: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        AutomationLiveSetting,
+    ) -> windows_core::HRESULT,
     AccessibilityViewProperty: usize,
     GetAccessibilityView: usize,
     SetAccessibilityView: usize,

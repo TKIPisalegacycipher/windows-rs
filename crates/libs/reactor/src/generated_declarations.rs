@@ -61,6 +61,31 @@ impl AutomationHeadingLevel {
 }
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AutomationLiveSetting {
+    Off,
+    Polite,
+    Assertive,
+}
+impl AutomationLiveSetting {
+    pub(crate) fn property_value(self) -> PropertyValue {
+        match self {
+            Self::Off => PropertyValue::Enum {
+                kind: "AutomationLiveSetting",
+                variant: "Off",
+            },
+            Self::Polite => PropertyValue::Enum {
+                kind: "AutomationLiveSetting",
+                variant: "Polite",
+            },
+            Self::Assertive => PropertyValue::Enum {
+                kind: "AutomationLiveSetting",
+                variant: "Assertive",
+            },
+        }
+    }
+}
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ContentDialogButton {
     None,
     Primary,
@@ -1823,6 +1848,16 @@ macro_rules! visual_methods {
             self.0 = self.0.property(
                 PropertyId::AutomationHeadingLevel,
                 automation_heading_level.property_value(),
+            );
+            self
+        }
+        pub fn automation_live_setting(
+            mut self,
+            automation_live_setting: AutomationLiveSetting,
+        ) -> Self {
+            self.0 = self.0.property(
+                PropertyId::AutomationLiveSetting,
+                automation_live_setting.property_value(),
             );
             self
         }
