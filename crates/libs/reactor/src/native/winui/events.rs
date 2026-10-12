@@ -744,6 +744,8 @@ impl WinUiAdapter {
                             native_event.revision = native_event.revision.wrapping_add(1);
                             native_event.callback = None;
                             // Clicks, Enter and Space raise ItemClick only while this is on.
+                            // Ctrl+click and Ctrl+Space raise it too, and selection still follows
+                            // each of them unless SelectionMode is None.
                             value
                                 .value
                                 .cast::<native::IListViewBase>()?
