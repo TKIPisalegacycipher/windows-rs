@@ -2566,6 +2566,7 @@ pub fn windows_reactor::NavigationView::min_width(self, f64) -> Self
 pub fn windows_reactor::NavigationView::new() -> Self
 pub fn windows_reactor::NavigationView::on_display_mode_changed(self, impl windows_reactor::IntoPayloadCallback<windows_reactor::NavigationViewDisplayMode>) -> Self
 pub fn windows_reactor::NavigationView::on_is_pane_open_changed(self, impl windows_reactor::IntoPayloadCallback<bool>) -> Self
+pub fn windows_reactor::NavigationView::on_item_invoked(self, impl windows_reactor::IntoPayloadCallback<alloc::rcs::rc::Rc<str>>) -> Self
 pub fn windows_reactor::NavigationView::on_selected_tag_changed(self, impl windows_reactor::IntoPayloadCallback<core::option::Option<alloc::rcs::rc::Rc<str>>>) -> Self
 pub fn windows_reactor::NavigationView::opacity(self, f64) -> Self
 pub fn windows_reactor::NavigationView::open_pane_length(self, f64) -> Self

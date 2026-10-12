@@ -967,6 +967,11 @@ name = "SelectionChanged"
 field = "on_selected_tag_changed"
 
 [[objects.events]]
+name = "ItemInvoked"
+payload = "InvokedItemContainer"
+payload_adapter = "item_tag"
+
+[[objects.events]]
 name = "DisplayModeChanged"
 payload = "DisplayMode"
 payload_adapter = "navigation_display_mode"

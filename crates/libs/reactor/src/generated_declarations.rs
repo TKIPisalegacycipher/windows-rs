@@ -4136,6 +4136,13 @@ impl NavigationView {
         );
         self
     }
+    pub fn on_item_invoked(mut self, callback: impl IntoPayloadCallback<Rc<str>>) -> Self {
+        self.0 = self.0.event(
+            EventId::ItemInvoked,
+            EventValue::String(callback.into_payload_callback()),
+        );
+        self
+    }
     pub fn on_display_mode_changed(
         mut self,
         callback: impl IntoPayloadCallback<NavigationViewDisplayMode>,

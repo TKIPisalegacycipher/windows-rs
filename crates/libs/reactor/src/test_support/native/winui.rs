@@ -915,6 +915,10 @@ impl WinUiAdapter {
                 Some(Handle::Generated(GeneratedHandle::TabView(value))),
                 EventId::TabCloseRequested,
             ) => &value.tab_close_requested,
+            (
+                Some(Handle::Generated(GeneratedHandle::NavigationView(value))),
+                EventId::ItemInvoked,
+            ) => &value.item_invoked,
             _ => return Err(WinUiError::InvalidEvent(object, event)),
         };
         Self::dispatch(

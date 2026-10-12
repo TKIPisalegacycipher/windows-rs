@@ -1760,16 +1760,26 @@ impl reactor::Component for Fixture {
 
         let modes = Rc::new(RefCell::new(Vec::new()));
         let mode_callback = Rc::clone(&modes);
+        let invoked = Rc::new(RefCell::new(Vec::new()));
+        let invoked_callback = Rc::clone(&invoked);
         let mut navigation_runtime =
             reactor::Runtime::new(reactor::native::WinUiAdapter::default());
         navigation_runtime
             .update(
-                reactor::NavigationView::new().on_display_mode_changed(move |value| {
-                    mode_callback.borrow_mut().push(value);
-                }),
+                reactor::NavigationView::new()
+                    .on_display_mode_changed(move |value| {
+                        mode_callback.borrow_mut().push(value);
+                    })
+                    .on_item_invoked(move |value| invoked_callback.borrow_mut().push(value)),
             )
             .unwrap();
         let navigation = navigation_runtime.graph().root().unwrap();
+        navigation_runtime
+            .adapter()
+            .simulate_string_event(navigation, reactor::EventId::ItemInvoked, "add-account")
+            .unwrap();
+        assert_eq!(navigation_runtime.dispatch_native_events().unwrap(), 1);
+        assert_eq!(&*invoked.borrow(), &[Rc::from("add-account")]);
         navigation_runtime
             .adapter()
             .simulate_navigation_display_mode_changed(

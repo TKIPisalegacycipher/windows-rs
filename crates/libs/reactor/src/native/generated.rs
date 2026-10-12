@@ -306,6 +306,8 @@ struct GeneratedNavigationView {
     _is_pane_open_changed: GeneratedRevoker,
     selection_changed: Rc<RefCell<NativeSelectionEvent>>,
     _selection_changed: GeneratedRevoker,
+    item_invoked: Rc<RefCell<NativeStringEvent>>,
+    _item_invoked: Option<GeneratedRevoker>,
     display_mode_changed: Rc<RefCell<NativeNavigationViewDisplayModeEvent>>,
     _display_mode_changed: Option<GeneratedRevoker>,
 }
@@ -1189,6 +1191,8 @@ impl GeneratedHandle {
                     );
                 })?;
                 let _selection_changed = GeneratedRevoker::Event(revoker);
+                let item_invoked = Rc::new(RefCell::new(NativeStringEvent::default()));
+                let _item_invoked = None;
                 let display_mode_changed =
                     Rc::new(RefCell::new(NativeNavigationViewDisplayModeEvent::default()));
                 let _display_mode_changed = None;
@@ -1198,6 +1202,8 @@ impl GeneratedHandle {
                     _is_pane_open_changed,
                     selection_changed,
                     _selection_changed,
+                    item_invoked,
+                    _item_invoked,
                     display_mode_changed,
                     _display_mode_changed,
                 }))
@@ -9262,6 +9268,11 @@ impl GeneratedHandle {
                     native_event.revision = native_event.revision.wrapping_add(1);
                     native_event.callback = None;
                 }
+                if clear.contains(&EventId::ItemInvoked) {
+                    let mut native_event = object.item_invoked.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
                 if clear.contains(&EventId::DisplayModeChanged) {
                     let mut native_event = object.display_mode_changed.borrow_mut();
                     native_event.revision = native_event.revision.wrapping_add(1);
@@ -9278,6 +9289,14 @@ impl GeneratedHandle {
                             let mut native_event = object.selection_changed.borrow_mut();
                             native_event.revision = native_event.revision.wrapping_add(1);
                             native_event.callback = Some(callback.clone());
+                        }
+                        (EventId::ItemInvoked, EventValue::String(callback)) => {
+                            {
+                                let mut native_event = object.item_invoked.borrow_mut();
+                                native_event.revision = native_event.revision.wrapping_add(1);
+                                native_event.callback = Some(callback.clone());
+                            }
+                            object.subscribe_item_invoked(object_id, context)?;
                         }
                         (
                             EventId::DisplayModeChanged,
@@ -10526,6 +10545,13 @@ impl GeneratedHandle {
                     .then(|| event.callback.clone())
                     .flatten()
                     .map(EventValue::Selection)
+            }
+            (Self::NavigationView(object), EventId::ItemInvoked) => {
+                let event = object.item_invoked.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::String)
             }
             (Self::NavigationView(object), EventId::DisplayModeChanged) => {
                 let event = object.display_mode_changed.borrow();
@@ -11798,6 +11824,57 @@ impl GeneratedAutoSuggestBox {
     }
 }
 impl GeneratedNavigationView {
+    fn subscribe_item_invoked(
+        &mut self,
+        object: ObjectId,
+        context: EventContext,
+    ) -> Result<(), WinUiError> {
+        if self._item_invoked.is_some() {
+            return Ok(());
+        }
+        let value = &self.value;
+        let event_for_callback = Rc::clone(&self.item_invoked);
+        let event_queue_item_invoked = Rc::clone(context.event_queue);
+        let revoker = value.ItemInvoked(move |_, args| {
+            let dispatch = true;
+            let observation = None;
+            let args = args.unwrap();
+            let payload = match args
+                .cast::<native::INavigationViewItemInvokedEventArgs2>()
+                .and_then(|args| args.InvokedItemContainer())
+                .and_then(|value| value.cast::<native::IFrameworkElement>())
+                .and_then(|value| value.Tag())
+            {
+                Ok(value) => match value
+                    .cast::<windows_reference::IReference<HSTRING>>()
+                    .and_then(|value| value.Value())
+                {
+                    Ok(value) => Rc::<str>::from(value.to_string_lossy()),
+                    Err(error) => {
+                        report_error(error);
+                        return;
+                    }
+                },
+                Err(error) if error.code().is_ok() => Rc::<str>::from(""),
+                Err(error) => {
+                    report_error(error);
+                    return;
+                }
+            };
+            if dispatch {
+                WinUiAdapter::dispatch(
+                    &event_for_callback,
+                    &event_queue_item_invoked,
+                    object,
+                    EventId::ItemInvoked,
+                    observation,
+                    payload,
+                );
+            }
+        })?;
+        self._item_invoked = Some(GeneratedRevoker::Event(revoker));
+        Ok(())
+    }
     fn subscribe_display_mode_changed(
         &mut self,
         object: ObjectId,

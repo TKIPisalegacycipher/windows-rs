@@ -757,6 +757,10 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
                 value: ValueType::Selection,
             },
             EventContract {
+                id: EventId::ItemInvoked,
+                value: ValueType::String,
+            },
+            EventContract {
                 id: EventId::DisplayModeChanged,
                 value: ValueType::NavigationViewDisplayMode,
             },

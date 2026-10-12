@@ -14410,6 +14410,35 @@ impl INavigationView {
             ))
         }
     }
+    pub(crate) fn ItemInvoked<F>(
+        &self,
+        handler: F,
+    ) -> windows_core::Result<windows_core::EventRevoker>
+    where
+        F: Fn(
+                windows_core::Ref<NavigationView>,
+                windows_core::Ref<NavigationViewItemInvokedEventArgs>,
+            ) + 'static,
+    {
+        let handler: TypedEventHandler<NavigationView, NavigationViewItemInvokedEventArgs> = {
+            let com = windows_core::imp::DelegateBox::< TypedEventHandler < NavigationView , NavigationViewItemInvokedEventArgs > , F >::new (& TypedEventHandlerBox::< NavigationView , NavigationViewItemInvokedEventArgs , F >::VTABLE , handler) ;
+            unsafe { core::mem::transmute(windows_core::imp::box_new(com)) }
+        };
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            let token__ = (windows_core::Interface::vtable(self).ItemInvoked)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Interface::as_raw(&handler),
+                &mut result__,
+            )
+            .map(|| result__)?;
+            Ok(windows_core::EventRevoker::new(
+                self.clone(),
+                token__,
+                windows_core::Interface::vtable(self).RemoveItemInvoked,
+            ))
+        }
+    }
     pub(crate) fn DisplayModeChanged<F>(
         &self,
         handler: F,
@@ -14531,8 +14560,13 @@ pub struct INavigationView_Vtbl {
     ) -> windows_core::HRESULT,
     pub RemoveSelectionChanged:
         unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
-    ItemInvoked: usize,
-    RemoveItemInvoked: usize,
+    pub ItemInvoked: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut i64,
+    ) -> windows_core::HRESULT,
+    pub RemoveItemInvoked:
+        unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
     pub DisplayModeChanged: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
@@ -14932,6 +14966,48 @@ pub struct INavigationViewItemFactory_Vtbl {
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    INavigationViewItemInvokedEventArgs,
+    INavigationViewItemInvokedEventArgs_Vtbl,
+    0x074cebaa_5d05_547b_8cd6_d19ac2d9bb3b
+);
+impl windows_core::RuntimeType for INavigationViewItemInvokedEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct INavigationViewItemInvokedEventArgs_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    INavigationViewItemInvokedEventArgs2,
+    INavigationViewItemInvokedEventArgs2_Vtbl,
+    0xe1cbb99f_19eb_5c7b_b982_854bb08d5eb7
+);
+impl windows_core::RuntimeType for INavigationViewItemInvokedEventArgs2 {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl INavigationViewItemInvokedEventArgs2 {
+    pub(crate) fn InvokedItemContainer(&self) -> windows_core::Result<NavigationViewItemBase> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).InvokedItemContainer)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+}
+#[repr(C)]
+pub struct INavigationViewItemInvokedEventArgs2_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub InvokedItemContainer: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
 }
@@ -27442,6 +27518,34 @@ impl windows_core::RuntimeName for NavigationViewItemBase {
 }
 unsafe impl Send for NavigationViewItemBase {}
 unsafe impl Sync for NavigationViewItemBase {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NavigationViewItemInvokedEventArgs(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    NavigationViewItemInvokedEventArgs,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl windows_core::RuntimeType for NavigationViewItemInvokedEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, INavigationViewItemInvokedEventArgs>();
+}
+unsafe impl windows_core::Interface for NavigationViewItemInvokedEventArgs {
+    type Vtable = <INavigationViewItemInvokedEventArgs as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID =
+        <INavigationViewItemInvokedEventArgs as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for NavigationViewItemInvokedEventArgs {
+    type Target = INavigationViewItemInvokedEventArgs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for NavigationViewItemInvokedEventArgs {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs";
+}
+unsafe impl Send for NavigationViewItemInvokedEventArgs {}
+unsafe impl Sync for NavigationViewItemInvokedEventArgs {}
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct NavigationViewPaneDisplayMode(pub i32);

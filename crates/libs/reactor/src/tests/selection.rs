@@ -817,6 +817,34 @@ fn auto_suggest_box_query_submitted_delivers_query_text() {
 }
 
 #[test]
+fn navigation_view_item_invoked_delivers_item_tag() {
+    let values = Rc::new(RefCell::new(Vec::new()));
+    let callback = {
+        let values = Rc::clone(&values);
+        Callback::new(move |value| values.borrow_mut().push(value))
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(NavigationView::new().on_item_invoked(callback.clone()))
+        .unwrap();
+    let object = runtime.graph().root().unwrap();
+    assert!(
+        event_contracts(ObjectType::NavigationView).contains(&EventContract {
+            id: EventId::ItemInvoked,
+            value: ValueType::String,
+        })
+    );
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        object,
+        EventId::ItemInvoked,
+        EventValue::String(callback),
+        EventPayload::String(Rc::from("add-account")),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 1);
+    assert_eq!(&*values.borrow(), &[Rc::from("add-account")]);
+}
+
+#[test]
 fn tab_view_events_deliver_item_tags() {
     let closed_values = Rc::new(RefCell::new(Vec::new()));
     let closed_callback = {
