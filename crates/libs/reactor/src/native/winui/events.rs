@@ -258,7 +258,6 @@ impl WinUiAdapter {
         policy: &Rc<RefCell<Option<Rc<DragDropPolicy>>>>,
     ) -> Result<(), WinUiError> {
         let args = args.unwrap();
-        let deferral = args.GetDeferral()?;
         let data = args.DataView()?;
         let kind = Self::data_kind(&data)?;
         let policy = policy.borrow().clone();
@@ -266,7 +265,6 @@ impl WinUiAdapter {
         let action = action.cloned();
         let Some(action) = action else {
             args.SetAcceptedOperation(native::DataPackageOperation::None)?;
-            deferral.Complete()?;
             Self::dispatch(
                 event,
                 event_queue,
@@ -278,6 +276,21 @@ impl WinUiAdapter {
             return Ok(());
         };
         args.SetAcceptedOperation(Self::native_drag_operation(action.operation))?;
+        // No payload to read, so no deferral: the drop is queued now. A deferred one would
+        // complete from a UI callback, which never runs while the drag source is the app's own
+        // modal `DoDragDrop` loop, so XAML's drop (and the loop) would wait forever.
+        if kind == DragKind::Other {
+            Self::dispatch(
+                event,
+                event_queue,
+                object,
+                event_id,
+                observation,
+                DroppedData::Other,
+            );
+            return Ok(());
+        }
+        let deferral = args.GetDeferral()?;
         let revision = event.borrow().revision;
         let subscribed = event.borrow().callback.is_some();
         let result = Arc::new(Mutex::new(None));
@@ -350,15 +363,7 @@ impl WinUiAdapter {
                     return Err(error.into());
                 }
             }
-            DragKind::Other => {
-                *result.lock().unwrap() = Some(Ok(DroppedData::Other));
-                if let Err(error) = callback.invoke() {
-                    callback.cancel();
-                    deferral.Complete()?;
-                    return Err(error.into());
-                }
-            }
-            DragKind::Unsupported => unreachable!(),
+            DragKind::Other | DragKind::Unsupported => unreachable!(),
         }
         Ok(())
     }
