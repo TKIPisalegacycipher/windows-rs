@@ -214,6 +214,18 @@ impl WinUiAdapter {
         })
     }
 
+    /// The kind and action `policy` gives a drag of `kind` offering `data`: a private format the
+    /// policy names wins over the kind.
+    fn resolve<'a>(
+        policy: Option<&'a DragDropPolicy>,
+        kind: DragKind,
+        data: &native::DataPackageView,
+    ) -> (DragKind, Option<&'a DragDropAction>) {
+        policy.map_or((kind, None), |policy| {
+            policy.resolve(kind, |name| data.Contains(name).unwrap_or(false))
+        })
+    }
+
     fn drag_kind(
         args: Ref<native::DragEventArgs>,
         policy: &Rc<RefCell<Option<Rc<DragDropPolicy>>>>,
@@ -222,7 +234,7 @@ impl WinUiAdapter {
         let data = args.DataView()?;
         let kind = Self::data_kind(&data)?;
         let policy = policy.borrow();
-        let action = policy.as_ref().and_then(|policy| policy.action(kind));
+        let (kind, action) = Self::resolve(policy.as_deref(), kind, &data);
         args.SetAcceptedOperation(action.map_or(native::DataPackageOperation::None, |action| {
             Self::native_drag_operation(action.operation)
         }))?;
@@ -249,11 +261,9 @@ impl WinUiAdapter {
         let deferral = args.GetDeferral()?;
         let data = args.DataView()?;
         let kind = Self::data_kind(&data)?;
-        let action = policy
-            .borrow()
-            .as_ref()
-            .and_then(|policy| policy.action(kind))
-            .cloned();
+        let policy = policy.borrow().clone();
+        let (kind, action) = Self::resolve(policy.as_deref(), kind, &data);
+        let action = action.cloned();
         let Some(action) = action else {
             args.SetAcceptedOperation(native::DataPackageOperation::None)?;
             deferral.Complete()?;

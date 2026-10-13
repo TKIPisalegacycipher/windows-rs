@@ -1539,7 +1539,8 @@ pub enum DragKind {
     StorageItems,
     Text,
     /// Data with neither files nor text, such as an app's own drag (virtual files, private
-    /// formats). Accepted through `DragDropPolicy::other`; the drop carries no payload.
+    /// formats), or any drag offering a format the policy names (`DragDropPolicy::format`).
+    /// Accepted through `DragDropPolicy::other` or `format`; the drop carries no payload.
     Other,
     Unsupported,
 }
@@ -1576,6 +1577,9 @@ pub struct DragDropPolicy {
     pub storage_items: Option<DragDropAction>,
     pub text: Option<DragDropAction>,
     pub other: Option<DragDropAction>,
+    /// Private data formats, by name, that take a drag whatever else it carries
+    /// (`DragDropPolicy::format`).
+    pub formats: Vec<(String, DragDropAction)>,
 }
 
 impl DragDropPolicy {
@@ -1601,6 +1605,31 @@ impl DragDropPolicy {
     pub fn other(mut self, action: impl Into<Option<DragDropAction>>) -> Self {
         self.other = action.into();
         self
+    }
+
+    /// Accepts drags whose data offers the clipboard format `name`, such as a private format the
+    /// app adds to its own drags, before looking at the files or text they also carry. The drop
+    /// reads no payload and reports `DroppedData::Other`.
+    ///
+    /// An app dragging its items as virtual files (`FileGroupDescriptorW`) needs this: XAML can
+    /// present such data as storage items, which `other` does not match, and reading them on
+    /// drop would ask the app's own drag for every file's contents.
+    pub fn format(mut self, name: impl Into<String>, action: DragDropAction) -> Self {
+        self.formats.push((name.into(), action));
+        self
+    }
+
+    /// The action for data offering `has_format` formats and of `kind`: a matching private
+    /// format first, then the kind's action.
+    pub(crate) fn resolve(
+        &self,
+        kind: DragKind,
+        mut has_format: impl FnMut(&str) -> bool,
+    ) -> (DragKind, Option<&DragDropAction>) {
+        if let Some((_, action)) = self.formats.iter().find(|(name, _)| has_format(name)) {
+            return (DragKind::Other, Some(action));
+        }
+        (kind, self.action(kind))
     }
 
     pub(crate) fn action(&self, kind: DragKind) -> Option<&DragDropAction> {

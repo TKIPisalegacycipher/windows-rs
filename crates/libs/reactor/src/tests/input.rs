@@ -316,6 +316,30 @@ fn drag_drop_policy_accepts_other_data_only_when_asked() {
 }
 
 #[test]
+fn drag_drop_policy_private_format_wins_over_the_data_kind() {
+    let own = DragDropAction::new(DragDropOperation::Copy).caption("Move here");
+    let policy = DragDropPolicy::new().format("App.Items", own.clone());
+    // The app's own drag, whatever XAML makes of its other formats.
+    for kind in [DragKind::StorageItems, DragKind::Text, DragKind::Other] {
+        assert_eq!(
+            policy.resolve(kind, |name| name == "App.Items"),
+            (DragKind::Other, Some(&own))
+        );
+    }
+    // Another drag: only the kind's own action, here none.
+    assert_eq!(
+        policy.resolve(DragKind::StorageItems, |_| false),
+        (DragKind::StorageItems, None)
+    );
+    let files = DragDropAction::new(DragDropOperation::Move);
+    let policy = policy.storage_items(files.clone());
+    assert_eq!(
+        policy.resolve(DragKind::StorageItems, |_| false),
+        (DragKind::StorageItems, Some(&files))
+    );
+}
+
+#[test]
 fn pointer_motion_events_use_the_shared_typed_payload() {
     let received = Rc::new(RefCell::new(Vec::new()));
     let callback = |event| {
