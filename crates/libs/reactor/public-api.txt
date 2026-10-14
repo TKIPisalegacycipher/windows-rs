@@ -2,14 +2,19 @@ pub mod windows_reactor
 pub use windows_reactor::DateTime
 pub use windows_reactor::TimeSpan
 pub enum windows_reactor::AcceleratorKey
+pub windows_reactor::AcceleratorKey::A
 pub windows_reactor::AcceleratorKey::Add
+pub windows_reactor::AcceleratorKey::B
+pub windows_reactor::AcceleratorKey::C
 pub windows_reactor::AcceleratorKey::D
 pub windows_reactor::AcceleratorKey::Decimal
 pub windows_reactor::AcceleratorKey::Delete
 pub windows_reactor::AcceleratorKey::Divide
 pub windows_reactor::AcceleratorKey::Down
+pub windows_reactor::AcceleratorKey::E
 pub windows_reactor::AcceleratorKey::Enter
 pub windows_reactor::AcceleratorKey::Escape
+pub windows_reactor::AcceleratorKey::F
 pub windows_reactor::AcceleratorKey::F10
 pub windows_reactor::AcceleratorKey::F11
 pub windows_reactor::AcceleratorKey::F12
@@ -21,8 +26,15 @@ pub windows_reactor::AcceleratorKey::F6
 pub windows_reactor::AcceleratorKey::F7
 pub windows_reactor::AcceleratorKey::F8
 pub windows_reactor::AcceleratorKey::F9
+pub windows_reactor::AcceleratorKey::G
+pub windows_reactor::AcceleratorKey::H
 pub windows_reactor::AcceleratorKey::Home
+pub windows_reactor::AcceleratorKey::I
+pub windows_reactor::AcceleratorKey::J
+pub windows_reactor::AcceleratorKey::K
+pub windows_reactor::AcceleratorKey::L
 pub windows_reactor::AcceleratorKey::Left
+pub windows_reactor::AcceleratorKey::M
 pub windows_reactor::AcceleratorKey::Multiply
 pub windows_reactor::AcceleratorKey::N
 pub windows_reactor::AcceleratorKey::Number1
@@ -39,16 +51,24 @@ pub windows_reactor::AcceleratorKey::NumberPad6
 pub windows_reactor::AcceleratorKey::NumberPad7
 pub windows_reactor::AcceleratorKey::NumberPad8
 pub windows_reactor::AcceleratorKey::NumberPad9
+pub windows_reactor::AcceleratorKey::O
 pub windows_reactor::AcceleratorKey::P
 pub windows_reactor::AcceleratorKey::PageDown
 pub windows_reactor::AcceleratorKey::PageUp
+pub windows_reactor::AcceleratorKey::Q
 pub windows_reactor::AcceleratorKey::R
 pub windows_reactor::AcceleratorKey::Right
 pub windows_reactor::AcceleratorKey::S
 pub windows_reactor::AcceleratorKey::Space
 pub windows_reactor::AcceleratorKey::Subtract
+pub windows_reactor::AcceleratorKey::T
+pub windows_reactor::AcceleratorKey::U
 pub windows_reactor::AcceleratorKey::Up
+pub windows_reactor::AcceleratorKey::V
+pub windows_reactor::AcceleratorKey::W
+pub windows_reactor::AcceleratorKey::X
 pub windows_reactor::AcceleratorKey::Y
+pub windows_reactor::AcceleratorKey::Z
 pub enum windows_reactor::AcceleratorModifiers
 pub windows_reactor::AcceleratorModifiers::Control
 pub windows_reactor::AcceleratorModifiers::ControlMenu
