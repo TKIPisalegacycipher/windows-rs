@@ -957,6 +957,14 @@ impl WinUiAdapter {
                 Some(Handle::Generated(GeneratedHandle::NavigationView(value))),
                 EventId::ItemInvoked,
             ) => &value.item_invoked,
+            (
+                Some(Handle::Generated(GeneratedHandle::NavigationView(value))),
+                EventId::Expanding,
+            ) => &value.expanding,
+            (
+                Some(Handle::Generated(GeneratedHandle::NavigationView(value))),
+                EventId::Collapsed,
+            ) => &value.collapsed,
             _ => return Err(WinUiError::InvalidEvent(object, event)),
         };
         Self::dispatch(

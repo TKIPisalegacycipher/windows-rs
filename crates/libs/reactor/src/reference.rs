@@ -326,6 +326,31 @@ impl ElementRef<ScrollViewer> {
     }
 }
 
+impl ElementRef<NavigationView> {
+    /// Observes the vertical scroll offset of the currently published view's menu items, which
+    /// scroll inside the view when they outgrow its pane. The callback gets the offset when the
+    /// menu first has a scroller and after every change of it, whether the user or
+    /// [`request_menu_vertical_offset`](Self::request_menu_vertical_offset) scrolled.
+    #[must_use]
+    pub fn observe_menu_scroll(&self, callback: impl Fn(f64) + 'static) -> ElementObservation {
+        self.observe(ReferenceObservation::MenuScroll(Callback::new(callback)))
+    }
+
+    /// Enqueues a scroll of the currently published view's menu items to `offset`, without
+    /// animation. The user scrolls freely between requests; each request scrolls again.
+    #[must_use]
+    pub fn request_menu_vertical_offset(&self, offset: f64) -> bool {
+        assert!(
+            offset.is_finite(),
+            "NavigationView menu vertical offset requires finite"
+        );
+        self.enqueue(move |object, _, _| ImperativeRequest::ChangeMenuView {
+            object,
+            vertical_offset: offset,
+        })
+    }
+}
+
 impl ElementRef<Button> {
     /// Enqueues closing the flyout attached to the currently published button with `flyout_with`,
     /// such as after a command inside the flyout runs. Closing a flyout that is not open does
@@ -463,6 +488,7 @@ enum ReferenceObservation {
     SwapChainPanel(Callback<SwapChainPanelEvent>),
     ImageScale(Callback<f64>),
     CompositionHost(Callback<CompositionHostEvent>),
+    MenuScroll(Callback<f64>),
 }
 
 impl ObservationRegistration {
@@ -486,6 +512,16 @@ impl ObservationRegistration {
                 }
             }
             ReferenceObservation::ImageScale(callback) => ImperativeRequest::ObserveImageScale {
+                object: binding.object,
+                observation: self.id,
+                callback: current_observation(
+                    Rc::downgrade(target),
+                    binding.id,
+                    self.id,
+                    callback.clone(),
+                ),
+            },
+            ReferenceObservation::MenuScroll(callback) => ImperativeRequest::ObserveMenuScroll {
                 object: binding.object,
                 observation: self.id,
                 callback: current_observation(
@@ -692,6 +728,11 @@ pub enum ImperativeRequest {
         observation: u64,
         callback: Callback<CompositionHostEvent>,
     },
+    ObserveMenuScroll {
+        object: ObjectId,
+        observation: u64,
+        callback: Callback<f64>,
+    },
     RevokeObservation {
         object: ObjectId,
         observation: u64,
@@ -702,6 +743,10 @@ pub enum ImperativeRequest {
         completion: Callback<Result<(), IntegrationError>>,
     },
     ChangeView {
+        object: ObjectId,
+        vertical_offset: f64,
+    },
+    ChangeMenuView {
         object: ObjectId,
         vertical_offset: f64,
     },
@@ -724,6 +769,11 @@ impl ImperativeRequest {
                 ..
             }
             | Self::ObserveCompositionHost {
+                object,
+                observation,
+                ..
+            }
+            | Self::ObserveMenuScroll {
                 object,
                 observation,
                 ..

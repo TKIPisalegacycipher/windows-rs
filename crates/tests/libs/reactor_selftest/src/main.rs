@@ -1788,6 +1788,10 @@ impl reactor::Component for Fixture {
         let mode_callback = Rc::clone(&modes);
         let invoked = Rc::new(RefCell::new(Vec::new()));
         let invoked_callback = Rc::clone(&invoked);
+        let expanded = Rc::new(RefCell::new(Vec::new()));
+        let expanded_callback = Rc::clone(&expanded);
+        let collapsed = Rc::new(RefCell::new(Vec::new()));
+        let collapsed_callback = Rc::clone(&collapsed);
         let mut navigation_runtime =
             reactor::Runtime::new(reactor::native::WinUiAdapter::default());
         navigation_runtime
@@ -1796,7 +1800,9 @@ impl reactor::Component for Fixture {
                     .on_display_mode_changed(move |value| {
                         mode_callback.borrow_mut().push(value);
                     })
-                    .on_item_invoked(move |value| invoked_callback.borrow_mut().push(value)),
+                    .on_item_invoked(move |value| invoked_callback.borrow_mut().push(value))
+                    .on_item_expanding(move |value| expanded_callback.borrow_mut().push(value))
+                    .on_item_collapsed(move |value| collapsed_callback.borrow_mut().push(value)),
             )
             .unwrap();
         let navigation = navigation_runtime.graph().root().unwrap();
@@ -1806,6 +1812,17 @@ impl reactor::Component for Fixture {
             .unwrap();
         assert_eq!(navigation_runtime.dispatch_native_events().unwrap(), 1);
         assert_eq!(&*invoked.borrow(), &[Rc::from("add-account")]);
+        navigation_runtime
+            .adapter()
+            .simulate_string_event(navigation, reactor::EventId::Expanding, "inbox")
+            .unwrap();
+        navigation_runtime
+            .adapter()
+            .simulate_string_event(navigation, reactor::EventId::Collapsed, "archive")
+            .unwrap();
+        assert_eq!(navigation_runtime.dispatch_native_events().unwrap(), 2);
+        assert_eq!(&*expanded.borrow(), &[Rc::from("inbox")]);
+        assert_eq!(&*collapsed.borrow(), &[Rc::from("archive")]);
         navigation_runtime
             .adapter()
             .simulate_navigation_display_mode_changed(

@@ -17,9 +17,11 @@ impl ImperativeRequest {
             | Self::SetNativeImageSource { object, .. }
             | Self::ObserveImageScale { object, .. }
             | Self::ObserveCompositionHost { object, .. }
+            | Self::ObserveMenuScroll { object, .. }
             | Self::RevokeObservation { object, .. }
             | Self::SetCompositionChildVisual { object, .. }
             | Self::ChangeView { object, .. }
+            | Self::ChangeMenuView { object, .. }
             | Self::HideFlyout { object } => *object,
         }
     }

@@ -100,6 +100,45 @@ fn scroll_viewer_reference_queues_vertical_offset() {
 }
 
 #[test]
+fn navigation_view_reference_queues_menu_offset_and_observation() {
+    let reference = ElementRef::<NavigationView>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    assert!(!reference.request_menu_vertical_offset(96.0));
+
+    let offsets = Rc::new(RefCell::new(Vec::new()));
+    let _observation = reference.observe_menu_scroll({
+        let offsets = Rc::clone(&offsets);
+        move |offset| offsets.borrow_mut().push(offset)
+    });
+    runtime
+        .update(NavigationView::new().element_ref(&reference))
+        .unwrap();
+    let object = reference.get().unwrap();
+    assert!(reference.request_menu_vertical_offset(96.0));
+    runtime.dispatch_native_events().unwrap();
+    let requests = runtime.adapter().imperatives();
+    assert!(
+        requests
+            .iter()
+            .any(|request| matches!(request, ImperativeRequest::ObserveMenuScroll { object: o, .. } if *o == object))
+    );
+    assert!(requests.contains(&ImperativeRequest::ChangeMenuView {
+        object,
+        vertical_offset: 96.0,
+    }));
+}
+
+#[test]
+fn navigation_view_menu_vertical_offset_must_be_finite() {
+    assert!(
+        std::panic::catch_unwind(|| {
+            ElementRef::<NavigationView>::new().request_menu_vertical_offset(f64::NAN)
+        })
+        .is_err()
+    );
+}
+
+#[test]
 fn button_reference_queues_flyout_hide() {
     let reference = ElementRef::<Button>::new();
     let mut runtime = Runtime::new(RecordingAdapter::default());

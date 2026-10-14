@@ -288,6 +288,7 @@ pub enum EventId {
     Checked,
     Click,
     Closed,
+    Collapsed,
     ColorChanged,
     CommandInvoked,
     DateChanged,
@@ -297,6 +298,7 @@ pub enum EventId {
     DragLeave,
     DragOver,
     Drop,
+    Expanding,
     GotFocus,
     ImageFailed,
     ImageOpened,
@@ -749,6 +751,14 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
             },
             EventContract {
                 id: EventId::ItemInvoked,
+                value: ValueType::String,
+            },
+            EventContract {
+                id: EventId::Expanding,
+                value: ValueType::String,
+            },
+            EventContract {
+                id: EventId::Collapsed,
                 value: ValueType::String,
             },
             EventContract {
