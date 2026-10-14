@@ -337,9 +337,7 @@ impl WinUiAdapter {
                             .iter()
                             .map(|child| self.inspectable(*child).map(Some))
                             .collect::<Result<Vec<_>, _>>()?;
-                        self.with_list_items_disconnected(parent, None, || {
-                            Ok(values.ReplaceAll(&children)?)
-                        })?;
+                        values.ReplaceAll(&children)?;
                     } else {
                         // Check every move before disconnecting anything.
                         let mut moved = Vec::with_capacity(moves.len());
@@ -357,30 +355,26 @@ impl WinUiAdapter {
                             }
                             moved.push((movement.child, child, before));
                         }
-                        let items = moved
-                            .iter()
-                            .map(|(_, child, _)| child.clone())
-                            .collect::<Vec<_>>();
-                        self.with_list_items_disconnected(parent, Some(&items), || {
-                            for (object, child, before) in &moved {
-                                let mut previous = 0;
-                                if !values.IndexOf(child, &mut previous)? {
+                        // No container is disconnected first: the one XAML prepares for a moved
+                        // item takes its content over (`ContainerContentChanging`), and one XAML
+                        // keeps for it would show nothing.
+                        for (object, child, before) in &moved {
+                            let mut previous = 0;
+                            if !values.IndexOf(child, &mut previous)? {
+                                return Err(WinUiError::ChildNotFound(*object));
+                            }
+                            values.RemoveAt(previous)?;
+                            let index = if let Some(before) = before {
+                                let mut index = 0;
+                                if !values.IndexOf(before, &mut index)? {
                                     return Err(WinUiError::ChildNotFound(*object));
                                 }
-                                values.RemoveAt(previous)?;
-                                let index = if let Some(before) = before {
-                                    let mut index = 0;
-                                    if !values.IndexOf(before, &mut index)? {
-                                        return Err(WinUiError::ChildNotFound(*object));
-                                    }
-                                    index
-                                } else {
-                                    values.Size()?
-                                };
-                                values.InsertAt(index, child)?;
-                            }
-                            Ok(())
-                        })?;
+                                index
+                            } else {
+                                values.Size()?
+                            };
+                            values.InsertAt(index, child)?;
+                        }
                     }
                 }
             }
