@@ -896,6 +896,7 @@ payload_adapter = "number_box_value"
 [[objects]]
 name = "NavigationView"
 enabled = true
+reference = true
 
 [[objects.properties]]
 name = "IsEnabled"
@@ -969,6 +970,18 @@ field = "on_selected_tag_changed"
 [[objects.events]]
 name = "ItemInvoked"
 payload = "InvokedItemContainer"
+payload_adapter = "item_tag"
+
+[[objects.events]]
+name = "Expanding"
+field = "on_item_expanding"
+payload = "ExpandingItemContainer"
+payload_adapter = "item_tag"
+
+[[objects.events]]
+name = "Collapsed"
+field = "on_item_collapsed"
+payload = "CollapsedItemContainer"
 payload_adapter = "item_tag"
 
 [[objects.events]]

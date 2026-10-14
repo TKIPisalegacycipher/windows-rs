@@ -654,6 +654,35 @@ impl Adapter for WinUiAdapter {
                     },
                 );
             }
+            ImperativeRequest::ObserveMenuScroll {
+                object,
+                observation,
+                callback,
+            } => {
+                let Some(Handle::Generated(GeneratedHandle::NavigationView(control))) =
+                    self.handles.get(&object)
+                else {
+                    return Ok(());
+                };
+                let root = control.value.cast::<native::DependencyObject>()?;
+                let framework = control.value.cast::<native::IFrameworkElement>()?;
+                let view = Rc::new(RefCell::new(None));
+                observe_menu_scroll(&root, &view, &callback)?;
+                let loaded_view = Rc::clone(&view);
+                let loaded_errors = Rc::clone(&self.event_queue);
+                let loaded = framework.Loaded(move |_, _| {
+                    if let Err(error) = observe_menu_scroll(&root, &loaded_view, &callback) {
+                        loaded_errors.errors.borrow_mut().push_back(error.into());
+                    }
+                })?;
+                self.observations.insert(
+                    (object, observation),
+                    ObservationSubscription::MenuScroll {
+                        _view: view,
+                        _loaded: loaded,
+                    },
+                );
+            }
             ImperativeRequest::RevokeObservation {
                 object,
                 observation,
@@ -698,6 +727,25 @@ impl Adapter for WinUiAdapter {
                     return Ok(());
                 };
                 control.ChangeViewWithOptionalAnimation(None, Some(vertical_offset), None, true)?;
+            }
+            ImperativeRequest::ChangeMenuView {
+                object,
+                vertical_offset,
+            } => {
+                let Some(Handle::Generated(GeneratedHandle::NavigationView(control))) =
+                    self.handles.get(&object)
+                else {
+                    return Ok(());
+                };
+                if let Some(scroller) = find_menu_scroller(&control.value.cast::<native::DependencyObject>()?)
+                {
+                    scroller.ChangeViewWithOptionalAnimation(
+                        None,
+                        Some(vertical_offset),
+                        None,
+                        true,
+                    )?;
+                }
             }
             ImperativeRequest::HideFlyout { object } => {
                 if let Some((flyout, _, _)) = self.flyouts.get(&object) {

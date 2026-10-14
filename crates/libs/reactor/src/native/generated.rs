@@ -308,6 +308,10 @@ struct GeneratedNavigationView {
     _selection_changed: GeneratedRevoker,
     item_invoked: Rc<RefCell<NativeStringEvent>>,
     _item_invoked: Option<GeneratedRevoker>,
+    expanding: Rc<RefCell<NativeStringEvent>>,
+    _expanding: Option<GeneratedRevoker>,
+    collapsed: Rc<RefCell<NativeStringEvent>>,
+    _collapsed: Option<GeneratedRevoker>,
     display_mode_changed: Rc<RefCell<NativeNavigationViewDisplayModeEvent>>,
     _display_mode_changed: Option<GeneratedRevoker>,
 }
@@ -1193,6 +1197,10 @@ impl GeneratedHandle {
                 let _selection_changed = GeneratedRevoker::Event(revoker);
                 let item_invoked = Rc::new(RefCell::new(NativeStringEvent::default()));
                 let _item_invoked = None;
+                let expanding = Rc::new(RefCell::new(NativeStringEvent::default()));
+                let _expanding = None;
+                let collapsed = Rc::new(RefCell::new(NativeStringEvent::default()));
+                let _collapsed = None;
                 let display_mode_changed =
                     Rc::new(RefCell::new(NativeNavigationViewDisplayModeEvent::default()));
                 let _display_mode_changed = None;
@@ -1204,6 +1212,10 @@ impl GeneratedHandle {
                     _selection_changed,
                     item_invoked,
                     _item_invoked,
+                    expanding,
+                    _expanding,
+                    collapsed,
+                    _collapsed,
                     display_mode_changed,
                     _display_mode_changed,
                 }))
@@ -9273,6 +9285,16 @@ impl GeneratedHandle {
                     native_event.revision = native_event.revision.wrapping_add(1);
                     native_event.callback = None;
                 }
+                if clear.contains(&EventId::Expanding) {
+                    let mut native_event = object.expanding.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
+                if clear.contains(&EventId::Collapsed) {
+                    let mut native_event = object.collapsed.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
                 if clear.contains(&EventId::DisplayModeChanged) {
                     let mut native_event = object.display_mode_changed.borrow_mut();
                     native_event.revision = native_event.revision.wrapping_add(1);
@@ -9297,6 +9319,22 @@ impl GeneratedHandle {
                                 native_event.callback = Some(callback.clone());
                             }
                             object.subscribe_item_invoked(object_id, context)?;
+                        }
+                        (EventId::Expanding, EventValue::String(callback)) => {
+                            {
+                                let mut native_event = object.expanding.borrow_mut();
+                                native_event.revision = native_event.revision.wrapping_add(1);
+                                native_event.callback = Some(callback.clone());
+                            }
+                            object.subscribe_expanding(object_id, context)?;
+                        }
+                        (EventId::Collapsed, EventValue::String(callback)) => {
+                            {
+                                let mut native_event = object.collapsed.borrow_mut();
+                                native_event.revision = native_event.revision.wrapping_add(1);
+                                native_event.callback = Some(callback.clone());
+                            }
+                            object.subscribe_collapsed(object_id, context)?;
                         }
                         (
                             EventId::DisplayModeChanged,
@@ -10565,6 +10603,20 @@ impl GeneratedHandle {
             }
             (Self::NavigationView(object), EventId::ItemInvoked) => {
                 let event = object.item_invoked.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::String)
+            }
+            (Self::NavigationView(object), EventId::Expanding) => {
+                let event = object.expanding.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::String)
+            }
+            (Self::NavigationView(object), EventId::Collapsed) => {
+                let event = object.collapsed.borrow();
                 (event.revision == revision)
                     .then(|| event.callback.clone())
                     .flatten()
@@ -11890,6 +11942,110 @@ impl GeneratedNavigationView {
             }
         })?;
         self._item_invoked = Some(GeneratedRevoker::Event(revoker));
+        Ok(())
+    }
+    fn subscribe_expanding(
+        &mut self,
+        object: ObjectId,
+        context: EventContext,
+    ) -> Result<(), WinUiError> {
+        if self._expanding.is_some() {
+            return Ok(());
+        }
+        let value = &self.value;
+        let event_for_callback = Rc::clone(&self.expanding);
+        let event_queue_expanding = Rc::clone(context.event_queue);
+        let revoker = value
+            .cast::<native::INavigationView2>()?
+            .Expanding(move |_, args| {
+                let dispatch = true;
+                let observation = None;
+                let args = args.unwrap();
+                let payload = match args
+                    .ExpandingItemContainer()
+                    .and_then(|value| value.cast::<native::IFrameworkElement>())
+                    .and_then(|value| value.Tag())
+                {
+                    Ok(value) => match value
+                        .cast::<windows_reference::IReference<HSTRING>>()
+                        .and_then(|value| value.Value())
+                    {
+                        Ok(value) => Rc::<str>::from(value.to_string_lossy()),
+                        Err(error) => {
+                            report_error(error);
+                            return;
+                        }
+                    },
+                    Err(error) if error.code().is_ok() => Rc::<str>::from(""),
+                    Err(error) => {
+                        report_error(error);
+                        return;
+                    }
+                };
+                if dispatch {
+                    WinUiAdapter::dispatch(
+                        &event_for_callback,
+                        &event_queue_expanding,
+                        object,
+                        EventId::Expanding,
+                        observation,
+                        payload,
+                    );
+                }
+            })?;
+        self._expanding = Some(GeneratedRevoker::Event(revoker));
+        Ok(())
+    }
+    fn subscribe_collapsed(
+        &mut self,
+        object: ObjectId,
+        context: EventContext,
+    ) -> Result<(), WinUiError> {
+        if self._collapsed.is_some() {
+            return Ok(());
+        }
+        let value = &self.value;
+        let event_for_callback = Rc::clone(&self.collapsed);
+        let event_queue_collapsed = Rc::clone(context.event_queue);
+        let revoker = value
+            .cast::<native::INavigationView2>()?
+            .Collapsed(move |_, args| {
+                let dispatch = true;
+                let observation = None;
+                let args = args.unwrap();
+                let payload = match args
+                    .CollapsedItemContainer()
+                    .and_then(|value| value.cast::<native::IFrameworkElement>())
+                    .and_then(|value| value.Tag())
+                {
+                    Ok(value) => match value
+                        .cast::<windows_reference::IReference<HSTRING>>()
+                        .and_then(|value| value.Value())
+                    {
+                        Ok(value) => Rc::<str>::from(value.to_string_lossy()),
+                        Err(error) => {
+                            report_error(error);
+                            return;
+                        }
+                    },
+                    Err(error) if error.code().is_ok() => Rc::<str>::from(""),
+                    Err(error) => {
+                        report_error(error);
+                        return;
+                    }
+                };
+                if dispatch {
+                    WinUiAdapter::dispatch(
+                        &event_for_callback,
+                        &event_queue_collapsed,
+                        object,
+                        EventId::Collapsed,
+                        observation,
+                        payload,
+                    );
+                }
+            })?;
+        self._collapsed = Some(GeneratedRevoker::Event(revoker));
         Ok(())
     }
     fn subscribe_display_mode_changed(

@@ -3905,6 +3905,8 @@ impl From<NumberBox> for View {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct NavigationView(Declaration);
+impl Sealed for NavigationView {}
+impl ReferenceElement for NavigationView {}
 impl NavigationView {
     pub fn new() -> Self {
         let declaration = Declaration::new(ObjectType::NavigationView);
@@ -3992,6 +3994,7 @@ impl NavigationView {
             .property(PropertyId::IsPaneOpen, PropertyValue::Bool(is_pane_open));
         self
     }
+    reference_methods!(NavigationView);
     visual_methods!();
     /// Rejects values outside this relation's generated type contract.
     ///
@@ -4139,6 +4142,20 @@ impl NavigationView {
     pub fn on_item_invoked(mut self, callback: impl IntoPayloadCallback<Rc<str>>) -> Self {
         self.0 = self.0.event(
             EventId::ItemInvoked,
+            EventValue::String(callback.into_payload_callback()),
+        );
+        self
+    }
+    pub fn on_item_expanding(mut self, callback: impl IntoPayloadCallback<Rc<str>>) -> Self {
+        self.0 = self.0.event(
+            EventId::Expanding,
+            EventValue::String(callback.into_payload_callback()),
+        );
+        self
+    }
+    pub fn on_item_collapsed(mut self, callback: impl IntoPayloadCallback<Rc<str>>) -> Self {
+        self.0 = self.0.event(
+            EventId::Collapsed,
             EventValue::String(callback.into_payload_callback()),
         );
         self

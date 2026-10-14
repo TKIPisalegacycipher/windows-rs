@@ -274,6 +274,10 @@ enum ObservationSubscription {
         _loaded: windows_core::EventRevoker,
         _size: windows_core::EventRevoker,
     },
+    MenuScroll {
+        _view: Rc<RefCell<Option<windows_core::EventRevoker>>>,
+        _loaded: windows_core::EventRevoker,
+    },
 }
 
 struct WebViewInitialization {
@@ -1724,6 +1728,56 @@ fn observe_xaml_scale(
             Err(error) => callback_errors.errors.borrow_mut().push_back(error.into()),
         }
     })?));
+    Ok(())
+}
+
+/// The template part name of the ScrollViewer that scrolls a NavigationView's menu items.
+const MENU_SCROLLER: &str = "MenuItemsScrollViewer";
+
+/// The ScrollViewer scrolling `root`'s menu items, once the NavigationView's template has applied.
+fn find_menu_scroller(root: &native::DependencyObject) -> Option<native::ScrollViewer> {
+    let count = native::VisualTreeHelper::GetChildrenCount(root).ok()?;
+    for index in 0..count {
+        let child = native::VisualTreeHelper::GetChild(root, index).ok()?;
+        if let Ok(scroller) = child.cast::<native::ScrollViewer>()
+            && child
+                .cast::<native::IFrameworkElement>()
+                .and_then(|element| element.Name())
+                .is_ok_and(|name| name == MENU_SCROLLER)
+        {
+            return Some(scroller);
+        }
+        if let Some(found) = find_menu_scroller(&child) {
+            return Some(found);
+        }
+    }
+    None
+}
+
+/// Reports the menu scroller's offset to `callback` now and after every change of its view, once
+/// `root` has a scroller. Does nothing while one is already observed or the template has not applied.
+fn observe_menu_scroll(
+    root: &native::DependencyObject,
+    view: &Rc<RefCell<Option<windows_core::EventRevoker>>>,
+    callback: &Callback<f64>,
+) -> windows_core::Result<()> {
+    if view.borrow().is_some() {
+        return Ok(());
+    }
+    let Some(scroller) = find_menu_scroller(root) else {
+        return Ok(());
+    };
+    callback.call(scroller.VerticalOffset()?);
+    let callback = callback.clone();
+    let revoker = scroller.ViewChanged({
+        let scroller = scroller.clone();
+        move |_, _| {
+            if let Ok(offset) = scroller.VerticalOffset() {
+                callback.call(offset);
+            }
+        }
+    })?;
+    view.replace(Some(revoker));
     Ok(())
 }
 

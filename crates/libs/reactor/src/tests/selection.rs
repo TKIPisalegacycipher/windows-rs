@@ -845,6 +845,52 @@ fn navigation_view_item_invoked_delivers_item_tag() {
 }
 
 #[test]
+fn navigation_view_expanding_and_collapsed_deliver_item_tags() {
+    let expanded = Rc::new(RefCell::new(Vec::new()));
+    let collapsed = Rc::new(RefCell::new(Vec::new()));
+    let expanding_callback = {
+        let expanded = Rc::clone(&expanded);
+        Callback::new(move |value| expanded.borrow_mut().push(value))
+    };
+    let collapsed_callback = {
+        let collapsed = Rc::clone(&collapsed);
+        Callback::new(move |value| collapsed.borrow_mut().push(value))
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            NavigationView::new()
+                .on_item_expanding(expanding_callback.clone())
+                .on_item_collapsed(collapsed_callback.clone()),
+        )
+        .unwrap();
+    let object = runtime.graph().root().unwrap();
+    for id in [EventId::Expanding, EventId::Collapsed] {
+        assert!(
+            event_contracts(ObjectType::NavigationView).contains(&EventContract {
+                id,
+                value: ValueType::String,
+            })
+        );
+    }
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        object,
+        EventId::Expanding,
+        EventValue::String(expanding_callback),
+        EventPayload::String(Rc::from("inbox")),
+    ));
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        object,
+        EventId::Collapsed,
+        EventValue::String(collapsed_callback),
+        EventPayload::String(Rc::from("archive")),
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 2);
+    assert_eq!(&*expanded.borrow(), &[Rc::from("inbox")]);
+    assert_eq!(&*collapsed.borrow(), &[Rc::from("archive")]);
+}
+
+#[test]
 fn tab_view_events_deliver_item_tags() {
     let closed_values = Rc::new(RefCell::new(Vec::new()));
     let closed_callback = {
