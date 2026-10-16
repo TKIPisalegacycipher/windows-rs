@@ -949,7 +949,7 @@ fn open_component_window(
             .insert(id, ComponentWindow { drain, state },)
             .is_none()
     );
-    if let Err(error) = native.activate() {
+    if let Err(error) = native.show(policy.activate) {
         if let Some(window) = application.borrow_mut().windows.remove(&id) {
             window.dispose();
         }

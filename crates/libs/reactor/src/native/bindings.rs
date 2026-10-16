@@ -5455,6 +5455,15 @@ impl IAppWindow {
             .ok()
         }
     }
+    pub(crate) fn ShowWithActivation(&self, activatewindow: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).ShowWithActivation)(
+                windows_core::Interface::as_raw(self),
+                activatewindow,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn Changed<F>(&self, handler: F) -> windows_core::Result<windows_core::EventRevoker>
     where
         F: Fn(windows_core::Ref<AppWindow>, windows_core::Ref<AppWindowChangedEventArgs>) + 'static,
@@ -5520,7 +5529,8 @@ pub struct IAppWindow_Vtbl {
     SetPresenter: usize,
     SetPresenterByKind: usize,
     Show: usize,
-    ShowWithActivation: usize,
+    pub ShowWithActivation:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     pub Changed: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
