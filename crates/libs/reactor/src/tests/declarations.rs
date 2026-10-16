@@ -169,6 +169,38 @@ fn typed_relation_rejects_other_visual_kinds() {
 }
 
 #[test]
+fn info_bar_mounts_an_action_button_and_content() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            InfoBar::new()
+                .title("Sending")
+                .action_button(Button::new().content("Undo"))
+                .content(ProgressBar::new()),
+        )
+        .unwrap();
+    let root = runtime.graph().root().unwrap();
+    let button = runtime
+        .graph()
+        .child(root, RelationId::ActionButton)
+        .unwrap();
+    assert_eq!(runtime.graph().kind(button), Some(ObjectType::Button));
+    let content = runtime.graph().child(root, RelationId::Content).unwrap();
+    assert_eq!(runtime.graph().kind(content), Some(ObjectType::ProgressBar));
+
+    runtime.update(InfoBar::new().title("Sending")).unwrap();
+    assert_eq!(runtime.graph().child(root, RelationId::ActionButton), None);
+    assert_eq!(runtime.graph().kind(button), None);
+
+    assert_eq!(
+        runtime.update(InfoBar::new().action_button(TextBlock::new().text("Undo"))),
+        Err(UpdateError::Graph(GraphError::InvalidChildCategory(
+            RelationId::ActionButton
+        )))
+    );
+}
+
+#[test]
 fn property_contract_enumeration_matches_point_lookup() {
     for kind in ALL_OBJECT_TYPES.iter().copied() {
         let contracts = property_contracts(kind);

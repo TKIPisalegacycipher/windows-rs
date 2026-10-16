@@ -4659,6 +4659,32 @@ impl InfoBar {
         self
     }
     visual_methods!();
+    /// Rejects values outside this relation's generated type contract.
+    ///
+    /// ```compile_fail
+    /// use windows_reactor::*;
+    /// let _ = InfoBar::new().action_button(TreeNode::new("node", "Node"));
+    /// ```
+    pub fn action_button(mut self, content: impl Into<View>) -> Self {
+        self.0 = self.0.relation(
+            RelationId::ActionButton,
+            RelationValue::One(Some(Rc::new(content.into().0))),
+        );
+        self
+    }
+    /// Rejects values outside this relation's generated type contract.
+    ///
+    /// ```compile_fail
+    /// use windows_reactor::*;
+    /// let _ = InfoBar::new().content(TreeNode::new("node", "Node"));
+    /// ```
+    pub fn content(mut self, content: impl Into<View>) -> Self {
+        self.0 = self.0.relation(
+            RelationId::Content,
+            RelationValue::One(Some(Rc::new(content.into().0))),
+        );
+        self
+    }
     pub fn on_closed(mut self, callback: impl IntoUnitCallback) -> Self {
         self.0 = self.0.event(
             EventId::Closed,

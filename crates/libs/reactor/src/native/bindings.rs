@@ -12120,6 +12120,30 @@ impl IInfoBar {
             .ok()
         }
     }
+    pub(crate) fn SetActionButton<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<ButtonBase>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetActionButton)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
+    pub(crate) fn SetContent<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<windows_core::IInspectable>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetContent)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
     pub(crate) fn Closed<F>(&self, handler: F) -> windows_core::Result<windows_core::EventRevoker>
     where
         F: Fn(windows_core::Ref<InfoBar>, windows_core::Ref<InfoBarClosedEventArgs>) + 'static,
@@ -12182,9 +12206,15 @@ pub struct IInfoBar_Vtbl {
     CloseButtonCommandParameter: usize,
     SetCloseButtonCommandParameter: usize,
     ActionButton: usize,
-    SetActionButton: usize,
+    pub SetActionButton: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     Content: usize,
-    SetContent: usize,
+    pub SetContent: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     ContentTemplate: usize,
     SetContentTemplate: usize,
     TemplateSettings: usize,

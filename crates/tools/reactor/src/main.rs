@@ -2300,8 +2300,9 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                     if let Some(item) = &relation.native_item {
                         let item = item.rsplit('.').next().unwrap();
                         format!(
-                            "match child {{ Some(child) => {object}.Set{native_relation}(\
-                             &child.cast::<native::{item}>()?).map_err(Into::into), None => \
+                            "match child {{ Some(child) => child.cast::<native::{item}>()\
+                             .map_err(Into::into).and_then(|child| {object}.Set{native_relation}(\
+                             &child).map_err(Into::into)), None => \
                              {object}.Set{native_relation}(None::<&{empty_type}>)\
                              .map_err(Into::into) }}"
                         )

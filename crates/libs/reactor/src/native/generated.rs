@@ -10896,6 +10896,23 @@ impl GeneratedHandle {
                     .SetHeader(None::<&IInspectable>)
                     .map_err(Into::into),
             }),
+            (Self::InfoBar(object), RelationId::ActionButton) => Some(match child {
+                Some(child) => child
+                    .cast::<native::ButtonBase>()
+                    .map_err(Into::into)
+                    .and_then(|child| object.value.SetActionButton(&child).map_err(Into::into)),
+                None => object
+                    .value
+                    .SetActionButton(None::<&native::ButtonBase>)
+                    .map_err(Into::into),
+            }),
+            (Self::InfoBar(object), RelationId::Content) => Some(match child {
+                Some(child) => object.value.SetContent(child).map_err(Into::into),
+                None => object
+                    .value
+                    .SetContent(None::<&IInspectable>)
+                    .map_err(Into::into),
+            }),
             (Self::ScrollView(object), RelationId::Content) => Some(match child {
                 Some(child) => object.SetContent(child).map_err(Into::into),
                 None => object
