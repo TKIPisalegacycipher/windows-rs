@@ -141,7 +141,8 @@ impl Component for WindowRequester {
                 "secondary".to_string(),
                 WindowPolicy::new()
                     .title("Secondary")
-                    .client_size(320.0, 200.0),
+                    .client_size(320.0, 200.0)
+                    .activate(false),
             ),
             WindowRequestMessage::Run => {
                 context.run_window(|window| WindowRequestMessage::Window(window.as_raw() as usize))
@@ -183,7 +184,9 @@ fn ui_local_services_accept_typed_window_requests() {
         WindowPolicy::new()
             .title("Secondary")
             .client_size(320.0, 200.0)
+            .activate(false)
     );
+    assert!(!policy.activate);
     let secondary = ComponentHost::mount(RecordingAdapter::default(), [root]).unwrap();
     let root = secondary
         .reference_at(&[Key::from("root")])
@@ -215,6 +218,15 @@ fn ui_local_services_accept_typed_window_requests() {
     assert!(sender.send(WindowRequestMessage::Open));
     assert_eq!(headless.drain(1).unwrap().dispatched, 1);
     assert_eq!(accepted.get(), Some(false));
+}
+
+#[test]
+fn window_policy_activates_unless_told_not_to() {
+    assert!(WindowPolicy::new().activate);
+    assert!(WindowPolicy::default().activate);
+    assert!(!WindowPolicy::new().activate(false).activate);
+    assert!(WindowPolicy::new().activate(false).activate(true).activate);
+    assert_ne!(WindowPolicy::new(), WindowPolicy::new().activate(false));
 }
 
 #[test]

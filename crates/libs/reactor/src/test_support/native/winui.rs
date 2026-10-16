@@ -21,7 +21,7 @@ impl WinUiAdapter {
         policy: &WindowPolicy,
     ) -> Result<NativeWindow, WinUiError> {
         let window = self.create_window_with_policy(root, policy)?;
-        window.activate()?;
+        window.show(policy.activate)?;
         Ok(window)
     }
 

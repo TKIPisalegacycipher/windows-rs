@@ -165,17 +165,41 @@ impl WindowVisuals {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct WindowPolicy {
     pub(crate) title: Option<String>,
     pub(crate) theme: WindowTheme,
     pub(crate) client_size: Option<(f64, f64)>,
     pub(crate) minimum_client_size: Option<(f64, f64)>,
+    pub(crate) activate: bool,
+}
+
+impl Default for WindowPolicy {
+    fn default() -> Self {
+        Self {
+            title: None,
+            theme: WindowTheme::default(),
+            client_size: None,
+            minimum_client_size: None,
+            activate: true,
+        }
+    }
 }
 
 impl WindowPolicy {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Whether opening the window activates it. The default is `true`.
+    ///
+    /// Opening with `false` shows the window without activating it: it doesn't take keyboard
+    /// focus or come in front of the active window's input. A window whose published initial
+    /// placement is maximized is still activated: Win32 has no show command that maximizes a
+    /// window without activating it.
+    pub fn activate(mut self, activate: bool) -> Self {
+        self.activate = activate;
+        self
     }
 
     pub fn title(mut self, title: impl Into<String>) -> Self {

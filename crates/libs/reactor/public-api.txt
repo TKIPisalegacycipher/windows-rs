@@ -4722,11 +4722,14 @@ pub windows_reactor::WindowPlacement::x: i32
 pub windows_reactor::WindowPlacement::y: i32
 pub struct windows_reactor::WindowPolicy
 impl windows_reactor::WindowPolicy
+pub fn windows_reactor::WindowPolicy::activate(self, bool) -> Self
 pub fn windows_reactor::WindowPolicy::client_size(self, f64, f64) -> Self
 pub fn windows_reactor::WindowPolicy::minimum_client_size(self, f64, f64) -> Self
 pub fn windows_reactor::WindowPolicy::new() -> Self
 pub fn windows_reactor::WindowPolicy::theme(self, windows_reactor::WindowTheme) -> Self
 pub fn windows_reactor::WindowPolicy::title(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::default::Default for windows_reactor::WindowPolicy
+pub fn windows_reactor::WindowPolicy::default() -> Self
 pub struct windows_reactor::WindowSize
 pub windows_reactor::WindowSize::height: f64
 pub windows_reactor::WindowSize::width: f64

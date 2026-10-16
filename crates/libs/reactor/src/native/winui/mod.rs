@@ -2180,10 +2180,26 @@ impl NativeWindow {
     }
 
     pub fn activate(&self) -> Result<(), WinUiError> {
-        if self.state.maximize_on_first_show.replace(false) {
+        self.show(true)
+    }
+
+    /// Shows the window, activating it when `activate` is set. Without activation the window is
+    /// shown through `AppWindow.Show(false)`, so it doesn't take focus, unless its first show is
+    /// maximized: maximizing always activates.
+    pub(crate) fn show(&self, activate: bool) -> Result<(), WinUiError> {
+        let maximize = self.state.maximize_on_first_show.replace(false);
+        if maximize {
             window_placement::show_maximized(self.raw_handle()?.cast())?;
         }
-        self.state.window.Activate()?;
+        if activate || maximize {
+            self.state.window.Activate()?;
+        } else {
+            self.state
+                .window
+                .cast::<native::IWindow2>()?
+                .AppWindow()?
+                .ShowWithActivation(false)?;
+        }
         self.state.shown.set(true);
         self.state.observe_placement()?;
         Ok(())
