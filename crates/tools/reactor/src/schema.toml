@@ -1198,6 +1198,14 @@ name = "IsOpen"
 [[objects.properties]]
 name = "IsClosable"
 
+[[objects.relations]]
+name = "ActionButton"
+allowed_objects = ["Button"]
+native_item = "ButtonBase"
+
+[[objects.relations]]
+name = "Content"
+
 [[objects.events]]
 name = "Closed"
 

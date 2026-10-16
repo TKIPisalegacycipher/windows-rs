@@ -267,6 +267,7 @@ pub enum PropertyId {
 }
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum RelationId {
+    ActionButton,
     Children,
     Content,
     FooterMenuItems,
@@ -3559,7 +3560,24 @@ pub fn relation_contracts(kind: ObjectType) -> &'static [RelationContract] {
             realization: Realization::Container,
         }],
         ObjectType::InfoBadge => &[],
-        ObjectType::InfoBar => &[],
+        ObjectType::InfoBar => &[
+            RelationContract {
+                id: RelationId::ActionButton,
+                child: ObjectCategory::Visual,
+                allowed_objects: &[ObjectType::Button],
+                cardinality: Cardinality::One,
+                identity: Identity::Positional,
+                realization: Realization::Owned,
+            },
+            RelationContract {
+                id: RelationId::Content,
+                child: ObjectCategory::Visual,
+                allowed_objects: &[],
+                cardinality: Cardinality::One,
+                identity: Identity::Positional,
+                realization: Realization::Owned,
+            },
+        ],
         ObjectType::PersonPicture => &[],
         ObjectType::ScrollView => &[RelationContract {
             id: RelationId::Content,

@@ -130,7 +130,7 @@ Microsoft::UI::Xaml::Controls::IImageIconSource::put_ImageSource
 Microsoft::UI::Xaml::Controls::IImageStatics::get_StretchProperty
 Microsoft::UI::Xaml::Controls::IInfoBadge::put_Value
 Microsoft::UI::Xaml::Controls::IInfoBadgeStatics::get_ValueProperty
-Microsoft::UI::Xaml::Controls::IInfoBar::{add_Closed, put_IsClosable, put_IsOpen, put_Message, put_Severity, put_Title, remove_Closed}
+Microsoft::UI::Xaml::Controls::IInfoBar::{add_Closed, put_ActionButton, put_Content, put_IsClosable, put_IsOpen, put_Message, put_Severity, put_Title, remove_Closed}
 Microsoft::UI::Xaml::Controls::IInfoBarStatics::{get_IsClosableProperty, get_IsOpenProperty, get_MessageProperty, get_SeverityProperty, get_TitleProperty}
 Microsoft::UI::Xaml::Controls::IItemClickEventArgs::get_ClickedItem
 Microsoft::UI::Xaml::Controls::IItemContainer::{get_IsSelected, put_IsSelected}
