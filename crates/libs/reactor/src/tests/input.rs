@@ -340,6 +340,14 @@ fn drag_drop_policy_private_format_wins_over_the_data_kind() {
 }
 
 #[test]
+fn drag_drop_policy_hides_the_image_of_the_formats_it_names() {
+    let policy = DragDropPolicy::new().hide_image("App.Items");
+    assert!(policy.hides_image(|name| name == "App.Items"));
+    assert!(!policy.hides_image(|_| false));
+    assert!(!DragDropPolicy::new().hides_image(|_| true));
+}
+
+#[test]
 fn pointer_motion_events_use_the_shared_typed_payload() {
     let received = Rc::new(RefCell::new(Vec::new()));
     let callback = |event| {

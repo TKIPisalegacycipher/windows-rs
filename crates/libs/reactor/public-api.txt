@@ -1426,11 +1426,13 @@ pub fn windows_reactor::DragDropAction::caption(self, impl core::convert::Into<a
 pub fn windows_reactor::DragDropAction::new(windows_reactor::DragDropOperation) -> Self
 pub struct windows_reactor::DragDropPolicy
 pub windows_reactor::DragDropPolicy::formats: alloc::vec::Vec<(alloc::string::String, windows_reactor::DragDropAction)>
+pub windows_reactor::DragDropPolicy::hidden_images: alloc::vec::Vec<alloc::string::String>
 pub windows_reactor::DragDropPolicy::other: core::option::Option<windows_reactor::DragDropAction>
 pub windows_reactor::DragDropPolicy::storage_items: core::option::Option<windows_reactor::DragDropAction>
 pub windows_reactor::DragDropPolicy::text: core::option::Option<windows_reactor::DragDropAction>
 impl windows_reactor::DragDropPolicy
 pub fn windows_reactor::DragDropPolicy::format(self, impl core::convert::Into<alloc::string::String>, windows_reactor::DragDropAction) -> Self
+pub fn windows_reactor::DragDropPolicy::hide_image(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub fn windows_reactor::DragDropPolicy::new() -> Self
 pub fn windows_reactor::DragDropPolicy::other(self, impl core::convert::Into<core::option::Option<windows_reactor::DragDropAction>>) -> Self
 pub fn windows_reactor::DragDropPolicy::storage_items(self, impl core::convert::Into<core::option::Option<windows_reactor::DragDropAction>>) -> Self

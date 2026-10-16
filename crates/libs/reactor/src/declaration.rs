@@ -1600,6 +1600,9 @@ pub struct DragDropPolicy {
     /// Private data formats, by name, that take a drag whatever else it carries
     /// (`DragDropPolicy::format`).
     pub formats: Vec<(String, DragDropAction)>,
+    /// Private data formats whose drags show no picture of their data while over this element
+    /// (`DragDropPolicy::hide_image`).
+    pub hidden_images: Vec<String>,
 }
 
 impl DragDropPolicy {
@@ -1637,6 +1640,20 @@ impl DragDropPolicy {
     pub fn format(mut self, name: impl Into<String>, action: DragDropAction) -> Self {
         self.formats.push((name.into(), action));
         self
+    }
+
+    /// Hides the picture XAML draws for drags whose data offers the clipboard format `name` (for
+    /// storage items, their file icon). The drag keeps its caption and operation glyph, and the
+    /// hiding applies even where the policy takes no drop: set it on a container to cover the
+    /// elements without a policy of their own.
+    pub fn hide_image(mut self, name: impl Into<String>) -> Self {
+        self.hidden_images.push(name.into());
+        self
+    }
+
+    /// Whether a drag whose data offers `has_format` formats shows no picture.
+    pub(crate) fn hides_image(&self, mut has_format: impl FnMut(&str) -> bool) -> bool {
+        self.hidden_images.iter().any(|name| has_format(name))
     }
 
     /// The action for data offering `has_format` formats and of `kind`: a matching private

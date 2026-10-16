@@ -238,7 +238,17 @@ impl WinUiAdapter {
         args.SetAcceptedOperation(action.map_or(native::DataPackageOperation::None, |action| {
             Self::native_drag_operation(action.operation)
         }))?;
+        // Taken: an ancestor's policy does not override the answer on its way up.
+        if action.is_some() {
+            args.SetHandled(true)?;
+        }
         let ui = args.DragUIOverride()?;
+        let hidden = policy
+            .as_deref()
+            .is_some_and(|policy| policy.hides_image(|name| data.Contains(name).unwrap_or(false)));
+        if hidden {
+            ui.SetIsContentVisible(false)?;
+        }
         if let Some(caption) = action.and_then(|action| action.caption.as_deref()) {
             ui.SetCaption(caption)?;
             ui.SetIsCaptionVisible(true)?;
@@ -276,6 +286,7 @@ impl WinUiAdapter {
             return Ok(());
         };
         args.SetAcceptedOperation(Self::native_drag_operation(action.operation))?;
+        args.SetHandled(true)?;
         // No payload to read, so no deferral: the drop is queued now. A deferred one would
         // complete from a UI callback, which never runs while the drag source is the app's own
         // modal `DoDragDrop` loop, so XAML's drop (and the loop) would wait forever.
