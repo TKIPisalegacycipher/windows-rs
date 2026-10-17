@@ -6,6 +6,25 @@ enum ListItems<'a> {
     Matching(&'a HashSet<usize>),
 }
 
+/// Whether a reactor write that left a `kind` selector with `has_selection`, after it had
+/// `had_selection`, gets a "nothing selected" event only after the write returns.
+///
+/// NavigationView raises a change to "nothing selected" late: `ChangeSelection` finds no container
+/// for the null item and leaves the event to `CompletePendingSelectionChange`, queued at Low
+/// priority for when the UI thread falls idle. A change to an item is raised inside the write, and
+/// other selectors raise both inside it.
+fn defers_deselect_echo(kind: ObjectType, had_selection: bool, has_selection: bool) -> bool {
+    kind == ObjectType::NavigationView && had_selection && !has_selection
+}
+
+/// The selection feedback of one reactor write to a selector (`begin_selection_feedback`).
+#[derive(Clone, Copy)]
+struct SelectionFeedback {
+    event: EventId,
+    /// The selector may raise its deselect late and had a selection before the write.
+    had_selection: bool,
+}
+
 impl WinUiAdapter {
     fn attach(
         &mut self,
@@ -428,7 +447,7 @@ impl WinUiAdapter {
         owner: ObjectId,
         relation: RelationId,
         selection: Option<SelectionContract>,
-    ) -> Result<Option<EventId>, WinUiError> {
+    ) -> Result<Option<SelectionFeedback>, WinUiError> {
         let index_selection = matches!(
             (self.kind(owner)?, relation),
             (ObjectType::ListView | ObjectType::GridView, RelationId::Items)
@@ -439,16 +458,61 @@ impl WinUiAdapter {
         else {
             return Ok(None);
         };
+        Ok(Some(self.begin_selector_write(owner, event)))
+    }
+
+    fn finish_selection_feedback(&self, owner: ObjectId, feedback: Option<SelectionFeedback>) {
+        if let Some(feedback) = feedback {
+            self.finish_selector_write(owner, feedback);
+        }
+    }
+
+    /// Suppresses `owner`'s `event` while the reactor writes its selection, and notes whether the
+    /// write could take away a selection whose "nothing selected" event comes late.
+    fn begin_selector_write(&self, owner: ObjectId, event: EventId) -> SelectionFeedback {
+        let had_selection = self
+            .kind(owner)
+            .is_ok_and(|kind| defers_deselect_echo(kind, true, false))
+            && self.native_selection(owner, event) == Some(true);
         self.event_queue
             .feedback
             .borrow_mut()
             .begin(owner, event, FeedbackExpectation::Suppressed);
-        Ok(Some(event))
+        SelectionFeedback {
+            event,
+            had_selection,
+        }
     }
 
-    fn finish_selection_feedback(&self, owner: ObjectId, event: Option<EventId>) {
-        if let Some(event) = event {
-            self.event_queue.feedback.borrow_mut().finish(owner, event);
+    /// Ends `begin_selector_write`. If the write took `owner`'s selection away and the selector
+    /// raises that late, its one late "nothing selected" event is expected and swallowed.
+    fn finish_selector_write(&self, owner: ObjectId, feedback: SelectionFeedback) {
+        let SelectionFeedback {
+            event,
+            had_selection,
+        } = feedback;
+        self.event_queue.feedback.borrow_mut().finish(owner, event);
+        if had_selection
+            && let Ok(kind) = self.kind(owner)
+            && let Some(has_selection) = self.native_selection(owner, event)
+            && defers_deselect_echo(kind, had_selection, has_selection)
+        {
+            self.event_queue
+                .feedback
+                .borrow_mut()
+                .expect_deferred_deselect(owner, event);
+        }
+    }
+
+    /// Whether `owner` has an item selected natively, or `None` if that can't be read. Callers
+    /// expect no late echo from a failed read, so a real event is never swallowed.
+    fn native_selection(&self, owner: ObjectId, event: EventId) -> Option<bool> {
+        let Some(Handle::Generated(handle)) = self.handles.get(&owner) else {
+            return None;
+        };
+        match handle.selected_item(event) {
+            Some(Ok(selected)) => Some(selected.is_some()),
+            Some(Err(_)) | None => None,
         }
     }
 
