@@ -98,6 +98,15 @@ for the list and how to restore any of them. Okojo pins fork SHAs, so the three 
 stay until Okojo vendors `okojo-rebased`. Deleting them would not lose commits, since all are
 reachable from `okojo-fast-list`, but nothing needs it yet.
 
+The local `okojo` branch in the main checkout is not one of these. It is `origin/okojo` plus 14
+commits that exist nowhere else, all superseded by this stack. Steps to retire it:
+
+1. `git tag backup/okojo-local-37f87d6fa 37f87d6fa` so the 14 SHAs stay reachable.
+2. `git switch okojo-rebased` in the main checkout (it is on `okojo`, so it cannot be deleted).
+3. `git branch -D okojo`.
+
+The tag is local; nothing on `origin` needs to change.
+
 None of these branches has an open pull request, upstream or on the fork, and no issue has been
 filed upstream for any of the work. Okojo's `docs/upstream-drafts/` holds 18 draft issues that
 have not been posted.
@@ -162,25 +171,40 @@ compares it byte for byte.
 
 ### Moving Okojo to the rebuilt stack
 
-Okojo still vendors `okojo-fast-list`. To move it:
+Okojo still vendors `okojo-fast-list`. These are the exact steps, from reading Okojo's sources
+(`main`, 2026-10-17). Okojo has not been built against the new stack.
 
-1. In Okojo, run `vendor/sync-reactor.sh <fork-path>` with the fork checked out at
-   `okojo-rebased`. It refuses a dirty fork, repackages the three crates and rewrites
-   `vendor/REACTOR_FORK`.
-2. Fix what the rebuild changed. A scan of Okojo's sources found:
+1. Check out `okojo-rebased` in a clean worktree of the fork. `vendor/sync-reactor.sh` refuses a
+   dirty tree and records the branch and commit, so do not run it from `okojo-fork-docs`.
+2. In Okojo run `vendor/sync-reactor.sh <fork-path>`. It repackages `windows-reactor`,
+   `windows-window` and `windows-reactor-setup` and rewrites `vendor/REACTOR_FORK`.
+3. Rewrite the three `PointerEventInfo` literals in the `only_the_primary_button_drags` test in
+   `src/ui/calendar/card.rs`. `PointerEventInfo` is `#[non_exhaustive]`, which forbids struct
+   expressions outside the crate, including `..Default::default()` and `..p`. Build with
+   `let mut p = PointerEventInfo::default(); p.is_left_button_pressed = true;`, and for the two
+   copies `let mut q = p; q.is_left_button_pressed = false; q.is_right_button_pressed = true;`
+   (and the middle button likewise).
+4. Run `cargo test` and clippy in Okojo. Nothing else in Okojo's sources needs an edit:
 
-| Change in the rebuild | Where Okojo is affected |
+| Change in the rebuild | Okojo |
 | --- | --- |
-| `PointerEventInfo` is `#[non_exhaustive]` | Three struct literals in `src/ui/calendar/card.rs` tests. Build from `PointerEventInfo::default()` and assign fields |
-| `DroppedData`, `DragKind`, `AcceleratorKey` are `#[non_exhaustive]` | Matches on `DroppedData` (`src/ui/compose/attach_view.rs`) need a wildcard arm |
-| `MenuItem` variants are `#[non_exhaustive]` | Okojo's patterns already end in `..`; no change expected |
-| `AcceleratorModifiers::Menu`, `ControlMenu`, `MenuShift` are gone | Okojo uses none of them. Use `InputModifiers` for Alt and other combinations |
-| `DragDropPolicy::other` is gone | Okojo does not call it; it uses `format` and `hide_image` |
-| `CalendarDatePicker::date`, and the colour-scheme and menu fixes, come from upstream | Check the three `CalendarDatePicker` call sites against upstream's signature |
+| `DroppedData`, `DragKind`, `AcceleratorKey`, `ThemeBrush`, `MenuItem` are `#[non_exhaustive]` | No change. The one `DroppedData` match (`attach_view.rs`) has a `_` arm, the `ThemeBrush` match (`theme.rs`) binds `other`, and every `MenuItem` pattern ends in `..` |
+| `AcceleratorModifiers::Menu`, `ControlMenu`, `MenuShift` are gone | No change. Okojo uses only `None` and `Control` |
+| `DragDropPolicy::other` is gone | No change. Okojo uses `format` and `hide_image` |
+| `MenuItem::icon` refuses image icons | No change. Every menu icon is `Icon::font(...)` |
+| `CalendarDatePicker::date` is upstream's | No change. `.date(Some(..))` matches `impl Into<Option<DateTime>>`. The comment in `src/ui/snooze.rs` about master clearing a picker's date is out of date after upstream #5093 |
 
-3. Update the patch table in Okojo's `vendor/README.md`.
-
-This was derived from reading Okojo's sources; Okojo was not built against the new stack.
+5. Review what upstream changed in the new base that Okojo gets for free: `windows-reactor-setup`
+   (632 lines; runtime staging now fails on download, extraction and copy errors and keeps
+   architecture-specific caches, so a previously tolerated `build.rs` problem can now fail the
+   build), window background matched to the theme (#5074), lazy event subscription (#5110),
+   and keyed reorder moves (#5114). The sibling crates Okojo takes from crates.io
+   (`windows-core`, `-future`, `-reference` and the rest) did not change between the two bases,
+   so 0.100.0 still builds against the vendored crates.
+6. Run Okojo's GUI scripts (`tests/gui/*.ps1`) on a desktop. Menus, drag and drop, list
+   selection and the folder pane are the areas the rebuild touched.
+7. Rewrite the patch table in Okojo's `vendor/README.md` from [patches.md](patches.md). It lists
+   58 commits and "upstream status: not yet proposed".
 
 ### Conventions to follow
 
