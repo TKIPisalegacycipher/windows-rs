@@ -1018,3 +1018,33 @@ fn list_hosts_return_the_container_an_item_leaves() {
     assert_eq!(hosts.prepare(2, &"c2"), None);
     assert_eq!(hosts.prepare(1, &"c3"), None);
 }
+
+#[test]
+fn a_list_container_shows_other_content_only_when_both_elements_are_known_and_differ() {
+    assert!(shows_other_content(Some(1), Some(2)));
+    assert!(!shows_other_content(Some(2), Some(2)));
+    // Nothing laid out yet, or the item holds only its text: nothing to repair.
+    assert!(!shows_other_content(None, Some(2)));
+    assert!(!shows_other_content(Some(1), None));
+    assert!(!shows_other_content(None, None));
+}
+
+#[test]
+fn list_rows_in_the_recycle_queue_are_not_live_until_prepared_again() {
+    let item: IInspectable = windows_reference::IReference::from(HSTRING::from("item")).into();
+    let mut rows = ListRows::<&str>::default();
+    rows.prepared(1, &"c1", &item);
+    rows.prepared(2, &"c2", &item);
+    assert_eq!(rows.live().count(), 2);
+
+    rows.recycled(1);
+    assert_eq!(
+        rows.live().map(|row| row.container).collect::<Vec<_>>(),
+        ["c2"]
+    );
+    // A container the list never prepared is ignored.
+    rows.recycled(3);
+
+    rows.prepared(1, &"c1", &item);
+    assert_eq!(rows.live().count(), 2);
+}

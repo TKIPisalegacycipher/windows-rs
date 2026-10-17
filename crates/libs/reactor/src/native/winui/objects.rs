@@ -220,6 +220,15 @@ impl WinUiAdapter {
                     let content_queue = Rc::clone(&self.event_queue);
                     // The container each item was last prepared in, by item identity.
                     let hosts = RefCell::new(ListHosts::<native::DependencyObject>::default());
+                    // The rows' bindings are applied by the next layout pass: see `ListSettle`.
+                    let rows = Rc::new(RefCell::new(
+                        ListRows::<native::DependencyObject>::default(),
+                    ));
+                    let settle = Rc::new(ListSettle::new(
+                        Rc::clone(&rows),
+                        self.data_content_key.clone(),
+                    )?);
+                    let container_settle = Rc::clone(&settle);
                     let _container_content_changing = value
                         .cast::<native::IListViewBase>()?
                         .ContainerContentChanging(move |_, args| {
@@ -229,12 +238,15 @@ impl WinUiAdapter {
                                 // to the same item without preparing it again, and a container
                                 // disconnected here would then show nothing (#433). The
                                 // container that shows the item next takes the content below.
-                                if recycled {
-                                    return Ok(());
-                                }
                                 let container: native::DependencyObject =
                                     args.ItemContainer()?.cast()?;
                                 let item = args.Item()?;
+                                if recycled {
+                                    rows.borrow_mut().recycled(com_identity(&container)?);
+                                    return Ok(());
+                                }
+                                rows.borrow_mut()
+                                    .prepared(com_identity(&container)?, &container, &item);
                                 let id = item.cast::<windows_core::IUnknown>()?.as_raw() as usize;
                                 // Whether the item's content waits for a container, and whether
                                 // this one asks for it.
@@ -276,6 +288,7 @@ impl WinUiAdapter {
                                     content_queue
                                         .queue_realization(RealizationRequest::Content { item });
                                 }
+                                container_settle.arm();
                                 Ok(())
                             });
                             if let Err(error) = result {
@@ -292,6 +305,7 @@ impl WinUiAdapter {
                         _item_click,
                         _drag_items_completed,
                         _container_content_changing,
+                        _settle: settle,
                         item_min_height,
                         selection_held,
                     })

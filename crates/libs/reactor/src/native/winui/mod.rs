@@ -22,6 +22,7 @@ struct NativeListView {
     _item_click: windows_core::EventRevoker,
     _drag_items_completed: windows_core::EventRevoker,
     _container_content_changing: windows_core::EventRevoker,
+    _settle: Rc<ListSettle>,
     item_min_height: Rc<Cell<Option<f64>>>,
     /// Set while `replace_items` replaces the items and restores the selection, so that the
     /// `SelectionChanged` events WinUI raises meanwhile are not reported one by one.
@@ -2494,6 +2495,150 @@ impl<C: Clone + PartialEq> ListHosts<C> {
         self.hosts
             .insert(item, container.clone())
             .filter(|previous| previous != container)
+    }
+}
+
+/// A ListView container and the item it was last prepared for.
+struct ListRow<C> {
+    container: C,
+    item: IInspectable,
+    /// Its container is in the recycle queue, which keeps its content on purpose.
+    recycled: bool,
+}
+
+/// The containers a ListView has prepared, by container identity.
+struct ListRows<C> {
+    rows: HashMap<usize, ListRow<C>>,
+}
+
+impl<C> Default for ListRows<C> {
+    fn default() -> Self {
+        Self {
+            rows: HashMap::new(),
+        }
+    }
+}
+
+impl<C: Clone> ListRows<C> {
+    fn prepared(&mut self, id: usize, container: &C, item: &IInspectable) {
+        self.rows.insert(
+            id,
+            ListRow {
+                container: container.clone(),
+                item: item.clone(),
+                recycled: false,
+            },
+        );
+    }
+
+    fn recycled(&mut self, id: usize) {
+        if let Some(row) = self.rows.get_mut(&id) {
+            row.recycled = true;
+        }
+    }
+
+    /// The containers showing an item, which leaves out those in the recycle queue.
+    fn live(&self) -> impl Iterator<Item = &ListRow<C>> {
+        self.rows.values().filter(|row| !row.recycled)
+    }
+}
+
+/// Whether a container shows a content element other than its item's: `shown` and `content` are
+/// the identities of the element in its presenter and of the one in the item's map, `None` when
+/// there is none (the presenter shows text or has not been laid out yet).
+fn shows_other_content(shown: Option<usize>, content: Option<usize>) -> bool {
+    matches!((shown, content), (Some(shown), Some(content)) if shown != content)
+}
+
+/// The identity of the content element a container's presenter shows.
+fn shown_content(container: &native::DependencyObject) -> Option<usize> {
+    let root = container
+        .cast::<native::IContentControl>()
+        .ok()?
+        .ContentTemplateRoot()
+        .ok()?;
+    let shown = native::VisualTreeHelper::GetChild(&root, 0).ok()?;
+    com_identity(&shown).ok()
+}
+
+/// The identity of the content element in an item's map; `None` while it holds only the text.
+fn item_content(item: &IInspectable, key: &HSTRING) -> Option<usize> {
+    let properties = item.cast::<IMap<HSTRING, IInspectable>>().ok()?;
+    if !properties.HasKey(key).ok()? {
+        return None;
+    }
+    let content = properties.Lookup(key).ok()?;
+    content.cast::<native::UIElement>().ok()?;
+    com_identity(&content).ok()
+}
+
+/// Checks the ListView's containers once layout has applied their bindings, and connects again
+/// those that still show another item's content.
+///
+/// A container is connected to its item by a binding that layout applies later, not as the
+/// container is prepared. An item's content element can be in one presenter only. When the
+/// element is still in another presenter as the binding is applied, XAML rejects it without a
+/// word and does not try again: the container keeps the element of the item it showed before
+/// (Okojo#624). By the time layout has finished the other presenter has let go, so connecting
+/// the container again binds the element. A timer checks a moment after the last container was
+/// prepared, and again after each repair, up to `SETTLE_ATTEMPTS` times.
+struct ListSettle {
+    timer: native::DispatcherQueueTimer,
+    attempts: Rc<Cell<u32>>,
+    _tick: windows_core::EventRevoker,
+}
+
+const SETTLE_DELAY_MS: u64 = 150;
+const SETTLE_ATTEMPTS: u32 = 5;
+
+impl ListSettle {
+    fn new(
+        rows: Rc<RefCell<ListRows<native::DependencyObject>>>,
+        content_key: HSTRING,
+    ) -> windows_core::Result<Self> {
+        let timer = native::DispatcherQueue::GetForCurrentThread()?.CreateTimer()?;
+        timer.SetInterval(TimeSpan::try_from(Duration::from_millis(SETTLE_DELAY_MS)).unwrap())?;
+        timer.SetIsRepeating(false)?;
+        let attempts = Rc::new(Cell::new(0));
+        let tick_attempts = Rc::clone(&attempts);
+        let tick = timer.Tick(move |sender, _| {
+            let stale: Vec<_> = rows
+                .borrow()
+                .live()
+                .filter(|row| {
+                    shows_other_content(
+                        shown_content(&row.container),
+                        item_content(&row.item, &content_key),
+                    )
+                })
+                .map(|row| row.container.clone())
+                .collect();
+            for container in &stale {
+                let result = set_list_container_connected(container, false)
+                    .and_then(|()| set_list_container_connected(container, true));
+                if let Err(error) = result {
+                    report_error(error.into());
+                }
+            }
+            if stale.is_empty() || tick_attempts.get() >= SETTLE_ATTEMPTS {
+                tick_attempts.set(0);
+            } else if let Some(timer) = sender.as_ref() {
+                tick_attempts.set(tick_attempts.get() + 1);
+                _ = timer.Start();
+            }
+        })?;
+        Ok(Self {
+            timer,
+            attempts,
+            _tick: tick,
+        })
+    }
+
+    /// A container was prepared: check again once layout has run.
+    fn arm(&self) {
+        self.attempts.set(0);
+        _ = self.timer.Stop();
+        _ = self.timer.Start();
     }
 }
 
