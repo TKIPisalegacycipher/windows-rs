@@ -749,8 +749,9 @@ impl WinUiAdapter {
     /// that drops or adds most of them (`Mutation::ReplaceItems`). Only the realized containers
     /// of `removed` items are disconnected first, as `remove` does for one item; the items that
     /// stay keep their content, which the container XAML prepares for each takes over
-    /// (`ContainerContentChanging`). Selection changes WinUI raises during the change are
-    /// suppressed once for the whole change, and the planner sets `SelectedIndex` again after it.
+    /// (`ContainerContentChanging`). The selected items that stay are selected again
+    /// (`replace_list_items`), selection feedback is suppressed once for the whole change, and
+    /// the planner sets `SelectedIndex` again after it.
     fn replace_items(
         &mut self,
         parent: ObjectId,
@@ -762,8 +763,8 @@ impl WinUiAdapter {
         {
             return Err(WinUiError::InvalidMutation(relation));
         }
-        // Container relations have no item selection contract (`selection_for_relation`), so
-        // there is no selected item to read and write back here.
+        // Container relations have no item selection contract (`selection_for_relation`): the
+        // ListView's own selection is kept by `replace_list_items`.
         debug_assert!(selection_for_relation(self.kind(parent)?, relation).is_none());
         let owner = Some(&(parent, relation));
         if let Some(child) = removed.iter().find(|child| self.owners.get(child) != owner) {
@@ -785,11 +786,7 @@ impl WinUiAdapter {
             .map(|child| self.inspectable(*child).and_then(|item| com_identity(&item)))
             .collect::<Result<HashSet<_>, _>>()?;
         let feedback = self.begin_selection_feedback(parent, relation, None)?;
-        let result = self.with_list_items_disconnected(
-            parent,
-            ListItems::Matching(&removed_items),
-            || Ok(values.ReplaceAll(&items)?),
-        );
+        let result = self.replace_list_items(parent, &values, &items, &removed_items);
         self.finish_selection_feedback(parent, feedback);
         result?;
         for child in removed {
@@ -799,6 +796,88 @@ impl WinUiAdapter {
             self.owners.insert(*child, (parent, relation));
         }
         Ok(())
+    }
+
+    /// Replaces a ListView's items with `items`, with the realized containers of the `removed`
+    /// items disconnected first, and keeps the selection of the items that stay.
+    ///
+    /// `ReplaceAll` resets the native selection, which `Remove`s and `Insert`s of other items
+    /// would not, so the selected items that stay are selected again in their selection order
+    /// (keeping the first one, and so `SelectedIndex`, the same). The `SelectionChanged` events
+    /// WinUI raises meanwhile are held back, and one is reported afterwards if the selection lost
+    /// any removed items, as removing them one by one would have.
+    fn replace_list_items(
+        &self,
+        parent: ObjectId,
+        values: &native::ItemCollection,
+        items: &[Option<IInspectable>],
+        removed: &HashSet<usize>,
+    ) -> Result<(), WinUiError> {
+        let replace = || {
+            self.with_list_items_disconnected(parent, ListItems::Matching(removed), || {
+                Ok(values.ReplaceAll(items)?)
+            })
+        };
+        let Some(Handle::ListView(list)) = self.handles.get(&parent) else {
+            return replace();
+        };
+        let selector = list.value.cast::<native::ISelector>()?;
+        let list_base = list.value.cast::<native::IListViewBase>()?;
+        let selected = list_base.SelectedItems()?;
+        let before = (0..selected.Size()?)
+            .map(|index| {
+                let item = selected.GetAt(index)?;
+                Ok((com_identity(&item)?, item))
+            })
+            .collect::<Result<Vec<_>, WinUiError>>()?;
+        let selected_before = before.len();
+        let kept = kept_selection(before, removed);
+        list.selection_held.set(true);
+        let result = replace().and_then(|()| match kept.as_slice() {
+            [] => Ok(()),
+            // Also right for `Single` mode, where `SelectedItems` holds at most one item.
+            [item] => Ok(selector.SetSelectedItem(item)?),
+            kept => {
+                let selected = list_base.SelectedItems()?;
+                for item in kept {
+                    selected.Append(item)?;
+                }
+                Ok(())
+            }
+        });
+        list.selection_held.set(false);
+        result?;
+        if kept.len() == selected_before {
+            return Ok(());
+        }
+        let value = selection_index(selector.SelectedIndex()?)?;
+        let observation = Observation::SetProperty {
+            object: parent,
+            property: Property {
+                id: PropertyId::SelectedIndex,
+                value: PropertyValue::SelectionIndex(value),
+            },
+        };
+        if self
+            .event_queue
+            .observe(parent, EventId::SelectionChanged, observation.clone())
+        {
+            Self::dispatch(
+                &list.selection_changed,
+                &self.event_queue,
+                parent,
+                EventId::SelectionChanged,
+                Some(observation),
+                value,
+            );
+        }
+        Self::dispatch_selected_items(
+            &list.selected_keys_changed,
+            &self.event_queue,
+            parent,
+            &list_base,
+            &self.data_items,
+        )
     }
 
     /// Runs `mutate` on a ListView's items with the realized containers of `items` disconnected

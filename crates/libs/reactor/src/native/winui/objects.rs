@@ -120,7 +120,12 @@ impl WinUiAdapter {
                     let selected_keys_event = Rc::clone(&selected_keys_changed);
                     let selected_items_source = value.cast::<native::IListViewBase>()?;
                     let data_items = Rc::clone(&self.data_items);
+                    let selection_held = Rc::new(Cell::new(false));
+                    let selection_changed_held = Rc::clone(&selection_held);
                     let _selection_changed = selection_source.SelectionChanged(move |_, _| {
+                        if selection_changed_held.get() {
+                            return;
+                        }
                         let value = match selection_source_for_callback
                             .SelectedIndex()
                             .and_then(selection_index)
@@ -270,6 +275,7 @@ impl WinUiAdapter {
                         _drag_items_completed,
                         _container_content_changing,
                         item_min_height,
+                        selection_held,
                     })
                 }
                 ObjectType::DataItem => {

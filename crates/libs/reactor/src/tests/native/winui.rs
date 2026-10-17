@@ -234,6 +234,24 @@ fn active_slot_reorder_rejects_missing_or_duplicate_active_identity() {
 }
 
 #[test]
+fn list_items_replacement_keeps_the_selected_items_that_stay_in_selection_order() {
+    let selected = vec![(30, "m30"), (5, "m5"), (7, "m7"), (12, "m12")];
+
+    assert_eq!(
+        kept_selection(selected.clone(), &HashSet::from([7, 99])),
+        ["m30", "m5", "m12"]
+    );
+    assert_eq!(
+        kept_selection(selected, &HashSet::from([30, 5, 7, 12])),
+        [""; 0]
+    );
+    assert_eq!(
+        kept_selection(Vec::<(usize, ())>::new(), &HashSet::new()),
+        []
+    );
+}
+
+#[test]
 fn controlled_property_feedback_uses_exact_incumbent_clear_values() {
     let cases = [
         (
