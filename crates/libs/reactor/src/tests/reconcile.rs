@@ -801,7 +801,7 @@ fn list_view_replaces_its_items_at_once_when_most_keys_change() {
 fn list_view_replace_keeps_the_objects_and_content_of_kept_keys() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime
-        .update(keyed_list(&list_keys("m", 0..40), None))
+        .update(keyed_list(&list_keys("m", 0..80), None))
         .unwrap();
     let list = runtime.graph().root().unwrap();
     let before = runtime
@@ -809,17 +809,17 @@ fn list_view_replace_keeps_the_objects_and_content_of_kept_keys() {
         .children(list, RelationId::Items)
         .unwrap()
         .to_vec();
-    realize_item_content(&mut runtime, &[before[5], before[30]]);
-    let kept_content = [5, 30].map(|index| {
+    realize_item_content(&mut runtime, &[before[50], before[70]]);
+    let kept_content = [50, 70].map(|index| {
         runtime
             .graph()
             .child(before[index], RelationId::Content)
             .unwrap()
     });
 
-    let mut keys = list_keys("n", 0..38);
-    keys.insert(0, "m30".to_string());
-    keys.push("m5".to_string());
+    let mut keys = list_keys("n", 0..78);
+    keys.insert(0, "m70".to_string());
+    keys.push("m50".to_string());
     let mutations = runtime.update(keyed_list(&keys, None)).unwrap();
     let after = runtime
         .graph()
@@ -828,18 +828,18 @@ fn list_view_replace_keeps_the_objects_and_content_of_kept_keys() {
         .to_vec();
 
     assert_eq!(list_item_mutations(&mutations, list), [0, 0, 0, 1]);
-    assert_eq!(after.len(), 40);
-    assert_eq!(after[0], before[30]);
-    assert_eq!(after[39], before[5]);
+    assert_eq!(after.len(), 80);
+    assert_eq!(after[0], before[70]);
+    assert_eq!(after[79], before[50]);
     assert_eq!(
         runtime.graph().child(after[0], RelationId::Content),
         Some(kept_content[1])
     );
     assert_eq!(
-        runtime.graph().child(after[39], RelationId::Content),
+        runtime.graph().child(after[79], RelationId::Content),
         Some(kept_content[0])
     );
-    let kept = [before[5], before[30], kept_content[0], kept_content[1]];
+    let kept = [before[50], before[70], kept_content[0], kept_content[1]];
     assert!(!mutations.iter().any(|mutation| matches!(
         mutation,
         Mutation::Destroy { object } | Mutation::Detach { child: object, .. }
@@ -852,16 +852,33 @@ fn list_view_replace_keeps_the_objects_and_content_of_kept_keys() {
             _ => None,
         })
         .unwrap();
-    assert_eq!(removed.len(), 38);
-    assert!(!removed.contains(&before[5]) && !removed.contains(&before[30]));
-    // The new items' content waits for their containers.
-    assert!(!mutations.iter().any(|mutation| matches!(
-        mutation,
-        Mutation::Create {
-            kind: ObjectType::TextBlock,
-            ..
-        }
-    )));
+    assert_eq!(removed.len(), 78);
+    assert!(!removed.contains(&before[50]) && !removed.contains(&before[70]));
+    // The list's first items are mounted whole; the other new items' content waits for their
+    // containers.
+    assert_eq!(text_blocks_created(&mutations), EAGER_ITEM_CONTENT - 1);
+    for (index, item) in after.iter().enumerate() {
+        assert_eq!(
+            runtime.graph().child(*item, RelationId::Content).is_some(),
+            index < EAGER_ITEM_CONTENT || index == 79,
+            "item {index}"
+        );
+    }
+}
+
+fn text_blocks_created(mutations: &UpdateStats) -> usize {
+    mutations
+        .iter()
+        .filter(|mutation| {
+            matches!(
+                mutation,
+                Mutation::Create {
+                    kind: ObjectType::TextBlock,
+                    ..
+                }
+            )
+        })
+        .count()
 }
 
 /// Mounts the content of `items`, as a ListView asks when it prepares their containers.
@@ -881,6 +898,19 @@ fn list_items(runtime: &Runtime<RecordingAdapter>) -> Vec<ObjectId> {
         .to_vec()
 }
 
+/// The first items of a list, whose content is mounted with them (`EAGER_ITEM_CONTENT`).
+fn leading_items() -> impl Iterator<Item = DataItem> {
+    (0..EAGER_ITEM_CONTENT).map(|index| {
+        let key = format!("lead{index}");
+        DataItem::new(key.clone(), &key).content(text(&key))
+    })
+}
+
+/// A list of the leading items, then `items`, whose content waits for their containers.
+fn list_after_leading(items: impl IntoIterator<Item = DataItem>) -> ListView {
+    ListView::new().items(leading_items().chain(items))
+}
+
 #[test]
 fn list_view_mounts_item_content_only_when_its_container_is_realized() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
@@ -889,15 +919,9 @@ fn list_view_mounts_item_content_only_when_its_container_is_realized() {
         .unwrap();
     let items = list_items(&runtime);
 
-    // The list and its 500 items, but none of the items' content.
-    assert_eq!(runtime.adapter().object_count(), 501);
-    assert!(!mutations.iter().any(|mutation| matches!(
-        mutation,
-        Mutation::Create {
-            kind: ObjectType::TextBlock,
-            ..
-        }
-    )));
+    // The list and its 500 items, and the content of only the first ones.
+    assert_eq!(runtime.adapter().object_count(), 501 + EAGER_ITEM_CONTENT);
+    assert_eq!(text_blocks_created(&mutations), EAGER_ITEM_CONTENT);
     assert_eq!(
         mutations
             .iter()
@@ -905,19 +929,14 @@ fn list_view_mounts_item_content_only_when_its_container_is_realized() {
             .count(),
         500
     );
-    assert!(
-        items
-            .iter()
-            .all(|item| runtime.graph().child(*item, RelationId::Content).is_none())
-    );
 
-    realize_item_content(&mut runtime, &items[..3]);
+    realize_item_content(&mut runtime, &items[100..103]);
 
-    assert_eq!(runtime.adapter().object_count(), 504);
+    assert_eq!(runtime.adapter().object_count(), 504 + EAGER_ITEM_CONTENT);
     for (index, item) in items.iter().enumerate() {
         assert_eq!(
             runtime.graph().child(*item, RelationId::Content).is_some(),
-            index < 3,
+            index < EAGER_ITEM_CONTENT || (100..103).contains(&index),
             "item {index}"
         );
     }
@@ -931,12 +950,44 @@ fn list_view_mounts_item_content_only_when_its_container_is_realized() {
 }
 
 #[test]
+fn list_view_mounts_the_content_of_items_inserted_or_moved_among_its_first() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mut keys = list_keys("m", 0..500);
+    runtime.update(keyed_list(&keys, None)).unwrap();
+    let list = runtime.graph().root().unwrap();
+    let before = list_items(&runtime);
+    let content = |runtime: &Runtime<RecordingAdapter>, item| {
+        runtime.graph().child(item, RelationId::Content)
+    };
+
+    // An item inserted at the top is mounted whole; one inserted further down waits.
+    keys.insert(0, "top".to_string());
+    keys.insert(200, "down".to_string());
+    let mutations = runtime.update(keyed_list(&keys, None)).unwrap();
+    assert_eq!(list_item_mutations(&mutations, list), [2, 0, 0, 0]);
+    let after = list_items(&runtime);
+    assert!(content(&runtime, after[0]).is_some());
+    assert!(content(&runtime, after[200]).is_none());
+    // The item pushed out of the first ones keeps its content.
+    assert_eq!(after[EAGER_ITEM_CONTENT], before[EAGER_ITEM_CONTENT - 1]);
+    assert!(content(&runtime, after[EAGER_ITEM_CONTENT]).is_some());
+
+    // Removing the top two moves the next waiting item up among the first ones.
+    let next = after[EAGER_ITEM_CONTENT + 1];
+    assert!(content(&runtime, next).is_none());
+    keys.drain(..2);
+    runtime.update(keyed_list(&keys, None)).unwrap();
+    assert_eq!(list_items(&runtime)[EAGER_ITEM_CONTENT - 1], next);
+    assert!(content(&runtime, next).is_some());
+}
+
+#[test]
 fn list_view_item_content_changes_in_place_once_realized_and_is_only_stored_before() {
     let item = |key: &str, text: &str| DataItem::new(key, key).content(TextBlock::new().text(text));
-    let list = |text: &str| ListView::new().items([item("a", text), item("b", text)]);
+    let list = |text: &str| list_after_leading([item("a", text), item("b", text)]);
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime.update(list("one")).unwrap();
-    let items = list_items(&runtime);
+    let items = list_items(&runtime)[EAGER_ITEM_CONTENT..].to_vec();
     realize_item_content(&mut runtime, &items[..1]);
     let content = runtime
         .graph()
@@ -973,18 +1024,21 @@ fn list_view_item_content_changes_in_place_once_realized_and_is_only_stored_befo
 
 #[test]
 fn list_view_ignores_content_requests_for_realized_or_removed_items() {
+    let lead = EAGER_ITEM_CONTENT;
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime
-        .update(keyed_list(&list_keys("m", 0..3), None))
+        .update(keyed_list(&list_keys("m", 0..lead + 3), None))
         .unwrap();
-    let items = list_items(&runtime);
+    let items = list_items(&runtime)[lead..].to_vec();
     realize_item_content(&mut runtime, &items[..1]);
     let content = runtime.graph().child(items[0], RelationId::Content);
-    assert_eq!(runtime.adapter().object_count(), 5);
+    let count = runtime.adapter().object_count();
+    // The list, its items, and the content of the leading ones and the realized one.
+    assert_eq!(count, 1 + lead + 3 + lead + 1);
 
     // Prepared again, as a recycled container is.
     realize_item_content(&mut runtime, &items[..1]);
-    assert_eq!(runtime.adapter().object_count(), 5);
+    assert_eq!(runtime.adapter().object_count(), count);
     assert_eq!(
         runtime.graph().child(items[0], RelationId::Content),
         content
@@ -992,25 +1046,26 @@ fn list_view_ignores_content_requests_for_realized_or_removed_items() {
 
     // Removing items whose content was never mounted detaches nothing.
     let mutations = runtime
-        .update(keyed_list(&list_keys("m", 0..1), None))
+        .update(keyed_list(&list_keys("m", 0..lead + 1), None))
         .unwrap();
     assert!(
         !mutations
             .iter()
             .any(|mutation| matches!(mutation, Mutation::Detach { .. }))
     );
-    assert_eq!(runtime.adapter().object_count(), 3);
+    assert_eq!(runtime.adapter().object_count(), count - 2);
     realize_item_content(&mut runtime, &items[1..]);
-    assert_eq!(runtime.adapter().object_count(), 3);
+    assert_eq!(runtime.adapter().object_count(), count - 2);
 }
 
 #[test]
 fn list_view_item_content_dropped_before_realization_restores_the_item_text() {
-    let with = || ListView::new().items([DataItem::new("a", "a").content(text("a"))]);
-    let without = || ListView::new().items([DataItem::new("a", "a")]);
+    let with = || list_after_leading([DataItem::new("a", "a").content(text("a"))]);
+    let without = || list_after_leading([DataItem::new("a", "a")]);
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime.update(with()).unwrap();
-    let item = list_items(&runtime)[0];
+    let item = list_items(&runtime)[EAGER_ITEM_CONTENT];
+    assert!(runtime.graph().child(item, RelationId::Content).is_none());
 
     let mutations = runtime.update(without()).unwrap();
     assert_eq!(
@@ -1031,12 +1086,11 @@ fn list_view_mounts_item_content_holding_references_at_once() {
     let reference: ElementRef = ElementRef::default();
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime
-        .update(
-            ListView::new()
-                .items([DataItem::new("a", "a").content(Button::new().element_ref(&reference))]),
-        )
+        .update(list_after_leading([
+            DataItem::new("a", "a").content(Button::new().element_ref(&reference))
+        ]))
         .unwrap();
-    let item = list_items(&runtime)[0];
+    let item = list_items(&runtime)[EAGER_ITEM_CONTENT];
     let content = runtime.graph().child(item, RelationId::Content);
     assert!(content.is_some());
     assert_eq!(reference.get(), content);

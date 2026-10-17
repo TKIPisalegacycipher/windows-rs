@@ -37,6 +37,15 @@ impl ObjectId {
 /// containers and scroll position of the items that stay.
 const REPLACE_ITEMS_MIN_CHANGES: usize = 16;
 
+/// A ListView's first items whose content is mounted with them rather than when their containers
+/// are realized (`defers_content`). A list opens at its top, so these are the rows of the first
+/// frame: mounted up front they show whole at once, where waiting content would show each row's
+/// text for a frame and then grow it. 40 is two screenfuls of compact message rows (about 32 px
+/// in a list some 600 px tall) and stays small against a 500-row folder. It applies to the
+/// list's first items after every change: on mount, after single inserts (an item inserted among
+/// them, or moved up into them) and after a `ReplaceItems`.
+pub(crate) const EAGER_ITEM_CONTENT: usize = 40;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Move {
     pub child: ObjectId,
@@ -3518,7 +3527,48 @@ impl Planner<'_, '_> {
                 }
                 self.retained.relation_mut(object, contract.id).value =
                     RetainedRelationValue::Many(retained);
+                if contract.realization == Realization::Container {
+                    self.mount_leading_content(object, contract.id)?;
+                }
             }
+        }
+        Ok(())
+    }
+
+    /// Mounts the waiting content of a container relation's first `EAGER_ITEM_CONTENT` items
+    /// (`defers_content`), which a list presents first: they are shown whole in the first frame,
+    /// and are not laid out at their text's height first.
+    fn mount_leading_content(
+        &mut self,
+        object: ObjectId,
+        relation: RelationId,
+    ) -> Result<(), GraphError> {
+        let RetainedRelationValue::Many(children) =
+            &self.retained.relation(object, relation).unwrap().value
+        else {
+            unreachable!()
+        };
+        let leading = children
+            .iter()
+            .take(EAGER_ITEM_CONTENT)
+            .copied()
+            .collect::<Vec<_>>();
+        for item in leading {
+            let Some(RetainedRelationValue::Deferred(content)) = self
+                .retained
+                .relation(item, RelationId::Content)
+                .map(|relation| relation.value.clone())
+            else {
+                continue;
+            };
+            let child = self.mount(content.as_object()?)?;
+            self.mutations.push(Mutation::Attach {
+                parent: item,
+                relation: RelationId::Content,
+                child,
+            });
+            self.retained.relation_mut(item, RelationId::Content).value =
+                RetainedRelationValue::One(Some(child));
         }
         Ok(())
     }
@@ -3846,6 +3896,9 @@ impl Planner<'_, '_> {
             Cardinality::Many => match contract.identity {
                 Identity::Keyed => {
                     self.reconcile_keyed_many(object, contract.id, relation)?;
+                    if contract.realization == Realization::Container {
+                        self.mount_leading_content(object, contract.id)?;
+                    }
                 }
                 Identity::Positional => {
                     self.reconcile_positional_many(object, contract.id, relation)?;
