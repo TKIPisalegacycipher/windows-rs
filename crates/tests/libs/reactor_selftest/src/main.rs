@@ -964,16 +964,14 @@ impl reactor::Component for Fixture {
             .simulate_calendar_date(calendar, reactor::DateTime::from_unix_secs(1_720_000_000))
             .unwrap();
         assert_eq!(calendar_runtime.dispatch_native_events().unwrap(), 0);
-        let pointer_value = reactor::PointerEventInfo {
-            x: 12.5,
-            y: 24.5,
-            window_x: 112.5,
-            window_y: 224.5,
-            pointer_id: 42,
-            is_captured: true,
-            is_right_button_pressed: true,
-            ..Default::default()
-        };
+        let mut pointer_value = reactor::PointerEventInfo::default();
+        pointer_value.x = 12.5;
+        pointer_value.y = 24.5;
+        pointer_value.window_x = 112.5;
+        pointer_value.window_y = 224.5;
+        pointer_value.pointer_id = 42;
+        pointer_value.is_captured = true;
+        pointer_value.is_right_button_pressed = true;
         let received_pointer = Rc::new(RefCell::new(None));
         let received_pointer_callback = Rc::clone(&received_pointer);
         let received_pointer_moved = Rc::new(Cell::new(false));
@@ -1062,10 +1060,8 @@ impl reactor::Component for Fixture {
                 .unwrap(),
             Some(Rc::new(drop_policy))
         );
-        let pressed_value = reactor::PointerEventInfo {
-            capture_succeeded: Some(true),
-            ..pointer_value
-        };
+        let mut pressed_value = pointer_value;
+        pressed_value.capture_succeeded = Some(true);
         pointer_runtime
             .adapter()
             .simulate_pointer_event(

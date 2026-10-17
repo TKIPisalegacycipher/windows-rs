@@ -1,7 +1,7 @@
 pub mod windows_reactor
 pub use windows_reactor::DateTime
 pub use windows_reactor::TimeSpan
-pub enum windows_reactor::AcceleratorKey
+#[non_exhaustive] pub enum windows_reactor::AcceleratorKey
 pub windows_reactor::AcceleratorKey::Add
 pub windows_reactor::AcceleratorKey::Decimal
 pub windows_reactor::AcceleratorKey::Divide
@@ -92,11 +92,11 @@ pub enum windows_reactor::DragDropOperation
 pub windows_reactor::DragDropOperation::Copy
 pub windows_reactor::DragDropOperation::Link
 pub windows_reactor::DragDropOperation::Move
-pub enum windows_reactor::DragKind
+#[non_exhaustive] pub enum windows_reactor::DragKind
 pub windows_reactor::DragKind::StorageItems
 pub windows_reactor::DragKind::Text
 pub windows_reactor::DragKind::Unsupported
-pub enum windows_reactor::DroppedData
+#[non_exhaustive] pub enum windows_reactor::DroppedData
 pub windows_reactor::DroppedData::StorageItems(alloc::vec::Vec<windows_reactor::DroppedStorageItem>)
 pub windows_reactor::DroppedData::Text(alloc::string::String)
 pub windows_reactor::DroppedData::Unsupported
@@ -138,14 +138,14 @@ pub windows_reactor::ListViewSelectionMode::Extended
 pub windows_reactor::ListViewSelectionMode::Multiple
 pub windows_reactor::ListViewSelectionMode::None
 pub windows_reactor::ListViewSelectionMode::Single
-pub enum windows_reactor::MenuItem
-pub windows_reactor::MenuItem::Item
+#[non_exhaustive] pub enum windows_reactor::MenuItem
+#[non_exhaustive] pub windows_reactor::MenuItem::Item
 pub windows_reactor::MenuItem::Item::enabled: bool
 pub windows_reactor::MenuItem::Item::key: windows_reactor::Key
 pub windows_reactor::MenuItem::Item::label: alloc::rcs::rc::Rc<str>
 pub windows_reactor::MenuItem::Separator
 pub windows_reactor::MenuItem::Separator::key: windows_reactor::Key
-pub windows_reactor::MenuItem::Submenu
+#[non_exhaustive] pub windows_reactor::MenuItem::Submenu
 pub windows_reactor::MenuItem::Submenu::items: alloc::rcs::rc::Rc<alloc::vec::Vec<Self>>
 pub windows_reactor::MenuItem::Submenu::key: windows_reactor::Key
 pub windows_reactor::MenuItem::Submenu::label: alloc::rcs::rc::Rc<str>
@@ -452,7 +452,7 @@ pub windows_reactor::TextTrimming::WordEllipsis
 pub windows_reactor::TextWrapping::NoWrap
 pub windows_reactor::TextWrapping::Wrap
 pub windows_reactor::TextWrapping::WrapWholeWords
-#[repr(u8)] pub enum windows_reactor::ThemeBrush
+#[non_exhaustive] #[repr(u8)] pub enum windows_reactor::ThemeBrush
 pub windows_reactor::ThemeBrush::Accent
 pub windows_reactor::ThemeBrush::AccentText
 pub windows_reactor::ThemeBrush::CardBackground
@@ -1314,7 +1314,7 @@ pub windows_reactor::DragDropAction::operation: windows_reactor::DragDropOperati
 impl windows_reactor::DragDropAction
 pub fn windows_reactor::DragDropAction::caption(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub fn windows_reactor::DragDropAction::new(windows_reactor::DragDropOperation) -> Self
-pub struct windows_reactor::DragDropPolicy
+#[non_exhaustive] pub struct windows_reactor::DragDropPolicy
 pub windows_reactor::DragDropPolicy::storage_items: core::option::Option<windows_reactor::DragDropAction>
 pub windows_reactor::DragDropPolicy::text: core::option::Option<windows_reactor::DragDropAction>
 impl windows_reactor::DragDropPolicy
@@ -2687,7 +2687,7 @@ impl core::convert::From<windows_reactor::PivotItem> for windows_reactor::View
 pub fn windows_reactor::View::from(windows_reactor::PivotItem) -> Self
 impl core::default::Default for windows_reactor::PivotItem
 pub fn windows_reactor::PivotItem::default() -> Self
-pub struct windows_reactor::PointerEventInfo
+#[non_exhaustive] pub struct windows_reactor::PointerEventInfo
 pub windows_reactor::PointerEventInfo::capture_succeeded: core::option::Option<bool>
 pub windows_reactor::PointerEventInfo::is_captured: bool
 pub windows_reactor::PointerEventInfo::is_left_button_pressed: bool

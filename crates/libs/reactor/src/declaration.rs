@@ -212,6 +212,7 @@ fn canonical_rich_edit_text(value: Rc<str>) -> Rc<str> {
 }
 
 /// A brush resolved from the active WinUI theme resources.
+#[non_exhaustive]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum ThemeBrush {
@@ -420,6 +421,7 @@ impl IntoUnitCallback for Callback<()> {
 }
 
 /// A key supported by Reactor keyboard accelerators.
+#[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum AcceleratorKey {
     Left,
@@ -750,8 +752,10 @@ impl Flyout {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum MenuItem {
+    #[non_exhaustive]
     Item {
         key: Key,
         label: Rc<str>,
@@ -760,6 +764,7 @@ pub enum MenuItem {
     Separator {
         key: Key,
     },
+    #[non_exhaustive]
     Submenu {
         key: Key,
         label: Rc<str>,
@@ -1335,6 +1340,7 @@ pub struct FocusEventInfo {
     pub is_direct: bool,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DragKind {
     StorageItems,
@@ -1369,6 +1375,7 @@ impl DragDropAction {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct DragDropPolicy {
     pub storage_items: Option<DragDropAction>,
@@ -1405,6 +1412,7 @@ pub struct DroppedStorageItem {
     pub path: String,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DroppedData {
     StorageItems(Vec<DroppedStorageItem>),
@@ -1420,6 +1428,7 @@ pub enum NavigationViewDisplayMode {
 }
 
 /// Pointer state in element-local and window-relative device-independent pixels.
+#[non_exhaustive]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct PointerEventInfo {
     pub x: f64,
