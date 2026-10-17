@@ -1904,10 +1904,10 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                 output.push_str(&format!(
                     "(PropertyId::{}, Some(PropertyValue::Enum {{ kind: \"{value}\", variant }})) \
                      => Some(element.cast::<native::FrameworkElement>().map_err(Into::into)\
-                     .and_then(|element| {{ let _ = native::{value}::None; \
+                     .and_then(|element| {{ let _ = native::{value}::{}; \
                      native::{owner}::Set{}(&element, match *variant {{ {arms} \
                      _ => unreachable!(\"validated enum variant\") }}).map_err(Into::into) }})),\n",
-                    property.name, property.native
+                    property.name, variants[0], property.native
                 ));
                 if property.default.is_none() {
                     output.push_str(&format!(
