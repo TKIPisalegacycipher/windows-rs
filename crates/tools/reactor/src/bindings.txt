@@ -358,9 +358,9 @@ Microsoft::UI::Xaml::IApplication::get_Resources
 Microsoft::UI::Xaml::IApplication3::put_DispatcherShutdownMode
 Microsoft::UI::Xaml::IApplicationOverrides::{}
 Microsoft::UI::Xaml::IDependencyObject::{ClearValue, RegisterPropertyChangedCallback, UnregisterPropertyChangedCallback}
-Microsoft::UI::Xaml::IDragEventArgs::{get_DataView, get_DragUIOverride, GetDeferral, put_AcceptedOperation}
+Microsoft::UI::Xaml::IDragEventArgs::{get_DataView, get_DragUIOverride, GetDeferral, put_AcceptedOperation, put_Handled}
 Microsoft::UI::Xaml::IDragOperationDeferral::Complete
-Microsoft::UI::Xaml::IDragUIOverride::{put_Caption, put_IsCaptionVisible}
+Microsoft::UI::Xaml::IDragUIOverride::{put_Caption, put_IsCaptionVisible, put_IsContentVisible}
 Microsoft::UI::Xaml::IElementFactory::{}
 Microsoft::UI::Xaml::IElementFactoryGetArgs::get_Data
 Microsoft::UI::Xaml::IElementFactoryRecycleArgs::get_Element

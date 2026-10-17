@@ -203,25 +203,52 @@ impl WinUiAdapter {
         Ok(tags)
     }
 
+    /// What a drag's data offers: files, else text, else something only a private format accepts.
+    fn data_kind(data: &native::DataPackageView) -> Result<DragKind, WinUiError> {
+        Ok(if data.Contains("Shell IDList Array")? {
+            DragKind::StorageItems
+        } else if data.Contains("Text")? {
+            DragKind::Text
+        } else {
+            DragKind::Other
+        })
+    }
+
+    /// The kind and action `policy` gives a drag of `kind` offering `data`: a private format the
+    /// policy names wins over the kind.
+    fn resolve<'a>(
+        policy: Option<&'a DragDropPolicy>,
+        kind: DragKind,
+        data: &native::DataPackageView,
+    ) -> (DragKind, Option<&'a DragDropAction>) {
+        policy.map_or((kind, None), |policy| {
+            policy.resolve(kind, |name| data.Contains(name).unwrap_or(false))
+        })
+    }
+
     fn drag_kind(
         args: Ref<native::DragEventArgs>,
         policy: &Rc<RefCell<Option<Rc<DragDropPolicy>>>>,
     ) -> Result<DragKind, WinUiError> {
         let args = args.unwrap();
         let data = args.DataView()?;
-        let kind = if data.Contains("Shell IDList Array")? {
-            DragKind::StorageItems
-        } else if data.Contains("Text")? {
-            DragKind::Text
-        } else {
-            DragKind::Unsupported
-        };
+        let kind = Self::data_kind(&data)?;
         let policy = policy.borrow();
-        let action = policy.as_ref().and_then(|policy| policy.action(kind));
+        let (kind, action) = Self::resolve(policy.as_deref(), kind, &data);
         args.SetAcceptedOperation(action.map_or(native::DataPackageOperation::None, |action| {
             Self::native_drag_operation(action.operation)
         }))?;
+        // Taken: an ancestor's policy does not override the answer on its way up.
+        if action.is_some() {
+            args.SetHandled(true)?;
+        }
         let ui = args.DragUIOverride()?;
+        let hidden = policy
+            .as_deref()
+            .is_some_and(|policy| policy.hides_image(|name| data.Contains(name).unwrap_or(false)));
+        if hidden {
+            ui.SetIsContentVisible(false)?;
+        }
         if let Some(caption) = action.and_then(|action| action.caption.as_deref()) {
             ui.SetCaption(caption)?;
             ui.SetIsCaptionVisible(true)?;
@@ -241,23 +268,13 @@ impl WinUiAdapter {
         policy: &Rc<RefCell<Option<Rc<DragDropPolicy>>>>,
     ) -> Result<(), WinUiError> {
         let args = args.unwrap();
-        let deferral = args.GetDeferral()?;
         let data = args.DataView()?;
-        let kind = if data.Contains("Shell IDList Array")? {
-            DragKind::StorageItems
-        } else if data.Contains("Text")? {
-            DragKind::Text
-        } else {
-            DragKind::Unsupported
-        };
-        let action = policy
-            .borrow()
-            .as_ref()
-            .and_then(|policy| policy.action(kind))
-            .cloned();
+        let kind = Self::data_kind(&data)?;
+        let policy = policy.borrow().clone();
+        let (kind, action) = Self::resolve(policy.as_deref(), kind, &data);
+        let action = action.cloned();
         let Some(action) = action else {
             args.SetAcceptedOperation(native::DataPackageOperation::None)?;
-            deferral.Complete()?;
             Self::dispatch(
                 event,
                 event_queue,
@@ -269,6 +286,22 @@ impl WinUiAdapter {
             return Ok(());
         };
         args.SetAcceptedOperation(Self::native_drag_operation(action.operation))?;
+        args.SetHandled(true)?;
+        // No payload to read, so no deferral: the drop is queued now. A deferred one would
+        // complete from a UI callback, which never runs while the drag source is the app's own
+        // modal `DoDragDrop` loop, so XAML's drop (and the loop) would wait forever.
+        if kind == DragKind::Other {
+            Self::dispatch(
+                event,
+                event_queue,
+                object,
+                event_id,
+                observation,
+                DroppedData::Other,
+            );
+            return Ok(());
+        }
+        let deferral = args.GetDeferral()?;
         let revision = event.borrow().revision;
         let subscribed = event.borrow().callback.is_some();
         let result = Arc::new(Mutex::new(None));
@@ -341,7 +374,7 @@ impl WinUiAdapter {
                     return Err(error.into());
                 }
             }
-            DragKind::Unsupported => unreachable!(),
+            DragKind::Other | DragKind::Unsupported => unreachable!(),
         }
         Ok(())
     }

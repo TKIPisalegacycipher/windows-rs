@@ -306,6 +306,49 @@ fn drag_drop_policy_and_payloads_round_trip_through_recording_protocol() {
 }
 
 #[test]
+fn drag_drop_policy_takes_other_data_only_through_a_private_format() {
+    let policy = DragDropPolicy::new().text(DragDropAction::new(DragDropOperation::Copy));
+    assert_eq!(policy.action(DragKind::Other), None);
+    assert_eq!(policy.action(DragKind::Unsupported), None);
+    assert_eq!(
+        policy.resolve(DragKind::Other, |_| false),
+        (DragKind::Other, None)
+    );
+}
+
+#[test]
+fn drag_drop_policy_private_format_wins_over_the_data_kind() {
+    let own = DragDropAction::new(DragDropOperation::Copy).caption("Move here");
+    let policy = DragDropPolicy::new().format("App.Items", own.clone());
+    // The app's own drag, whatever XAML makes of its other formats.
+    for kind in [DragKind::StorageItems, DragKind::Text, DragKind::Other] {
+        assert_eq!(
+            policy.resolve(kind, |name| name == "App.Items"),
+            (DragKind::Other, Some(&own))
+        );
+    }
+    // Another drag: only the kind's own action, here none.
+    assert_eq!(
+        policy.resolve(DragKind::StorageItems, |_| false),
+        (DragKind::StorageItems, None)
+    );
+    let files = DragDropAction::new(DragDropOperation::Move);
+    let policy = policy.storage_items(files.clone());
+    assert_eq!(
+        policy.resolve(DragKind::StorageItems, |_| false),
+        (DragKind::StorageItems, Some(&files))
+    );
+}
+
+#[test]
+fn drag_drop_policy_hides_the_image_of_the_formats_it_names() {
+    let policy = DragDropPolicy::new().hide_image("App.Items");
+    assert!(policy.hides_image(|name| name == "App.Items"));
+    assert!(!policy.hides_image(|_| false));
+    assert!(!DragDropPolicy::new().hides_image(|_| true));
+}
+
+#[test]
 fn pointer_motion_events_use_the_shared_typed_payload() {
     let received = Rc::new(RefCell::new(Vec::new()));
     let callback = |event| {

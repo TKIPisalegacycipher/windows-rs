@@ -10210,6 +10210,15 @@ impl windows_core::RuntimeType for IDragEventArgs {
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
 impl IDragEventArgs {
+    pub(crate) fn SetHandled(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetHandled)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn DataView(&self) -> windows_core::Result<DataPackageView> {
         unsafe {
             let mut result__ = core::mem::zeroed();
@@ -10257,7 +10266,8 @@ impl IDragEventArgs {
 pub struct IDragEventArgs_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
     Handled: usize,
-    SetHandled: usize,
+    pub SetHandled:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     Data: usize,
     SetData: usize,
     pub DataView: unsafe extern "system" fn(
@@ -10334,6 +10344,15 @@ impl IDragUIOverride {
             .ok()
         }
     }
+    pub(crate) fn SetIsContentVisible(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetIsContentVisible)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetIsCaptionVisible(&self, value: bool) -> windows_core::Result<()> {
         unsafe {
             (windows_core::Interface::vtable(self).SetIsCaptionVisible)(
@@ -10353,7 +10372,8 @@ pub struct IDragUIOverride_Vtbl {
         *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
     IsContentVisible: usize,
-    SetIsContentVisible: usize,
+    pub SetIsContentVisible:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     IsCaptionVisible: usize,
     pub SetIsCaptionVisible:
         unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
