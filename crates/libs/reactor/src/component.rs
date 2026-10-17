@@ -353,6 +353,7 @@ pub struct ComponentContext<C: Component> {
     services: Arc<dyn ComponentServices>,
     tasks: Arc<Mutex<Vec<SyncWeak<TaskControl>>>>,
     ui_services: Rc<dyn ComponentUiServices>,
+    skip_render: Cell<bool>,
 }
 
 pub struct WindowHandle<'a> {
@@ -395,6 +396,22 @@ impl<C: Component> ComponentContext<C> {
 
     pub fn root(&self) -> ElementRef {
         self.reference.clone()
+    }
+
+    /// Tells the runtime that the current `update` changed nothing the view shows, so it skips
+    /// this component's `view` and reconcile for this message.
+    ///
+    /// The runtime renders after each message, not once per drained batch, so the request covers
+    /// the `update` call it is made in and nothing else: every other message, including later ones
+    /// in the same batch, renders as usual. State changed by a skipped update shows, and the
+    /// effects and window publication declared from it run, on the component's next render. It has
+    /// no effect outside `update`.
+    ///
+    /// Call it only when the message changed nothing that `view`, an effect or the window
+    /// publication reads. A skipped update that did change such state leaves the screen out of
+    /// date until some later message renders, because nothing else triggers a render.
+    pub fn skip_render(&self) {
+        self.skip_render.set(true);
     }
 
     #[must_use]
@@ -1185,6 +1202,7 @@ impl<C: Component> ErasedFactory for TypedFactory<C> {
             services: Arc::clone(&services),
             tasks: Arc::clone(&tasks),
             ui_services: Rc::clone(&ui_services),
+            skip_render: Cell::new(false),
         };
         let component = C::create(&self.input, &context);
         let mut scope = TypedScope {
@@ -1261,7 +1279,7 @@ trait ErasedComponent {
         message: Box<dyn Any>,
         reference: ElementRef,
         contexts: &HashMap<ContextId, ContextValue>,
-    ) -> Result<ComponentRender, ComponentDeclarationError>;
+    ) -> Result<Option<ComponentRender>, ComponentDeclarationError>;
     fn render_view(
         &mut self,
         reference: ElementRef,
@@ -1294,6 +1312,7 @@ impl<C: Component> TypedScope<C> {
             services: Arc::clone(&self.services),
             tasks: Arc::clone(&self.tasks),
             ui_services: Rc::clone(&self.ui_services),
+            skip_render: Cell::new(false),
         }
     }
 
@@ -1382,11 +1401,14 @@ impl<C: Component> ErasedComponent for TypedScope<C> {
         message: Box<dyn Any>,
         reference: ElementRef,
         contexts: &HashMap<ContextId, ContextValue>,
-    ) -> Result<ComponentRender, ComponentDeclarationError> {
+    ) -> Result<Option<ComponentRender>, ComponentDeclarationError> {
         let context = self.context(reference.clone());
         self.component
             .update(*message.downcast::<C::Message>().unwrap(), &context);
-        self.render_view(reference, contexts)
+        if context.skip_render.get() {
+            return Ok(None);
+        }
+        self.render_view(reference, contexts).map(Some)
     }
 
     fn render_view(
@@ -1945,12 +1967,10 @@ impl<A: Adapter> ComponentHost<A> {
                     let scope = host.scope_mut(component).unwrap();
                     let reference = scope.reference.clone();
                     let render = match value {
-                        LocalMessageValue::Message(value) => Some(
-                            scope
-                                .component
-                                .dispatch(value, reference, &contexts)
-                                .map_err(ComponentError::from)?,
-                        ),
+                        LocalMessageValue::Message(value) => scope
+                            .component
+                            .dispatch(value, reference, &contexts)
+                            .map_err(ComponentError::from)?,
                         LocalMessageValue::Input(node) => scope
                             .component
                             .apply_input(node.factory.input(), reference, &contexts)
