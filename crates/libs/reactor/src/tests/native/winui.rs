@@ -906,3 +906,35 @@ fn data_item_text_names_list_containers() {
     values.Insert(&key, &text).unwrap();
     assert_eq!(data_item_text(&item, &key).unwrap(), "Unread message");
 }
+
+#[test]
+fn waiting_list_content_is_asked_for_once_and_waits_until_attached() {
+    let mut waiting = WaitingContent::<u32>::default();
+    assert_eq!(waiting.prepare(1), None);
+
+    waiting.defer(1);
+    // The first container prepared asks; another one prepared before the content arrives (a
+    // recycled container's item prepared again) only learns that it still waits.
+    assert_eq!(waiting.prepare(1), Some(true));
+    assert_eq!(waiting.prepare(1), Some(false));
+
+    waiting.end(1);
+    assert_eq!(waiting.prepare(1), None);
+
+    // Deferred again (new content for the item): asked for again.
+    waiting.defer(1);
+    assert_eq!(waiting.prepare(1), Some(true));
+}
+
+#[test]
+fn list_hosts_return_the_container_an_item_leaves() {
+    let mut hosts = ListHosts::<&str>::default();
+    assert_eq!(hosts.prepare(1, &"c1"), None);
+    // Prepared again in the same container: nothing to release.
+    assert_eq!(hosts.prepare(1, &"c1"), None);
+    // Prepared in another container (its first one recycled meanwhile): the first is released.
+    assert_eq!(hosts.prepare(1, &"c2"), Some("c1"));
+    // A container hosts one item: c2 now presenting item 2 is no longer item 1's.
+    assert_eq!(hosts.prepare(2, &"c2"), None);
+    assert_eq!(hosts.prepare(1, &"c3"), None);
+}

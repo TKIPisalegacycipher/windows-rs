@@ -210,7 +210,7 @@ impl WinUiAdapter {
                     let deferred_content = Rc::clone(&self.deferred_content);
                     let content_queue = Rc::clone(&self.event_queue);
                     // The container each item was last prepared in, by item identity.
-                    let hosts = RefCell::new(HashMap::<usize, native::DependencyObject>::new());
+                    let hosts = RefCell::new(ListHosts::<native::DependencyObject>::default());
                     let _container_content_changing = value
                         .cast::<native::IListViewBase>()?
                         .ContainerContentChanging(move |_, args| {
@@ -227,12 +227,18 @@ impl WinUiAdapter {
                                     args.ItemContainer()?.cast()?;
                                 let item = args.Item()?;
                                 let id = item.cast::<windows_core::IUnknown>()?.as_raw() as usize;
-                                {
-                                    let mut hosts = hosts.borrow_mut();
-                                    hosts.retain(|key, host| *key == id || *host != container);
-                                    if let Some(previous) = hosts.insert(id, container.clone())
-                                        && previous != container
-                                    {
+                                // Whether the item's content waits for a container, and whether
+                                // this one asks for it.
+                                let object = data_items.borrow().get(&id).copied();
+                                let waiting = object
+                                    .and_then(|object| deferred_content.borrow_mut().prepare(object));
+                                let previous = hosts.borrow_mut().prepare(id, &container);
+                                if let Some(previous) = previous {
+                                    if waiting.is_some() {
+                                        // The previous container shows the item's text, and would
+                                        // take the content as well when it arrives: release it.
+                                        set_list_container_connected(&previous, false)?;
+                                    } else {
                                         release_list_item_content(&previous, &item, &content_key)?;
                                     }
                                 }
@@ -255,10 +261,9 @@ impl WinUiAdapter {
                                 // The item's content waits for a container: ask for it now.
                                 // Until it is mounted the container shows the item's text, and
                                 // the binding hands it the content once the item's map holds it.
-                                let waiting = data_items.borrow().get(&id).copied().filter(
-                                    |object| deferred_content.borrow_mut().remove(object),
-                                );
-                                if let Some(item) = waiting {
+                                if waiting == Some(true)
+                                    && let Some(item) = object
+                                {
                                     content_queue
                                         .queue_realization(RealizationRequest::Content { item });
                                 }
@@ -677,7 +682,7 @@ impl WinUiAdapter {
             }
             Handle::Data(value) => {
                 self.data_items.borrow_mut().remove(&com_identity(&value)?);
-                self.deferred_content.borrow_mut().remove(&object);
+                self.deferred_content.borrow_mut().end(object);
                 self.container_resources.borrow_mut().items.remove(&object);
             }
             Handle::Generated(GeneratedHandle::ContentDialog(dialog)) => {

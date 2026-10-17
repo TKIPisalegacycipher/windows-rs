@@ -1843,7 +1843,7 @@ pub struct WinUiAdapter {
     data_items: Rc<RefCell<HashMap<usize, ObjectId>>>,
     /// `DataItem`s whose content waits for a container (`Mutation::DeferContent`): the ListView
     /// asks for it as it prepares one for the item.
-    deferred_content: Rc<RefCell<HashSet<ObjectId>>>,
+    deferred_content: Rc<RefCell<WaitingContent<ObjectId>>>,
     container_resources: Rc<RefCell<ContainerResources>>,
     /// ListViews and GridViews whose `SelectedIndex` is set: the reconciler sets it again after
     /// their items change, so the selection changes WinUI raises meanwhile are not reported.
@@ -1899,7 +1899,7 @@ impl Default for WinUiAdapter {
             pending_focus_states: Rc::new(RefCell::new(HashMap::new())),
             tree_node_texts: Rc::new(RefCell::new(HashMap::new())),
             data_items: Rc::new(RefCell::new(HashMap::new())),
-            deferred_content: Rc::new(RefCell::new(HashSet::new())),
+            deferred_content: Rc::new(RefCell::new(WaitingContent::default())),
             container_resources: Rc::new(RefCell::new(ContainerResources::default())),
             controlled_index_selectors: HashSet::new(),
         }
@@ -2454,6 +2454,65 @@ fn release_list_item_content(
         set_list_container_connected(container, false)?;
     }
     Ok(())
+}
+
+/// The container each ListView item was last prepared in, keyed by item identity.
+struct ListHosts<C> {
+    hosts: HashMap<usize, C>,
+}
+
+impl<C> Default for ListHosts<C> {
+    fn default() -> Self {
+        Self {
+            hosts: HashMap::new(),
+        }
+    }
+}
+
+impl<C: Clone + PartialEq> ListHosts<C> {
+    /// Records that `container` is prepared for `item`, and returns the other container the item
+    /// was last prepared in, which may still hold the item's content. A container hosts one item.
+    fn prepare(&mut self, item: usize, container: &C) -> Option<C> {
+        self.hosts
+            .retain(|key, host| *key == item || host != container);
+        self.hosts
+            .insert(item, container.clone())
+            .filter(|previous| previous != container)
+    }
+}
+
+/// The ListView items whose content waits for a container (`Mutation::DeferContent`).
+#[derive(Debug)]
+struct WaitingContent<K> {
+    items: HashMap<K, bool>,
+}
+
+impl<K> Default for WaitingContent<K> {
+    fn default() -> Self {
+        Self {
+            items: HashMap::new(),
+        }
+    }
+}
+
+impl<K: Copy + Eq + std::hash::Hash> WaitingContent<K> {
+    /// `item`'s content waits until a container is prepared for it.
+    fn defer(&mut self, item: K) {
+        self.items.insert(item, false);
+    }
+
+    /// `item`'s content is mounted, or it has none or is gone.
+    fn end(&mut self, item: K) {
+        self.items.remove(&item);
+    }
+
+    /// A container is prepared for `item`. `None` when its content does not wait; otherwise
+    /// whether to ask for the content now: only the first container prepared asks, and the item
+    /// waits until its content is attached.
+    fn prepare(&mut self, item: K) -> Option<bool> {
+        let requested = self.items.get_mut(&item)?;
+        Some(!std::mem::replace(requested, true))
+    }
 }
 
 /// The `DataItem` property map key holding the item's UI Automation id.
