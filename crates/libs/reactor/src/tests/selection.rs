@@ -269,13 +269,15 @@ fn list_view_properties_update_and_clear() {
         )
         .unwrap();
     let list = runtime.graph().root().unwrap();
+    // `SelectedIndex` comes in a mutation of its own, after the items.
     let set = mutations
         .iter()
-        .find_map(|mutation| match mutation {
-            Mutation::SetProperties { object, set, .. } if *object == list => Some(set),
+        .filter_map(|mutation| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == list => Some(set.iter()),
             _ => None,
         })
-        .unwrap();
+        .flatten()
+        .collect::<Vec<_>>();
     for property in [
         PropertyId::SelectedIndex,
         PropertyId::SelectionMode,
@@ -289,11 +291,13 @@ fn list_view_properties_update_and_clear() {
     let mutations = runtime.update(ListView::new()).unwrap();
     let clear = mutations
         .iter()
-        .find_map(|mutation| match mutation {
-            Mutation::SetProperties { object, clear, .. } if *object == list => Some(clear),
+        .filter_map(|mutation| match mutation {
+            Mutation::SetProperties { object, clear, .. } if *object == list => Some(clear.iter()),
             _ => None,
         })
-        .unwrap();
+        .flatten()
+        .copied()
+        .collect::<Vec<_>>();
     assert_eq!(clear.len(), 5);
     for property in [
         PropertyId::SelectedIndex,
@@ -932,5 +936,123 @@ fn tab_view_events_deliver_item_tags() {
     assert_eq!(
         &*reordered_values.borrow(),
         &[vec!["second".to_string(), "first".to_string()]]
+    );
+}
+
+fn list_view_with(keys: &[&str], selected: Option<usize>) -> ListView {
+    ListView::new()
+        .selected_index(selected)
+        .items(keys.iter().map(|key| DataItem::new(*key, *key)))
+}
+
+/// Positions of the list's item removals and of its `SelectedIndex` sets in `mutations`.
+fn removals_and_index_sets(mutations: &UpdateStats, list: ObjectId) -> (Vec<usize>, Vec<usize>) {
+    let removals = mutations
+        .iter()
+        .enumerate()
+        .filter(
+            |(_, mutation)| matches!(mutation, Mutation::Remove { parent, .. } if *parent == list),
+        )
+        .map(|(at, _)| at)
+        .collect();
+    let index_sets = mutations
+        .iter()
+        .enumerate()
+        .filter(|(_, mutation)| {
+            matches!(mutation, Mutation::SetProperties { object, set, .. }
+                if *object == list && set.iter().any(|p| p.id == PropertyId::SelectedIndex))
+        })
+        .map(|(at, _)| at)
+        .collect();
+    (removals, index_sets)
+}
+
+/// Positions of the list's item inserts and of its `SelectedIndex` sets in `mutations`.
+fn inserts_and_index_sets(mutations: &UpdateStats, list: ObjectId) -> (Vec<usize>, Vec<usize>) {
+    let inserts = mutations
+        .iter()
+        .enumerate()
+        .filter(
+            |(_, mutation)| matches!(mutation, Mutation::Insert { parent, .. } if *parent == list),
+        )
+        .map(|(at, _)| at)
+        .collect();
+    (inserts, removals_and_index_sets(mutations, list).1)
+}
+
+#[test]
+fn list_view_selected_index_is_set_after_the_items_it_mounts_with() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(list_view_with(&["a", "b", "c"], Some(1)))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let (inserts, index_sets) = inserts_and_index_sets(&mutations, list);
+    assert_eq!(inserts.len(), 3);
+    assert_eq!(index_sets.len(), 1);
+    assert!(index_sets[0] > inserts[2]);
+}
+
+#[test]
+fn list_view_selected_index_is_set_after_the_items_it_replaces_with() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(Border::new().content(Button::new().content("Button")))
+        .unwrap();
+    let root = runtime.graph().root().unwrap();
+    let target = runtime.graph().child(root, RelationId::Content).unwrap();
+
+    let mutations = runtime
+        .update_subtree(target, list_view_with(&["a", "b", "c"], Some(1)))
+        .unwrap();
+    let (inserts, index_sets) = inserts_and_index_sets(&mutations, target);
+    assert_eq!(inserts.len(), 3);
+    assert_eq!(index_sets.len(), 1);
+    assert!(index_sets[0] > inserts[2]);
+}
+
+#[test]
+fn list_view_selected_index_is_set_after_the_items_it_indexes() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(list_view_with(&["h0", "a", "b", "h1", "c"], Some(2)))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+
+    // "b" leaves; "c" is selected and now sits at 3. Set before the removal, 3 would name "h1".
+    let mutations = runtime
+        .update(list_view_with(&["h0", "a", "h1", "c"], Some(3)))
+        .unwrap();
+    let (removals, index_sets) = removals_and_index_sets(&mutations, list);
+    assert_eq!(removals.len(), 1);
+    assert_eq!(index_sets.len(), 1);
+    assert!(index_sets[0] > removals[0]);
+}
+
+#[test]
+fn list_view_selected_index_is_set_again_when_its_items_change() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(list_view_with(&["a", "b", "c"], Some(1)))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+
+    // The selected "b" leaves and "c" slides into index 1: the index is unchanged, but the native
+    // list dropped its selection with "b", so it is set again.
+    let mutations = runtime
+        .update(list_view_with(&["a", "c"], Some(1)))
+        .unwrap();
+    let (removals, index_sets) = removals_and_index_sets(&mutations, list);
+    assert_eq!(removals.len(), 1);
+    assert_eq!(index_sets.len(), 1);
+    assert!(index_sets[0] > removals[0]);
+
+    // Items unchanged: nothing to set.
+    let mutations = runtime
+        .update(list_view_with(&["a", "c"], Some(1)))
+        .unwrap();
+    assert_eq!(
+        removals_and_index_sets(&mutations, list),
+        (Vec::new(), Vec::new())
     );
 }

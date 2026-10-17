@@ -1813,6 +1813,9 @@ pub struct WinUiAdapter {
     tree_node_texts: Rc<RefCell<HashMap<usize, Rc<str>>>>,
     data_items: Rc<RefCell<HashMap<usize, ObjectId>>>,
     container_resources: Rc<RefCell<ContainerResources>>,
+    /// ListViews and GridViews whose `SelectedIndex` is set: the reconciler sets it again after
+    /// their items change, so the selection changes WinUI raises meanwhile are not reported.
+    controlled_index_selectors: HashSet<ObjectId>,
 }
 
 /// The resource overrides that `DataItem`s request for their ListView item containers.
@@ -1865,6 +1868,7 @@ impl Default for WinUiAdapter {
             tree_node_texts: Rc::new(RefCell::new(HashMap::new())),
             data_items: Rc::new(RefCell::new(HashMap::new())),
             container_resources: Rc::new(RefCell::new(ContainerResources::default())),
+            controlled_index_selectors: HashSet::new(),
         }
     }
 }

@@ -157,7 +157,7 @@ impl WinUiAdapter {
             .map(|selection| self.selection_item_is_selected(child, selection))
             .transpose()?
             .unwrap_or(false);
-        let feedback = self.begin_selection_feedback(parent, selection);
+        let feedback = self.begin_selection_feedback(parent, relation, selection)?;
         let result = (|| {
             match relation_contract(self.kind(parent)?, relation)?.realization {
                 Realization::Owned => {
@@ -219,7 +219,7 @@ impl WinUiAdapter {
                     .and_then(|value| value.cast::<IInspectable>().map_err(Into::into))
             })
             .transpose()?;
-        let feedback = self.begin_selection_feedback(parent, selection);
+        let feedback = self.begin_selection_feedback(parent, relation, selection)?;
         let result = (|| {
             match relation_contract(self.kind(parent)?, relation)?.realization {
                 Realization::Owned => {
@@ -274,7 +274,7 @@ impl WinUiAdapter {
             .map(|selection| self.read_selected_item(parent, selection))
             .transpose()?
             .flatten();
-        let feedback = self.begin_selection_feedback(parent, selection);
+        let feedback = self.begin_selection_feedback(parent, relation, selection)?;
         let result = (|| {
             match relation_contract(self.kind(parent)?, relation)?.realization {
                 Realization::Owned if !self.has_retirements(parent, relation) => {
@@ -413,17 +413,30 @@ impl WinUiAdapter {
         )
     }
 
+    /// Suppresses the selection changes a mutation of `owner`'s `relation` causes natively: an
+    /// item selector's, and an index selector's (ListView, GridView) whose selected item is
+    /// removed or moved; the planner sets the declared `SelectedIndex` again after its items.
     fn begin_selection_feedback(
         &self,
         owner: ObjectId,
+        relation: RelationId,
         selection: Option<SelectionContract>,
-    ) -> Option<EventId> {
-        let event = selection.map(|selection| selection.event)?;
+    ) -> Result<Option<EventId>, WinUiError> {
+        let index_selection = matches!(
+            (self.kind(owner)?, relation),
+            (ObjectType::ListView | ObjectType::GridView, RelationId::Items)
+        ) && self.controlled_index_selectors.contains(&owner);
+        let Some(event) = selection
+            .map(|selection| selection.event)
+            .or(index_selection.then_some(EventId::SelectionChanged))
+        else {
+            return Ok(None);
+        };
         self.event_queue
             .feedback
             .borrow_mut()
             .begin(owner, event, FeedbackExpectation::Suppressed);
-        Some(event)
+        Ok(Some(event))
     }
 
     fn finish_selection_feedback(&self, owner: ObjectId, event: Option<EventId>) {
