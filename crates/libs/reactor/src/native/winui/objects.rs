@@ -362,14 +362,9 @@ impl WinUiAdapter {
                     .borrow_mut()
                     .begin(object, event, expectation);
             }
-            let selection_feedback = self.selection_feedback(object, property)?;
-            if let Some((owner, event)) = selection_feedback {
-                self.event_queue.feedback.borrow_mut().begin(
-                    owner,
-                    event,
-                    FeedbackExpectation::Suppressed,
-                );
-            }
+            let selection_feedback = self
+                .selection_feedback(object, property)?
+                .map(|(owner, event)| (owner, self.begin_selector_write(owner, event)));
             let result = 'apply: {
                 match property {
                     PropertyId::Resources => {
@@ -453,8 +448,8 @@ impl WinUiAdapter {
             let observation = feedback.and_then(|(event, _)| {
                 self.event_queue.feedback.borrow_mut().finish(object, event)
             });
-            if let Some((owner, event)) = selection_feedback {
-                self.event_queue.feedback.borrow_mut().finish(owner, event);
+            if let Some((owner, feedback)) = selection_feedback {
+                self.finish_selector_write(owner, feedback);
             }
             result?;
             if let Some(observation) = observation {
@@ -471,14 +466,9 @@ impl WinUiAdapter {
                     .borrow_mut()
                     .begin(object, event, expectation);
             }
-            let selection_feedback = self.selection_feedback(object, property.id)?;
-            if let Some((owner, event)) = selection_feedback {
-                self.event_queue.feedback.borrow_mut().begin(
-                    owner,
-                    event,
-                    FeedbackExpectation::Suppressed,
-                );
-            }
+            let selection_feedback = self
+                .selection_feedback(object, property.id)?
+                .map(|(owner, event)| (owner, self.begin_selector_write(owner, event)));
             let result = 'apply: {
                 match (property.id, &property.value) {
                     (PropertyId::Resources, PropertyValue::ResourceOverrides(value)) => {
@@ -634,8 +624,8 @@ impl WinUiAdapter {
             let observation = feedback.and_then(|(event, _)| {
                 self.event_queue.feedback.borrow_mut().finish(object, event)
             });
-            if let Some((owner, event)) = selection_feedback {
-                self.event_queue.feedback.borrow_mut().finish(owner, event);
+            if let Some((owner, feedback)) = selection_feedback {
+                self.finish_selector_write(owner, feedback);
             }
             result?;
             if let Some(observation) = observation {

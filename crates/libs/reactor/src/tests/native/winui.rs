@@ -276,6 +276,33 @@ fn controlled_property_feedback_uses_exact_incumbent_clear_values() {
     }
 }
 
+#[test]
+fn only_a_navigation_view_losing_its_selection_expects_a_late_deselect_echo() {
+    // NavigationView raises "nothing selected" late (ChangeSelection defers it to the idle
+    // CompletePendingSelectionChange), so only a write that took its selection away expects one.
+    assert!(defers_deselect_echo(
+        ObjectType::NavigationView,
+        true,
+        false
+    ));
+    // Nothing was selected natively: WinUI raises nothing.
+    assert!(!defers_deselect_echo(
+        ObjectType::NavigationView,
+        false,
+        false
+    ));
+    // The selection moved to an item: WinUI raises that at once, inside the write.
+    assert!(!defers_deselect_echo(
+        ObjectType::NavigationView,
+        true,
+        true
+    ));
+    // Other selectors raise their deselect inside the write.
+    for kind in [ObjectType::ListBox, ObjectType::SelectorBar] {
+        assert!(!defers_deselect_echo(kind, true, false));
+    }
+}
+
 fn virtual_index(value: IInspectable) -> i32 {
     value
         .cast::<windows_reference::IReference<i32>>()

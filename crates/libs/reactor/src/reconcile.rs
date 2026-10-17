@@ -255,6 +255,9 @@ pub(crate) enum FeedbackExpectation {
 #[derive(Default)]
 pub(crate) struct FeedbackState {
     expectations: HashMap<(ObjectId, EventId), FeedbackExpectation>,
+    /// Selectors the reactor took the selection away from whose "nothing selected" event comes
+    /// after the write returns (`expect_deferred_deselect`).
+    deferred_deselects: HashSet<(ObjectId, EventId)>,
 }
 
 impl FeedbackState {
@@ -285,7 +288,13 @@ impl FeedbackState {
             return !suppress;
         }
         let Some(expectation) = self.expectations.get_mut(&key) else {
-            return true;
+            // Outside the reactor's writes, the first observation ends a deferred deselect, and is
+            // its echo only if nothing is selected.
+            return !(self.deferred_deselects.remove(&key)
+                && matches!(
+                    observation,
+                    Observation::SetSelection { selected: None, .. }
+                ));
         };
         match expectation {
             FeedbackExpectation::Exact(expected)
@@ -322,9 +331,19 @@ impl FeedbackState {
         }
     }
 
+    /// Expects one "nothing selected" `SetSelection` of `object` after the reactor's write that
+    /// took its selection away has returned, and swallows it. The first observation outside the
+    /// reactor's writes ends the expectation, so a selection or a second deselect is reported.
+    /// The reactor's own later writes keep it: the late event still comes after them.
+    pub(crate) fn expect_deferred_deselect(&mut self, object: ObjectId, event: EventId) {
+        self.deferred_deselects.insert((object, event));
+    }
+
     pub(crate) fn remove_object(&mut self, object: ObjectId) {
         self.expectations
             .retain(|(expected_object, _), _| *expected_object != object);
+        self.deferred_deselects
+            .retain(|(expected_object, _)| *expected_object != object);
     }
 }
 

@@ -207,3 +207,109 @@ fn deferred_exact_clear_suppresses_repeated_empty_observations() {
         }
     ));
 }
+
+/// A NavigationView with two items, its id, and its items' ids.
+fn navigation_view_with_items() -> (Runtime<RecordingAdapter>, ObjectId, Vec<ObjectId>) {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(NavigationView::new().keyed_menu_items([
+            keyed(
+                "inbox",
+                NavigationViewItem::new().tag("inbox").is_selected(true),
+            ),
+            keyed("archive", NavigationViewItem::new().tag("archive")),
+        ]))
+        .unwrap();
+    let owner = runtime.graph().root().unwrap();
+    let items = runtime
+        .graph()
+        .children(owner, RelationId::MenuItems)
+        .unwrap()
+        .to_vec();
+    (runtime, owner, items)
+}
+
+fn selection(object: ObjectId, selected: Option<ObjectId>) -> Observation {
+    Observation::SetSelection { object, selected }
+}
+
+/// The reactor's own write of `owner`'s selection: suppressed while it runs.
+fn reactor_write(feedback: &mut FeedbackState, owner: ObjectId) {
+    feedback.begin(
+        owner,
+        EventId::SelectionChanged,
+        FeedbackExpectation::Suppressed,
+    );
+    assert_eq!(feedback.finish(owner, EventId::SelectionChanged), None);
+}
+
+#[test]
+fn deferred_deselect_swallows_one_late_nothing_selected_echo() {
+    let (_runtime, owner, _) = navigation_view_with_items();
+    let mut feedback = FeedbackState::default();
+    reactor_write(&mut feedback, owner);
+    feedback.expect_deferred_deselect(owner, EventId::SelectionChanged);
+
+    assert!(!feedback.observe(owner, EventId::SelectionChanged, selection(owner, None)));
+    // One echo only: a second "nothing selected" is the user's.
+    assert!(feedback.observe(owner, EventId::SelectionChanged, selection(owner, None)));
+}
+
+#[test]
+fn deferred_deselect_reports_a_user_selection_and_is_cleared_by_it() {
+    let (_runtime, owner, items) = navigation_view_with_items();
+    let mut feedback = FeedbackState::default();
+    reactor_write(&mut feedback, owner);
+    feedback.expect_deferred_deselect(owner, EventId::SelectionChanged);
+
+    assert!(feedback.observe(
+        owner,
+        EventId::SelectionChanged,
+        selection(owner, Some(items[1]))
+    ));
+    assert!(feedback.observe(owner, EventId::SelectionChanged, selection(owner, None)));
+}
+
+#[test]
+fn deferred_deselect_outlives_the_reactors_own_later_selection_writes() {
+    let (_runtime, owner, items) = navigation_view_with_items();
+    let mut feedback = FeedbackState::default();
+    reactor_write(&mut feedback, owner);
+    feedback.expect_deferred_deselect(owner, EventId::SelectionChanged);
+
+    // The reactor selects an item before the echo arrives; WinUI still raises the late null.
+    feedback.begin(
+        owner,
+        EventId::SelectionChanged,
+        FeedbackExpectation::Suppressed,
+    );
+    assert!(!feedback.observe(
+        owner,
+        EventId::SelectionChanged,
+        selection(owner, Some(items[1]))
+    ));
+    assert_eq!(feedback.finish(owner, EventId::SelectionChanged), None);
+
+    assert!(!feedback.observe(owner, EventId::SelectionChanged, selection(owner, None)));
+    assert!(feedback.observe(owner, EventId::SelectionChanged, selection(owner, None)));
+}
+
+#[test]
+fn deferred_deselect_is_per_control_and_dropped_with_it() {
+    let (_runtime, owner, items) = navigation_view_with_items();
+    let other = items[0];
+    let mut feedback = FeedbackState::default();
+    feedback.expect_deferred_deselect(owner, EventId::SelectionChanged);
+    assert!(feedback.observe(other, EventId::SelectionChanged, selection(other, None)));
+
+    feedback.remove_object(owner);
+    assert!(feedback.observe(owner, EventId::SelectionChanged, selection(owner, None)));
+}
+
+#[test]
+fn no_deferred_deselect_means_nothing_selected_is_reported() {
+    let (_runtime, owner, _) = navigation_view_with_items();
+    let mut feedback = FeedbackState::default();
+    reactor_write(&mut feedback, owner);
+    assert!(feedback.observe(owner, EventId::SelectionChanged, selection(owner, None)));
+}
