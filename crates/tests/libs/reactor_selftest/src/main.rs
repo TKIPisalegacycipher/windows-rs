@@ -3544,6 +3544,8 @@ impl reactor::Component for Fixture {
                 Self::schedule(context);
                 return;
             }
+            // The containers just prepared ask for their items' content.
+            list_names_runtime.dispatch_native_events().unwrap();
             assert_eq!(names, ["First", "Second"]);
             assert_eq!(
                 list_names_runtime
@@ -3644,14 +3646,25 @@ impl reactor::Component for Fixture {
             // Every realized container presents its own item's content element: after
             // containers are recycled by scrolling, and after keyed changes that remove realized
             // rows and move kept ones (a header kept across a folder switch).
-            let assert_contents = |runtime: &reactor::Runtime<reactor::native::WinUiAdapter>| {
-                let matches = runtime.adapter().list_item_content_matches(list).unwrap();
-                assert!(!matches.is_empty());
-                assert!(
-                    matches.iter().all(|(_, matched)| *matched),
-                    "stale list item content: {matches:?}"
-                );
-            };
+            // A container XAML prepares in a layout asks for its item's content, which waits
+            // for it: mount it and lay out again, until every realized container presents its
+            // own (and no request is left for the next update).
+            let assert_contents =
+                |runtime: &mut reactor::Runtime<reactor::native::WinUiAdapter>| {
+                    let mut matches = Vec::new();
+                    for _ in 0..8 {
+                        matches = runtime.adapter().list_item_content_matches(list).unwrap();
+                        runtime.dispatch_native_events().unwrap();
+                        if !matches.is_empty() && matches.iter().all(|(_, matched)| *matched) {
+                            break;
+                        }
+                    }
+                    assert!(!matches.is_empty());
+                    assert!(
+                        matches.iter().all(|(_, matched)| *matched),
+                        "stale list item content: {matches:?}"
+                    );
+                };
             let rows = |keys: &[&str]| {
                 reactor::ListView::new().height(300.0).items(
                     keys.iter()

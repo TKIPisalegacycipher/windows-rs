@@ -2085,6 +2085,11 @@ impl<A: Adapter> ComponentHost<A> {
                 .runtime
                 .cancel_virtual(collection, relation, container)
                 .map_err(|error| self.runtime_error(error)),
+            // Waiting content holds no component (`mounts_alone`), so no scope changes.
+            VirtualWork::Content { item } => self
+                .runtime
+                .realize_content(item)
+                .map_err(|error| self.runtime_error(error)),
         }
     }
 
@@ -2746,8 +2751,11 @@ impl<A: Adapter> ComponentHost<A> {
         for relation in declaration.relations.iter() {
             match &relation.value {
                 RelationValue::One(Some(child)) => {
-                    let object = self.runtime.graph().child(object, relation.id).unwrap();
-                    self.refresh_roots_from(child.as_object().unwrap(), object);
+                    // No object yet for a `DataItem`'s content that waits for its container;
+                    // such content holds no component root.
+                    if let Some(object) = self.runtime.graph().child(object, relation.id) {
+                        self.refresh_roots_from(child.as_object().unwrap(), object);
+                    }
                 }
                 RelationValue::Many(children) => {
                     for (index, child) in children.iter().enumerate() {

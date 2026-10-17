@@ -159,6 +159,9 @@ impl WinUiAdapter {
                     removed,
                     children,
                 } => self.replace_items(*parent, *relation, removed, children)?,
+                Mutation::DeferContent { item, deferred } => {
+                    self.defer_content(*item, *deferred)?;
+                }
                 Mutation::Retire {
                     root,
                     nodes,

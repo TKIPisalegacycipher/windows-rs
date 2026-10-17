@@ -752,3 +752,77 @@ fn tree_node_component_content_survives_structural_reorder() {
     assert_eq!(host.drain(1).unwrap().dispatched, 1);
     assert_eq!(host.reference_at(&first_path).unwrap().get(), Some(first));
 }
+
+struct ListContent(u32);
+
+impl Component for ListContent {
+    type Input = ();
+    type Message = ();
+
+    fn create(_input: &Self::Input, _context: &ComponentContext<Self>) -> Self {
+        Self(0)
+    }
+
+    fn update(&mut self, (): (), _context: &ComponentContext<Self>) {
+        self.0 += 1;
+    }
+
+    fn view(&self, _input: &Self::Input, _context: &mut ViewContext<Self>) -> View {
+        let text = Rc::<str>::from(self.0.to_string());
+        ListView::new()
+            .items([
+                DataItem::new("plain", "Plain").content(TextBlock::new().text(text.clone())),
+                DataItem::new("label", "Label").content(component::<Label>("label", text)),
+            ])
+            .into()
+    }
+}
+
+#[test]
+fn list_view_item_content_waits_for_its_container_unless_it_holds_components() {
+    let mut host = ComponentHost::mount(
+        RecordingAdapter::default(),
+        [component::<ListContent>("list", ())],
+    )
+    .unwrap();
+    let root = host.runtime().graph().root().unwrap();
+    let list = host
+        .runtime()
+        .graph()
+        .children(root, RelationId::Children)
+        .unwrap()[0];
+    let items = host
+        .runtime()
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    let content = |host: &ComponentHost<RecordingAdapter>, item| {
+        host.runtime().graph().child(item, RelationId::Content)
+    };
+    assert_eq!(content(&host, items[0]), None);
+    let label = content(&host, items[1]).unwrap();
+
+    // A render while the content waits keeps it waiting.
+    assert!(
+        host.sender::<ListContent>(&Key::from("list"))
+            .unwrap()
+            .send(())
+    );
+    assert_eq!(host.drain(4).unwrap().dispatched, 1);
+    assert_eq!(content(&host, items[0]), None);
+    assert_eq!(content(&host, items[1]), Some(label));
+
+    host.queue_realization(RealizationRequest::Content { item: items[0] });
+    host.drain(4).unwrap();
+    let plain = content(&host, items[0]).unwrap();
+
+    assert!(
+        host.sender::<ListContent>(&Key::from("list"))
+            .unwrap()
+            .send(())
+    );
+    assert_eq!(host.drain(4).unwrap().dispatched, 1);
+    assert_eq!(content(&host, items[0]), Some(plain));
+    assert_eq!(content(&host, items[1]), Some(label));
+}

@@ -594,6 +594,21 @@ impl RecordingAdapter {
                 Mutation::SetVirtualSource { object, .. } => {
                     self.require_object(*object)?;
                 }
+                Mutation::DeferContent { item, .. } => {
+                    let object = self
+                        .objects
+                        .get(item)
+                        .ok_or(AdapterError::MissingObject(*item))?;
+                    if object.kind != ObjectType::DataItem {
+                        return Err(AdapterError::InvalidRelation(*item, RelationId::Content));
+                    }
+                    // Only an item without mounted content waits for it.
+                    if object.relations.get(&RelationId::Content)
+                        != Some(&RecordedRelation::One(None))
+                    {
+                        return Err(AdapterError::InvalidMutation(RelationId::Content));
+                    }
+                }
                 Mutation::Realize {
                     parent,
                     relation,
