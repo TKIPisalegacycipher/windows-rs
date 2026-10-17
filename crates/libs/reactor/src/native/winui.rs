@@ -23,6 +23,9 @@ struct NativeListView {
     _drag_items_completed: windows_core::EventRevoker,
     _container_content_changing: windows_core::EventRevoker,
     item_min_height: Rc<Cell<Option<f64>>>,
+    /// Set while `replace_items` replaces the items and restores the selection, so that the
+    /// `SelectionChanged` events WinUI raises meanwhile are not reported one by one.
+    selection_held: Rc<Cell<bool>>,
 }
 
 impl NativeListView {
@@ -2573,6 +2576,16 @@ fn set_list_container_min_height(
             .SetMinHeight(height),
         None => container.ClearValue(&native::FrameworkElement::MinHeightProperty()?),
     }
+}
+
+/// The selected items, in selection order and by COM identity, that a ListView items replacement
+/// (`replace_items`) keeps and selects again: those not in `removed`.
+fn kept_selection<T>(selected: Vec<(usize, T)>, removed: &HashSet<usize>) -> Vec<T> {
+    selected
+        .into_iter()
+        .filter(|(identity, _)| !removed.contains(identity))
+        .map(|(_, item)| item)
+        .collect()
 }
 
 fn simulate_active_slot_reorder<T: Clone>(
