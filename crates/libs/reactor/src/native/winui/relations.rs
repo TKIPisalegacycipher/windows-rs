@@ -62,7 +62,7 @@ impl WinUiAdapter {
                     parent.cast::<IMap<HSTRING, IInspectable>>()?;
                 let content: IInspectable = child_element.cast()?;
                 properties.Insert(&data_content_key, &content)?;
-                self.deferred_content.borrow_mut().remove(&parent_id);
+                self.deferred_content.borrow_mut().end(parent_id);
             }
             _ => return Err(WinUiError::InvalidRelation(parent, relation)),
         }
@@ -962,9 +962,9 @@ impl WinUiAdapter {
         };
         let mut waiting = self.deferred_content.borrow_mut();
         if deferred {
-            waiting.insert(item);
+            waiting.defer(item);
         } else {
-            waiting.remove(&item);
+            waiting.end(item);
         }
         Ok(())
     }
