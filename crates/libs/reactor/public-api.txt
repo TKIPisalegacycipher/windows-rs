@@ -1303,6 +1303,7 @@ pub fn windows_reactor::ComponentContext<C>::root(&self) -> windows_reactor::Ele
 pub fn windows_reactor::ComponentContext<C>::run_window(&self, impl for<'a> core::ops::function::FnOnce(windows_reactor::WindowHandle<'a>) -> <C as windows_reactor::Component>::Message + 'static) -> bool
 pub fn windows_reactor::ComponentContext<C>::sender(&self) -> windows_reactor::LocalSender<<C as windows_reactor::Component>::Message>
 pub fn windows_reactor::ComponentContext<C>::set_local_timeout(&self, core::time::Duration, impl core::ops::function::FnOnce() -> <C as windows_reactor::Component>::Message + core::marker::Send + 'static) -> windows_reactor::ComponentTimer
+pub fn windows_reactor::ComponentContext<C>::skip_render(&self)
 impl<C> windows_reactor::ComponentContext<C> where C: windows_reactor::Component, <C as windows_reactor::Component>::Message: core::marker::Send
 pub fn windows_reactor::ComponentContext<C>::completion(&self) -> windows_reactor::ComponentCompletion<<C as windows_reactor::Component>::Message>
 pub fn windows_reactor::ComponentContext<C>::set_timeout(&self, core::time::Duration, <C as windows_reactor::Component>::Message) -> windows_reactor::ComponentTimer

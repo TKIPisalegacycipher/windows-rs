@@ -902,3 +902,104 @@ fn coalesced_root_inputs_drop_outside_message_queue_borrows() {
     assert!(dropped.get());
     host.drain(64).unwrap();
 }
+
+#[derive(Clone, Default)]
+struct SkipRenderInput {
+    effects: Rc<RefCell<Vec<u32>>>,
+    views: Rc<Cell<usize>>,
+}
+
+impl PartialEq for SkipRenderInput {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.effects, &other.effects) && Rc::ptr_eq(&self.views, &other.views)
+    }
+}
+
+enum SkipRenderMessage {
+    Quiet(u32),
+    Shown(u32),
+}
+
+struct SkipRenderProbe(u32);
+
+impl Component for SkipRenderProbe {
+    type Input = SkipRenderInput;
+    type Message = SkipRenderMessage;
+
+    fn create(_input: &Self::Input, _context: &ComponentContext<Self>) -> Self {
+        Self(0)
+    }
+
+    fn update(&mut self, message: Self::Message, context: &ComponentContext<Self>) {
+        match message {
+            SkipRenderMessage::Quiet(value) => {
+                self.0 = value;
+                context.skip_render();
+            }
+            SkipRenderMessage::Shown(value) => self.0 = value,
+        }
+    }
+
+    fn view(&self, input: &Self::Input, context: &mut ViewContext<Self>) -> View {
+        input.views.set(input.views.get() + 1);
+        let effects = Rc::clone(&input.effects);
+        let value = self.0;
+        context.use_effect("value", value, move || {
+            effects.borrow_mut().push(value);
+            None
+        });
+        TextBlock::new().text(value.to_string()).into()
+    }
+}
+
+#[test]
+fn update_that_skips_the_render_does_not_call_view() {
+    let input = SkipRenderInput::default();
+    let mut host = ComponentHost::mount(
+        RecordingAdapter::default(),
+        [component::<SkipRenderProbe>("probe", input.clone())],
+    )
+    .unwrap();
+    let sender = host.sender::<SkipRenderProbe>(&Key::from("probe")).unwrap();
+    assert_eq!(input.views.get(), 1);
+
+    assert!(sender.send(SkipRenderMessage::Quiet(1)));
+    let drain = host.drain(1).unwrap();
+    assert_eq!(drain.dispatched, 1);
+    assert_eq!(drain.mutations, 0);
+    assert_eq!(input.views.get(), 1);
+    assert_eq!(&*input.effects.borrow(), &[0]);
+
+    // The skip lasts for its own update only: the next message renders again.
+    assert!(sender.send(SkipRenderMessage::Shown(2)));
+    let drain = host.drain(1).unwrap();
+    assert_eq!(drain.dispatched, 1);
+    assert!(drain.mutations > 0);
+    assert_eq!(input.views.get(), 2);
+    assert_eq!(&*input.effects.borrow(), &[0, 2]);
+}
+
+#[test]
+fn batch_with_one_skipping_update_renders_once_with_the_latest_state() {
+    let input = SkipRenderInput::default();
+    let mut host = ComponentHost::mount(
+        RecordingAdapter::default(),
+        [component::<SkipRenderProbe>("probe", input.clone())],
+    )
+    .unwrap();
+    let sender = host.sender::<SkipRenderProbe>(&Key::from("probe")).unwrap();
+    assert_eq!(input.views.get(), 1);
+
+    assert!(sender.send(SkipRenderMessage::Shown(1)));
+    assert!(sender.send(SkipRenderMessage::Quiet(2)));
+    assert_eq!(host.drain(2).unwrap().dispatched, 2);
+    assert_eq!(input.views.get(), 2);
+    assert_eq!(&*input.effects.borrow(), &[0, 1]);
+
+    // A quiet update's state shows, and its effects run, on the next render that isn't skipped.
+    assert!(sender.send(SkipRenderMessage::Quiet(3)));
+    assert!(sender.send(SkipRenderMessage::Shown(4)));
+    assert_eq!(host.drain(2).unwrap().dispatched, 2);
+    assert_eq!(input.views.get(), 3);
+    assert_eq!(&*input.effects.borrow(), &[0, 1, 4]);
+}
