@@ -737,12 +737,23 @@ impl MetadataResolver {
             .then(|| getter_ref.interface.full_path())
     }
 
-    fn resolve_event_args_getter(
+    /// Resolves the interface short name that declares an event-args getter, and the
+    /// event-args class, so callers can cast the args when the getter is not on the
+    /// class's default interface.
+    pub fn resolve_event_args_getter_interface(
         &self,
         class_name: &str,
         add_event: &str,
         property: &str,
-    ) -> Option<&MethodRef> {
+    ) -> Option<(String, String)> {
+        let args_class = self.event_args_class(class_name, add_event)?;
+        let getter = self
+            .lookup
+            .get(&(args_class.clone(), format!("get_{property}")))?;
+        Some((args_class, getter.interface.short_name().to_string()))
+    }
+
+    fn event_args_class(&self, class_name: &str, add_event: &str) -> Option<String> {
         let add_ref = self
             .lookup
             .get(&(class_name.to_string(), add_event.to_string()))?;
@@ -763,6 +774,16 @@ impl MetadataResolver {
             }
             _ => return None,
         };
+        Some(args_class)
+    }
+
+    fn resolve_event_args_getter(
+        &self,
+        class_name: &str,
+        add_event: &str,
+        property: &str,
+    ) -> Option<&MethodRef> {
+        let args_class = self.event_args_class(class_name, add_event)?;
         let getter = format!("get_{property}");
         self.lookup.get(&(args_class, getter))
     }

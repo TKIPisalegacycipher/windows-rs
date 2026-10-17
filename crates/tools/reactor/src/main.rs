@@ -1338,9 +1338,25 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                     && let Some(payload) = &event.payload
                 {
                     if event.payload_adapter == Some(PayloadAdapter::ItemTag) {
+                        // The getter may live on a secondary interface of the args class.
+                        let args_getter = match metadata.resolve_event_args_getter_interface(
+                            &native_name(object),
+                            &format!("add_{}", event.name),
+                            payload,
+                        ) {
+                            Some((class, interface))
+                                if !metadata.is_default_interface(&class, &interface) =>
+                            {
+                                format!(
+                                    "args.cast::<native::{interface}>()\
+                                     .and_then(|args| args.{payload}())"
+                                )
+                            }
+                            _ => format!("args.{payload}()"),
+                        };
                         code.push_str(&format!(
                             "let args = args.unwrap();\n\
-                             let payload = match args.{payload}()\
+                             let payload = match {args_getter}\
                              .and_then(|value| value.cast::<native::IFrameworkElement>())\
                              .and_then(|value| value.Tag()) {{\
                              Ok(value) => match value\
