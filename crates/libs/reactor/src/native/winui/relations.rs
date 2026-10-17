@@ -1,3 +1,11 @@
+/// The ListView items whose realized containers `with_list_items_disconnected` disconnects.
+enum ListItems<'a> {
+    /// These items.
+    These(&'a [IInspectable]),
+    /// The items with these COM identities (`com_identity`).
+    Matching(&'a HashSet<usize>),
+}
+
 /// Whether a reactor write that left a `kind` selector with `has_selection`, after it had
 /// `had_selection`, gets a "nothing selected" event only after the write returns.
 ///
@@ -261,7 +269,7 @@ impl WinUiAdapter {
                     if values.GetAt(index32(index)?)? != item {
                         return Err(WinUiError::ChildNotFound(child));
                     }
-                    self.with_list_items_disconnected(parent, Some(&[item]), || {
+                    self.with_list_items_disconnected(parent, ListItems::These(&[item]), || {
                         Ok(values.RemoveAt(index32(index)?)?)
                     })?;
                 }
@@ -737,41 +745,100 @@ impl WinUiAdapter {
         Ok(())
     }
 
-    /// Runs `mutate` on a ListView's items with the realized containers of `items` (all items when
-    /// `None`) disconnected first, so that their elements are free for the containers XAML
-    /// prepares next. If `mutate` fails the containers are connected again, since XAML will not
-    /// prepare them again for items that did not change.
+    /// Replaces all of a ListView's items with `children` in one `ReplaceAll`, for a keyed change
+    /// that drops or adds most of them (`Mutation::ReplaceItems`). Only the realized containers
+    /// of `removed` items are disconnected first, as `remove` does for one item; the items that
+    /// stay keep their content, which the container XAML prepares for each takes over
+    /// (`ContainerContentChanging`). Selection changes WinUI raises during the change are
+    /// suppressed once for the whole change, and the planner sets `SelectedIndex` again after it.
+    fn replace_items(
+        &mut self,
+        parent: ObjectId,
+        relation: RelationId,
+        removed: &[ObjectId],
+        children: &[ObjectId],
+    ) -> Result<(), WinUiError> {
+        if relation_contract(self.kind(parent)?, relation)?.realization != Realization::Container
+        {
+            return Err(WinUiError::InvalidMutation(relation));
+        }
+        // Container relations have no item selection contract (`selection_for_relation`), so
+        // there is no selected item to read and write back here.
+        debug_assert!(selection_for_relation(self.kind(parent)?, relation).is_none());
+        let owner = Some(&(parent, relation));
+        if let Some(child) = removed.iter().find(|child| self.owners.get(child) != owner) {
+            return Err(WinUiError::ChildNotFound(*child));
+        }
+        if let Some(child) = children
+            .iter()
+            .find(|child| self.owners.get(child).is_some_and(|owned| Some(owned) != owner))
+        {
+            return Err(WinUiError::StillOwned(*child));
+        }
+        let values = self.items(parent)?;
+        let items = children
+            .iter()
+            .map(|child| self.inspectable(*child).map(Some))
+            .collect::<Result<Vec<_>, _>>()?;
+        let removed_items = removed
+            .iter()
+            .map(|child| self.inspectable(*child).and_then(|item| com_identity(&item)))
+            .collect::<Result<HashSet<_>, _>>()?;
+        let feedback = self.begin_selection_feedback(parent, relation, None)?;
+        let result = self.with_list_items_disconnected(
+            parent,
+            ListItems::Matching(&removed_items),
+            || Ok(values.ReplaceAll(&items)?),
+        );
+        self.finish_selection_feedback(parent, feedback);
+        result?;
+        for child in removed {
+            self.owners.remove(child);
+        }
+        for child in children {
+            self.owners.insert(*child, (parent, relation));
+        }
+        Ok(())
+    }
+
+    /// Runs `mutate` on a ListView's items with the realized containers of `items` disconnected
+    /// first, so that their elements are free for the containers XAML prepares next. If `mutate`
+    /// fails the containers are connected again, since XAML will not prepare them again for
+    /// items that did not change.
     fn with_list_items_disconnected(
         &self,
         parent: ObjectId,
-        items: Option<&[IInspectable]>,
+        items: ListItems<'_>,
         mutate: impl FnOnce() -> Result<(), WinUiError>,
     ) -> Result<(), WinUiError> {
         let Some(Handle::ListView(list)) = self.handles.get(&parent) else {
             return mutate();
         };
         let mapping = list.value.cast::<native::IItemContainerMapping>()?;
-        let mut containers = Vec::new();
-        let mut realized = |container: windows_core::Result<native::DependencyObject>| {
-            match container {
-                Ok(container) => containers.push(container),
-                Err(error) if error.code().is_ok() => {}
-                Err(error) => return Err(WinUiError::from(error)),
-            }
-            Ok(())
+        let realized = |container: windows_core::Result<native::DependencyObject>| match container
+        {
+            Ok(container) => Ok(Some(container)),
+            Err(error) if error.code().is_ok() => Ok(None),
+            Err(error) => Err(WinUiError::from(error)),
         };
-        if let Some(items) = items {
-            for item in items {
-                realized(mapping.ContainerFromItem(item))?;
+        let mut containers = Vec::new();
+        match items {
+            ListItems::These(items) => {
+                for item in items {
+                    containers.extend(realized(mapping.ContainerFromItem(item))?);
+                }
             }
-        } else {
-            let count = list
-                .value
-                .cast::<native::IItemsControl>()?
-                .Items()?
-                .Size()?;
-            for index in 0..count {
-                realized(mapping.ContainerFromIndex(index as i32))?;
+            ListItems::Matching(identities) => {
+                // One pass over the indices, which is cheap for unrealized ones, rather than a
+                // `ContainerFromItem` search per item.
+                let values = list.value.cast::<native::IItemsControl>()?.Items()?;
+                for index in 0..values.Size()? {
+                    if let Some(container) = realized(mapping.ContainerFromIndex(index as i32))?
+                        && identities.contains(&com_identity(&values.GetAt(index)?)?)
+                    {
+                        containers.push(container);
+                    }
+                }
             }
         }
         let result = containers

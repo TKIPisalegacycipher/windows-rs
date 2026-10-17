@@ -707,3 +707,215 @@ fn no_change_produces_no_mutations() {
             .is_empty()
     );
 }
+
+fn keyed_list(keys: &[String], selected: Option<usize>) -> ListView {
+    ListView::new().selected_index(selected).items(
+        keys.iter()
+            .map(|key| DataItem::new(key.clone(), key).content(text(key.as_str()))),
+    )
+}
+
+fn list_keys(prefix: &str, range: std::ops::Range<usize>) -> Vec<String> {
+    range.map(|index| format!("{prefix}{index}")).collect()
+}
+
+/// The list's `Insert`, `Remove`, `Reorder` and `ReplaceItems` mutations, counted.
+fn list_item_mutations(mutations: &UpdateStats, list: ObjectId) -> [usize; 4] {
+    let mut counts = [0; 4];
+    for mutation in mutations.iter() {
+        match mutation {
+            Mutation::Insert { parent, .. } if *parent == list => counts[0] += 1,
+            Mutation::Remove { parent, .. } if *parent == list => counts[1] += 1,
+            Mutation::Reorder { parent, .. } if *parent == list => counts[2] += 1,
+            Mutation::ReplaceItems { parent, .. } if *parent == list => counts[3] += 1,
+            _ => {}
+        }
+    }
+    counts
+}
+
+#[test]
+fn list_view_replaces_its_items_at_once_when_most_keys_change() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(keyed_list(&list_keys("m", 0..500), Some(3)))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let before = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+
+    let mutations = runtime
+        .update(keyed_list(&list_keys("n", 0..12), Some(0)))
+        .unwrap();
+    let after = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+
+    assert_eq!(list_item_mutations(&mutations, list), [0, 0, 0, 1]);
+    let (replace_at, removed, children) = mutations
+        .iter()
+        .enumerate()
+        .find_map(|(at, mutation)| match mutation {
+            Mutation::ReplaceItems {
+                parent,
+                relation: RelationId::Items,
+                removed,
+                children,
+            } if *parent == list => Some((at, removed.clone(), children.clone())),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(children, after);
+    let mut removed_sorted = removed;
+    removed_sorted.sort_unstable_by_key(|object| (object.index(), object.generation()));
+    let mut before_sorted = before.clone();
+    before_sorted.sort_unstable_by_key(|object| (object.index(), object.generation()));
+    assert_eq!(removed_sorted, before_sorted);
+    // New items are created before they are placed; old ones are destroyed after they leave.
+    for (at, mutation) in mutations.iter().enumerate() {
+        match mutation {
+            Mutation::Create { object, .. } if after.contains(object) => {
+                assert!(at < replace_at);
+            }
+            Mutation::Destroy { object } if before.contains(object) => assert!(at > replace_at),
+            _ => {}
+        }
+    }
+    // SelectedIndex is set again after the items (df9100551).
+    let index_set = mutations
+        .iter()
+        .position(|mutation| {
+            matches!(mutation, Mutation::SetProperties { object, set, .. }
+                if *object == list && set.iter().any(|p| p.id == PropertyId::SelectedIndex))
+        })
+        .unwrap();
+    assert!(index_set > replace_at);
+}
+
+#[test]
+fn list_view_replace_keeps_the_objects_and_content_of_kept_keys() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(keyed_list(&list_keys("m", 0..40), None))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let before = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    let kept_content = [5, 30].map(|index| {
+        runtime
+            .graph()
+            .child(before[index], RelationId::Content)
+            .unwrap()
+    });
+
+    let mut keys = list_keys("n", 0..38);
+    keys.insert(0, "m30".to_string());
+    keys.push("m5".to_string());
+    let mutations = runtime.update(keyed_list(&keys, None)).unwrap();
+    let after = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+
+    assert_eq!(list_item_mutations(&mutations, list), [0, 0, 0, 1]);
+    assert_eq!(after.len(), 40);
+    assert_eq!(after[0], before[30]);
+    assert_eq!(after[39], before[5]);
+    assert_eq!(
+        runtime.graph().child(after[0], RelationId::Content),
+        Some(kept_content[1])
+    );
+    assert_eq!(
+        runtime.graph().child(after[39], RelationId::Content),
+        Some(kept_content[0])
+    );
+    let kept = [before[5], before[30], kept_content[0], kept_content[1]];
+    assert!(!mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::Destroy { object } | Mutation::Detach { child: object, .. }
+            if kept.contains(object)
+    )));
+    let removed = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::ReplaceItems { removed, .. } => Some(removed.clone()),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(removed.len(), 38);
+    assert!(!removed.contains(&before[5]) && !removed.contains(&before[30]));
+}
+
+#[test]
+fn list_view_small_edit_still_inserts_and_removes_single_items() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(keyed_list(&list_keys("m", 0..500), Some(3)))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+
+    let mut keys = list_keys("m", 0..500);
+    keys.remove(7);
+    keys.insert(0, "new".to_string());
+    let mutations = runtime.update(keyed_list(&keys, Some(4))).unwrap();
+
+    assert_eq!(list_item_mutations(&mutations, list), [1, 1, 0, 0]);
+}
+
+#[test]
+fn list_view_reorder_of_mostly_the_same_keys_is_unchanged() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(keyed_list(&list_keys("m", 0..40), None))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let before = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+
+    let mut keys = list_keys("m", 0..40);
+    keys.swap(0, 39);
+    keys.swap(10, 20);
+    keys[25] = "new".to_string();
+    let mutations = runtime.update(keyed_list(&keys, None)).unwrap();
+    let after = runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+
+    assert_eq!(list_item_mutations(&mutations, list), [1, 1, 1, 0]);
+    assert_eq!(after[0], before[39]);
+    assert_eq!(after[39], before[0]);
+    assert_eq!(after[10], before[20]);
+}
+
+#[test]
+fn panel_keyed_children_still_change_one_at_a_time_when_most_keys_change() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(StackPanel::new().keyed_children(
+            (0..40).map(|index| keyed(format!("m{index}"), TextBlock::new().text("Old"))),
+        ))
+        .unwrap();
+    let root = runtime.graph().root().unwrap();
+
+    let mutations = runtime
+        .update(StackPanel::new().keyed_children(
+            (0..12).map(|index| keyed(format!("n{index}"), TextBlock::new().text("New"))),
+        ))
+        .unwrap();
+
+    assert_eq!(list_item_mutations(&mutations, root), [12, 40, 0, 0]);
+}

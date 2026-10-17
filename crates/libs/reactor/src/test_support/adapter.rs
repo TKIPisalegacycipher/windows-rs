@@ -772,6 +772,12 @@ impl RecordingAdapter {
                         _ => return Err(AdapterError::InvalidMutation(*relation)),
                     }
                 }
+                Mutation::ReplaceItems {
+                    parent,
+                    relation,
+                    removed,
+                    children,
+                } => self.replace_items(*parent, *relation, removed, children)?,
                 Mutation::Retire {
                     root,
                     nodes,
@@ -928,6 +934,64 @@ impl RecordingAdapter {
         (active == active_index)
             .then_some(children.len())
             .ok_or(AdapterError::InvalidMutation(relation))
+    }
+
+    /// Applies `Mutation::ReplaceItems`: only a container relation without retiring items, whose
+    /// current items are exactly `removed` plus the `children` it already holds.
+    fn replace_items(
+        &mut self,
+        parent: ObjectId,
+        relation: RelationId,
+        removed: &[ObjectId],
+        children: &[ObjectId],
+    ) -> Result<(), AdapterError> {
+        let kind = self
+            .objects
+            .get(&parent)
+            .ok_or(AdapterError::MissingObject(parent))?
+            .kind;
+        let container = relation_contracts(kind).iter().any(|contract| {
+            contract.id == relation && contract.realization == Realization::Container
+        });
+        if !container
+            || self
+                .retirements
+                .values()
+                .any(|retirement| retirement.parent == parent && retirement.relation == relation)
+        {
+            return Err(AdapterError::InvalidMutation(relation));
+        }
+        let owner = Some(&(parent, relation));
+        let mut expected = Vec::with_capacity(children.len() + removed.len());
+        for child in children {
+            self.require_object(*child)?;
+            self.validate_child(parent, relation, *child)?;
+            if self.owners.get(child) == owner {
+                expected.push(*child);
+            } else if self.is_owned(*child) {
+                return Err(AdapterError::AlreadyOwned(*child));
+            }
+        }
+        expected.extend(removed.iter().copied());
+        let RecordedRelation::Many(current) = self.relation_mut(parent, relation)? else {
+            return Err(AdapterError::InvalidMutation(relation));
+        };
+        let mut current_sorted = current.clone();
+        let key = |object: &ObjectId| (object.index(), object.generation());
+        current_sorted.sort_unstable_by_key(key);
+        expected.sort_unstable_by_key(key);
+        if current_sorted != expected {
+            return Err(AdapterError::InvalidMutation(relation));
+        }
+        *current = children.to_vec();
+        let owners = Rc::make_mut(&mut self.owners);
+        for child in removed {
+            owners.remove(child);
+        }
+        for child in children {
+            owners.insert(*child, (parent, relation));
+        }
+        Ok(())
     }
 
     fn object_mut(&mut self, object: ObjectId) -> Result<&mut RecordedObject, AdapterError> {
