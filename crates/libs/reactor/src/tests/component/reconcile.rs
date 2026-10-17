@@ -769,11 +769,15 @@ impl Component for ListContent {
 
     fn view(&self, _input: &Self::Input, _context: &mut ViewContext<Self>) -> View {
         let text = Rc::<str>::from(self.0.to_string());
+        // After the first items, whose content is mounted with them (EAGER_ITEM_CONTENT).
+        let leading = (0..EAGER_ITEM_CONTENT).map(|index| {
+            DataItem::new(index as u64, "Lead").content(TextBlock::new().text("Lead"))
+        });
         ListView::new()
-            .items([
+            .items(leading.chain([
                 DataItem::new("plain", "Plain").content(TextBlock::new().text(text.clone())),
                 DataItem::new("label", "Label").content(component::<Label>("label", text)),
-            ])
+            ]))
             .into()
     }
 }
@@ -795,7 +799,7 @@ fn list_view_item_content_waits_for_its_container_unless_it_holds_components() {
         .runtime()
         .graph()
         .children(list, RelationId::Items)
-        .unwrap()
+        .unwrap()[EAGER_ITEM_CONTENT..]
         .to_vec();
     let content = |host: &ComponentHost<RecordingAdapter>, item| {
         host.runtime().graph().child(item, RelationId::Content)

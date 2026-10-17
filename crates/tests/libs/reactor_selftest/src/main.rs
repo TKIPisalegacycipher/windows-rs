@@ -3672,7 +3672,9 @@ impl reactor::Component for Fixture {
                         .collect::<Vec<_>>(),
                 )
             };
-            let scrolled = (0..30)
+            // Past the list's first items (whose content is mounted with them), so that the rows
+            // scrolled to have content that waits for their containers.
+            let scrolled = (0..120)
                 .map(|index| format!("row-{index}"))
                 .collect::<Vec<_>>();
             let scrolled = scrolled.iter().map(String::as_str).collect::<Vec<_>>();
@@ -3680,7 +3682,7 @@ impl reactor::Component for Fixture {
             assert_contents(list_names_runtime);
             list_names_runtime
                 .adapter()
-                .scroll_list_into_view(list, 29)
+                .scroll_list_into_view(list, 119)
                 .unwrap();
             assert_contents(list_names_runtime);
             list_names_runtime
