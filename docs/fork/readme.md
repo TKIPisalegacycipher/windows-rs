@@ -11,13 +11,12 @@ repository and its [documentation index](../readme.md).
 | Page | Read it to learn |
 | --- | --- |
 | This page | What the fork is, why it exists, how the branches and tooling fit together |
-| [patches.md](patches.md) | Every fork commit: what it changes, why, and its status against upstream |
+| [patches.md](patches.md) | Every commit in the stack: what it changes, why, and its status against upstream |
 | [upstreaming.md](upstreaming.md) | Which changes to propose, in what order, and the case for each |
-| [issues.md](issues.md) | Defects and design problems found in the library and in the fork itself |
+| [issues.md](issues.md) | Defects found in the library, and the problems in the fork and how each was closed |
 
-Facts in these pages were checked on 2026-10-16 against upstream `master` at `ffe56ded6` and the
-fork branch `okojo-fast-list` at `dcfb63c07`. Both move quickly. Re-check before acting on a
-status.
+Facts in these pages were checked on 2026-10-17 against upstream `master` at `ffe56ded6` and the
+fork branch `okojo-rebased` at `47c5b855d`. Both move quickly. Re-check before acting on a status.
 
 ## Background
 
@@ -58,31 +57,29 @@ Okojo vendors three crates from the fork (`windows-reactor`, `windows-window` an
 
 ## What the fork contains
 
-On `okojo-fast-list`, 58 commits sit on upstream `d5b6a1f68` ("unify native event dispatch",
-#5061, 2026-10-10). They fall into five kinds of work:
+`okojo-rebased` is upstream `ffe56ded6` plus 45 commits. The first four prepare the ground (a
+`#[non_exhaustive]` change and three generator fixes). The other 41 expose WinUI behaviour or fix
+a defect, and fall into five kinds of work:
 
 | Kind | Examples |
 | --- | --- |
 | Missing WinUI properties and events | `IsHitTestVisible`, `Cursor`, `AutoSuggestBox` `QuerySubmitted`, `ListView` `ItemClick`, `InfoBar` `ActionButton` |
 | Theming and icons | Any theme brush by resource key, app light/dark colour dictionaries, icon foregrounds, icons in menus |
-| Input | More accelerator keys, focus-scoped accelerators, element context menus, drag formats |
+| Input | More accelerator keys, any modifier combination, focus-scoped accelerators, element context menus, drag formats |
 | Correctness fixes | Pointer events out of order, wrong `ListView` row selected, stale rows, a late `NavigationView` echo |
 | Performance of large lists | Skip a render, replace many keyed rows at once, build row content only when a row is shown |
 
-[patches.md](patches.md) lists all 58 with their reasons. The short version of where they stand:
+[patches.md](patches.md) lists all 45 with their reasons. Where they stand against upstream:
 
 | Status against current upstream | Commits |
 | --- | --- |
-| Landed on upstream under another change (drop) | 2 |
-| Partly landed | 1 |
-| Fixed upstream a different way (drop, re-verify) | 3 |
+| Preparation: `#[non_exhaustive]` and generator fixes | 4 |
 | Requested by the maintainer in upstream issue #5087 | 8 |
-| Not on upstream and not requested (needs an issue first) | 28 |
-| `ListView` row-content rework that must be proposed as a unit | 7 |
-| On hold: little case beyond Okojo | 2 |
-| Fixups that belong inside another commit | 7 |
+| Not on upstream and not requested (needs an issue first) | 27 |
+| `ListView` row-content rework that must be proposed as a unit | 6 |
 
-That is all 58. The status of each commit and the reasoning is in [patches.md](patches.md).
+The original stack, `okojo-fast-list`, had 58 commits. The rebuild dropped 7 and merged 10 more
+into their parents; [patches.md](patches.md#what-happened-to-the-original-58) maps every one.
 
 ## Branches
 
@@ -90,12 +87,16 @@ All branches are on `origin` (`TKIPisalegacycipher/windows-rs`). `master` mirror
 
 | Branch | Tip | Use |
 | --- | --- | --- |
-| `okojo-fast-list` | `dcfb63c07` | The complete stack, 58 commits. This is the branch Okojo vendors |
-| `okojo-infobar-action` | `7e9aea584` | A prefix of `okojo-fast-list` (51 commits). The InfoBar commit `7e9aea584` is its tip, and a pending Okojo PR pins it |
-| `okojo`, `okojo-review-fixes` | `14f2210a2`, `981798f05` | Earlier integration points, both ancestors of `okojo-fast-list` |
-| `okojo-accel-letters`, `okojo-dialog-retire`, `okojo-drag-format`, `okojo-drag-image`, `okojo-drop-other`, `okojo-listview-item-click`, `okojo-live-setting`, `okojo-nav-item-invoked`, `okojo-nav-scroll`, `okojo-open-inactive` | various | One branch per feature, each an ancestor of `okojo-fast-list`. Useful as PR heads, redundant as history |
-| `okojo-local` | `37f87d6fa` | A reordered rebuild of part of the stack. 10 of its 14 unique commits are patch-equivalent to commits in `okojo-fast-list`; 4 differ in content. Not an input to anything |
-| `okojo-fork-docs` | this branch | The pages you are reading, on top of `okojo-fast-list` |
+| `okojo-rebased` | `47c5b855d` | The current stack: 45 commits on upstream `ffe56ded6`. Propose from here |
+| `okojo-fork-docs` | this branch | The pages you are reading, on top of `okojo-rebased` |
+| `okojo-fast-list` | `dcfb63c07` | The old 58-commit stack on `d5b6a1f68`. Okojo still vendors it. Superseded |
+| `okojo-infobar-action` | `7e9aea584` | A prefix of `okojo-fast-list` (51 commits). A pending Okojo PR pins its tip. Superseded |
+| `okojo` | `14f2210a2` | An early integration point, an ancestor of `okojo-fast-list`. Superseded |
+
+Twelve other branches were deleted on 2026-10-17; see [issues.md](issues.md#f11-redundant-branches)
+for the list and how to restore any of them. Okojo pins fork SHAs, so the three superseded branches
+stay until Okojo vendors `okojo-rebased`. Deleting them would not lose commits, since all are
+reachable from `okojo-fast-list`, but nothing needs it yet.
 
 None of these branches has an open pull request, upstream or on the fork, and no issue has been
 filed upstream for any of the work. Okojo's `docs/upstream-drafts/` holds 18 draft issues that
@@ -112,16 +113,21 @@ cargo run -p tool-reactor --quiet          # regenerate; must leave no diff
 cargo test -p tool-reactor --quiet
 cargo test -p windows-reactor --all-features --quiet
 cargo clippy -p windows-reactor --all-targets
+cargo public-api -p windows-reactor -sss --color never    # compare with public-api.txt
 ```
 
-Measured on `okojo-fast-list` at `dcfb63c07` for these pages: regeneration left the tree clean,
-and the `windows-reactor` test targets passed (341 + 4 + 77 passed, 16 ignored, 0 failed, plus
-doctests). The ignored tests drive a real WinUI window and run only on a desktop.
+Measured on `okojo-rebased` at `47c5b855d`: regeneration left the tree clean, the
+`windows-reactor` test targets passed (366 + 6 + 77 passed, 19 ignored, 0 failed, plus doctests),
+the `reactor-gallery` and `reactor-workbench` tests passed, clippy reported nothing new, formatting
+was clean for every touched crate, the public API snapshot matched, and all 113 workspace crates
+that depend on Reactor compile (`cargo check --all-targets`). Every commit in the stack was gated
+the same way when it was rebuilt. The ignored tests drive a real WinUI window and run only on a
+desktop.
 
 The live checks need a desktop session and Windows App Runtime 2.5. They are
 `cargo run -p test-reactor-selftest` (add `-- --headless` for CI mode) and the
-`test-reactor-integration` binaries. Upstream's workflow lists them. Do not run them from an
-unattended agent: they open windows.
+`test-reactor-integration` binaries. Upstream's workflow lists them. They have not been run on this
+stack. Do not run them from an unattended agent: they open windows.
 
 ### How a change is made
 
@@ -154,17 +160,27 @@ WinUI events into queued messages). Tests are layered:
 A change that alters the public API must also update `public-api.txt`; upstream's workflow
 compares it byte for byte.
 
-### Updating Okojo's vendored copy
+### Moving Okojo to the rebuilt stack
 
-1. In the fork, rebase onto `upstream/master`, rerun `cargo run -p tool-reactor`, resolve
-   conflicts, run the gates above, push.
-2. In Okojo, run `vendor/sync-reactor.sh <fork-path>`. It refuses a dirty fork, repackages the
-   three crates and rewrites `vendor/REACTOR_FORK`.
+Okojo still vendors `okojo-fast-list`. To move it:
+
+1. In Okojo, run `vendor/sync-reactor.sh <fork-path>` with the fork checked out at
+   `okojo-rebased`. It refuses a dirty fork, repackages the three crates and rewrites
+   `vendor/REACTOR_FORK`.
+2. Fix what the rebuild changed. A scan of Okojo's sources found:
+
+| Change in the rebuild | Where Okojo is affected |
+| --- | --- |
+| `PointerEventInfo` is `#[non_exhaustive]` | Three struct literals in `src/ui/calendar/card.rs` tests. Build from `PointerEventInfo::default()` and assign fields |
+| `DroppedData`, `DragKind`, `AcceleratorKey` are `#[non_exhaustive]` | Matches on `DroppedData` (`src/ui/compose/attach_view.rs`) need a wildcard arm |
+| `MenuItem` variants are `#[non_exhaustive]` | Okojo's patterns already end in `..`; no change expected |
+| `AcceleratorModifiers::Menu`, `ControlMenu`, `MenuShift` are gone | Okojo uses none of them. Use `InputModifiers` for Alt and other combinations |
+| `DragDropPolicy::other` is gone | Okojo does not call it; it uses `format` and `hide_image` |
+| `CalendarDatePicker::date`, and the colour-scheme and menu fixes, come from upstream | Check the three `CalendarDatePicker` call sites against upstream's signature |
+
 3. Update the patch table in Okojo's `vendor/README.md`.
 
-Step 1 is the expensive one. A trial rebase of the 58 commits onto current upstream stops on
-hand-written conflicts in 36 of them, even with every generated file taken from upstream. See
-[upstreaming.md](upstreaming.md) for what that means for the plan.
+This was derived from reading Okojo's sources; Okojo was not built against the new stack.
 
 ### Conventions to follow
 

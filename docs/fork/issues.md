@@ -2,7 +2,7 @@
 
 Problems found while building and reviewing the fork. [Part A](#a-defects-in-windows-reactor)
 lists defects and design gaps in upstream `windows-reactor` itself.
-[Part B](#b-problems-in-the-fork) lists what must change in the fork before anything is proposed.
+[Part B](#b-problems-in-the-fork) lists the problems the fork had and records how each was closed.
 Parts C and D cover the generator and the checking that has not been done.
 
 Each defect has a confidence level, because most were found by reading code or by Okojo's own
@@ -14,7 +14,8 @@ testing, not by reproducing them on current upstream:
 | Observed in Okojo | Seen in the running application on the fork, which carried upstream `d5b6a1f68` |
 | Suspected | Inferred from the fix and from the code, not reproduced |
 
-No defect below has been reported upstream. That is the first step for most of them.
+No defect below has been reported upstream. That is the first step for most of them. Where the
+rebuilt stack (`okojo-rebased`) fixes one, the commit number from [patches.md](patches.md) is given.
 
 ## A. Defects in windows-reactor
 
@@ -28,7 +29,7 @@ cannot tell a finished drag from a cancelled one. The `?` also drops the release
 release fails.
 
 - Confidence: confirmed in source. The call is still in `pointer_event_info`.
-- Fork fix: `5f2d95a1a`. Dispatch first, then release, and report a release error without losing
+- Fork fix: commit 14. Dispatch first, then release, and report a release error without losing
   the event. No public API change.
 - Checked: ordering tests against the native event queue; in Okojo, a calendar drag-to-create
   ends in the editor with the dragged range (the unfixed order was not re-run).
@@ -41,7 +42,7 @@ notification-icon menu already uses `BottomEdgeAlignedLeft`.
 
 - Confidence: confirmed in source that no placement is set for these menus; the visible effect
   was not re-run unfixed.
-- Fork fix: `9777d44b1`. If a configurable `Menu::placement` is preferred, this is its default.
+- Fork fix: commit 13. If a configurable `Menu::placement` is preferred, this is its default.
 - Related: upstream #5055 (notification-icon menu anchoring) and #4923.
 
 ### U3. `ListView` `SelectedIndex` is applied before the item changes of the same update
@@ -54,7 +55,7 @@ index stays the same.
 
 - Confidence: suspected on current upstream. Upstream orders `SelectedIndex` after other
   properties in `native/winui/objects.rs`, which does not order it after the items relation.
-- Fork fix: `df9100551`, `9194fe4cc`, `677bc7dcf` (one fix, three commits).
+- Fork fix: commit 35.
 
 ### U4. Stale or blank `ListView` rows after keyed changes
 
@@ -67,7 +68,7 @@ tree.
 
 - Confidence: observed in Okojo (rows kept stale "Message" text). Not reproduced on current
   upstream, which changed keyed moves in #5114.
-- Fork fix: `660a63bec`, `7804302d7`, `02f414d18`. `7804302d7` has no regression test.
+- Fork fix: commits 40 and 44.
 
 ### U5. `NavigationView` reports "nothing selected" late after a deselect
 
@@ -77,14 +78,14 @@ ended. The echo reaches the application as a user event, 0.3 to 1 s after the pi
 caused a full render per folder pick.
 
 - Confidence: observed in Okojo; the code that suppresses own writes is unchanged upstream.
-- Fork fix: `dcfb63c07`. It expects one late event after a reactor deselect and swallows it.
+- Fork fix: commit 36. It expects one late event after a reactor deselect and swallows it.
 
 ### U6. WinUI access violation in `ScrollIntoView` after keyed `ListView` changes
 
 `ScrollIntoView` after some keyed item changes can crash `Microsoft.UI.Xaml.dll`, with text-only
-items and with none of the fork's changes. The repro in the body of `660a63bec` is four item
-lists and the index to scroll to, in a 300 px `ListView` with `item_min_height` 0. Okojo's notes
-say it also reproduces on upstream master.
+items and with none of the fork's changes. The repro in the body of commit 40 is four item lists
+and the index to scroll to, in a 300 px `ListView` with `item_min_height` 0. Okojo's notes say it
+also reproduces on upstream master.
 
 - Confidence: observed in Okojo; the repro has not been run for these pages.
 - Action: reduce it to a standalone sample and report it to the WinUI team and to Reactor.
@@ -100,16 +101,16 @@ access violation, in hosted `ContentDialog` teardown. A related symptom, a dialo
 after its owner closed (#212), was an Okojo bug.
 
 - Confidence: observed in Okojo; the cause is not isolated.
-- Fork work: `12871a8f1` and `039255210` hide a released dialog, but by `039255210`'s own
-  message the reconciler already hides it first, and neither message ties the change to #211.
-  Treat #211 as open.
+- Fork work: the original stack had two commits that hide a released dialog. By the second one's
+  own message the reconciler already hides it first, and neither ties the change to #211, so both
+  were dropped from the rebuilt stack. Treat #211 as open.
 
 ### U8. A drop can hang when the drag source is the application's own modal loop
 
 `IDropTarget::Drop` waits while XAML runs the drop handler. A drop that completes a deferral
 from a UI callback cannot finish when the source is the application's own `DoDragDrop`, because
 that loop is blocking the thread the callback needs. The fork fixed this for the new
-`DragKind::Other` drop by queuing the event without a deferral (`01b9d70a6`).
+`DragKind::Other` drop by queuing the event without a deferral (commit 38).
 
 - Confidence: suspected for the existing file and text drops. They read a payload and so need a
   deferral. An in-process drag of text or files onto a Reactor target would hit the same wait.
@@ -152,100 +153,155 @@ problem for `ListView` and is the largest design question in the stack.
 
 ## B. Problems in the fork
 
+The fork had eleven problems. All are closed. Each entry says what was wrong and what closed it.
+
 ### F1. The stack no longer rebases cleanly
 
-Upstream `master` is 32 commits ahead of the fork's base, 22 of them in `windows-reactor`,
-`windows-window` or `windows-bindgen`. They include #5108 (directory module layout), #5110
-(lazy event subscription), #5114 (keyed reorder moves), #5079 (menus), #5093 (property
-ownership) and #5071 (window observers). A trial rebase stopped on hand-written conflicts in 36
-of 58 commits, with every generated file resolved to upstream's side. The fork must be rebuilt
-by stages and regenerated, not mechanically rebased. Lazy event subscription (#5110) changes how
-native events are subscribed, so each event this fork adds needs re-checking against it.
+Upstream `master` was 32 commits ahead of the fork's base, 22 of them in `windows-reactor`,
+`windows-window` or `windows-bindgen`, including #5108 (directory module layout), #5110 (lazy
+event subscription), #5114 (keyed reorder moves), #5079 (menus), #5093 (property ownership) and
+#5071 (window observers). A trial rebase stopped on hand-written conflicts in 36 of 58 commits.
 
-### F2. Some patches duplicate upstream
+Closed: the stack was rebuilt on `ffe56ded6` as `okojo-rebased`, one proposal at a time and in
+dependency order, resolving conflicts by hand and regenerating every generated file rather than
+merging it. Each of the 45 commits passed the generator check, the `windows-reactor` tests, a
+compile of every crate that depends on Reactor, clippy and the public API snapshot before the next
+was started. Rebuilding exposed an ordering dependency that a mechanical rebase would have missed:
+the bindgen fix (commit 23) must precede the first `ListView` naming commit, or the regenerated
+bindings fail `-D warnings`.
 
-Commits 14, 16, 3, 23 and 24 are on upstream under other changes, and part of 7 is. Carrying
-them risks a double implementation. Drop them and keep upstream's behaviour.
+### F2. Some patches duplicated upstream
+
+Commits 3, 14, 16, 23 and 24 of the original stack are on upstream under other changes, and part
+of commit 7 is.
+
+Closed: all dropped, and the `FontIcon` half of commit 7 removed (it is commit 15, `SymbolIcon`
+only). Upstream's behaviour is used.
 
 ### F3. Accelerator modifiers cannot express Control+Shift
 
-Upstream #5087 item 14 asks for "combined modifiers, including Control+Shift". The fork's
-`AcceleratorModifiers` offers `Control`, `Menu`, `ControlMenu` and `MenuShift` only. Adding one
-variant per combination does not scale. The draft's second option, taking the existing
-`VirtualKey` and `InputModifiers` (with a `BitOr`), covers every combination and matches key
-events. Use it.
+#5087 item 14 asks for combined modifiers "including Control+Shift". The original
+`AcceleratorModifiers` offered `Control`, `Menu`, `ControlMenu` and `MenuShift`.
+
+Closed: commit 12. `AcceleratorModifiers` is back to upstream's `None` and `Control`; both
+`KeyAccelerator::new` and the mapping to `VirtualKeyModifiers` take `InputModifiers`, which gains
+`BitOr`. A unit test maps every combination, including Control+Shift and all four modifiers
+together. Existing calls compile unchanged because `AcceleratorModifiers` converts into
+`InputModifiers`.
 
 ### F4. Public types are not `non_exhaustive`
 
-`AcceleratorKey`, `AcceleratorModifiers`, `MenuItem`, `PointerEventInfo`, `DragDropPolicy`,
-`DragKind` and `DroppedData` are exhaustive, so every variant or field the fork adds can break
-downstream code. Upstream already marks `ContentDialogResult` `#[non_exhaustive]`. This is a
-property of the library; the fork's additions make it visible. Propose the attribute once, before
-the feature proposals that add variants and fields.
+`AcceleratorKey`, `MenuItem`, `PointerEventInfo`, `DragDropPolicy`, `DragKind`, `DroppedData` and
+`ThemeBrush` are exhaustive, so every variant or field the fork adds can break downstream code.
+
+Closed: commit 1 marks them `#[non_exhaustive]` (and the `Item` and `Submenu` variants of
+`MenuItem`) before any commit adds to them. The drag-drop sample and the live self-test were
+adjusted. The attribute is itself a breaking change; [patches.md](patches.md#public-api-impact)
+states it, and each proposal should too.
 
 ### F5. Resource keys are inserted into XAML unescaped
 
-`ThemeBrush::Resource(&'static str)` and the colour swatch write the key into a XAML string as
-`{ThemeResource <key>}`. A key containing `'`, `<` or `&` fails at XAML load time, and an empty
-key cannot be rejected. Upstream's existing eight brushes use fixed keys, so they never hit
-this. Escape or validate the key before proposing commits 10, 11, 12 and 27. Not checked: that
-such a key fails as described.
+The earlier version of this page, taken from the draft issue text, said a key containing `'`, `<`
+or `&` would fail at XAML load time. That was wrong about the code. `ThemeBrush::Resource` and
+`register_theme_colors` validate the key (ASCII letters, digits, `_` and `.` only) and panic on
+anything else, with tests for empty and malformed keys, so a bad key never reaches XAML.
+
+Closed as not a defect. The draft text for the theming proposal should say the keys are
+validated, and that a panic on a bad key matches how `WindowPolicy` rejects bad sizes.
 
 ### F6. `TitleBar` icon theme is unverified
 
-The `TitleBar` takes an `IconSource`, which is not in the visual tree. A theme brush on it is
-resolved when the icon is applied and may not follow later theme changes. The fork documents the
-limit; no one has run it. Commit 19 should either verify this or state it plainly.
+The `TitleBar` takes an `IconSource`, which is not in the visual tree, so a theme brush on it is
+resolved when the icon is applied and may not follow later theme changes.
 
-### F7. History is not shaped for review
+Closed: the limit is stated plainly in the public rustdoc of `Icon::foreground` and in the comment
+on `icon_source`, as the original asked ("verify or state it plainly"). It has not been verified
+in a running window; that stays in [Part D](#d-verification-debt).
 
-Seven commits are fixups of earlier ones and two are on hold (see [patches.md](patches.md)).
-Upstream's maintainer authors almost every Reactor change as one self-contained pull request that
-cites an issue. Squash the fixups into their parents and split the bundled generator fixes out
-(Part C) before proposing.
+### F7. History was not shaped for review
 
-### F8. `DragDropPolicy::other` does not do what it was added for
+Seven commits were fixups of earlier ones, two were on hold, and generator fixes were bundled
+inside feature commits.
 
-`07d4d2ec3` added `other` so Okojo's message drag could drop on folder rows. It never matched
-there: XAML presents virtual `.eml` files as storage items. `86c99deab` added `format` instead,
-which Okojo uses. `other` still matches any foreign drag that has no files and no text, so a
-drag from another application is accepted too, and it carries no payload to inspect. Propose
-`format` and `hide_image`, and leave `other` out unless a second use appears.
+Closed: ten fixups were merged into their parents, two held commits dropped, and the three
+generator fixes became their own output-neutral commits (2, 3, 4). See the map in
+[patches.md](patches.md#what-happened-to-the-original-58).
+
+### F8. `DragDropPolicy::other` did not do what it was added for
+
+`other` was added so Okojo's message drag could drop on folder rows. It never matched there: XAML
+presents virtual `.eml` files as storage items. `format` was added instead and Okojo uses it.
+`other` still matched any foreign drag with no files and no text, with no payload to inspect.
+
+Closed: `other` is removed from commit 38. The `DragKind::Other` and `DroppedData::Other` values
+remain, reached only through `format`. A unit test pins that `Other` data is not accepted without
+a format. Okojo does not call `other`.
 
 ### F9. `skip_render` changes when side effects run
 
-`ComponentContext::skip_render()` skips `view` and the reconcile for a message. State changed in
-a skipped update shows on the next render, and the effects and window publication declared from
-it run then. That is a new rule for component authors, and an update that forgets state it
-changed leaves the screen stale until some later message. Raise it as a design question with a
-measured benefit before a pull request.
+`ComponentContext::skip_render()` skips `view` and the reconcile for a message. State changed in a
+skipped update shows on the next render, and the effects and window publication declared from it
+run then.
+
+Closed: commit 39 now documents the hazard in the rustdoc ("call it only when the message changed
+nothing that `view`, an effect or the window publication reads; a skipped update that did change
+such state leaves the screen out of date until some later message renders"), and two unit tests
+pin the behaviour. Whether upstream wants the API at all stays a design question for the
+maintainer.
 
 ### F10. Commits carry an AI co-author trailer
 
-57 of 58 commits end with `Co-Authored-By: Claude ...` (53 Opus 5.5, 4 Sonnet 5.5). Upstream ships
-`.github/copilot-instructions.md`, so assisted work is expected there, and that file also says the
-maintainer reviews and commits changes. Say in each issue that the patch was written with
-assistance, and follow that file's writing rules.
+57 of 58 original commits ended with `Co-Authored-By: Claude ...`. Upstream ships
+`.github/copilot-instructions.md`, so assisted work is expected there, and that file says the
+maintainer reviews and commits changes.
+
+Closed by policy. All 45 commits on `okojo-rebased` carry `Co-Authored-By: Claude Sonnet 5.5`, the
+model that rebuilt them, and 37 also carry `Claude Opus 5.5`, the model that wrote the original.
+The trailers describe how the work was made and stay. Original authors and dates were preserved.
+Each upstream issue or pull request should say the patch was written with assistance, and follow
+that file's writing rules. [upstreaming.md](upstreaming.md#how-to-post-one) says so.
 
 ### F11. Redundant branches
 
-`okojo-local` is a reordered copy of part of the stack and shares no history past `a568d350d`.
-Ten per-feature branches are ancestors of `okojo-fast-list`. Keep only the ones used as pull
-request heads. See the table in [readme.md](readme.md#branches).
+`okojo-local` was a reordered copy of part of the stack, and ten per-feature branches were
+ancestors of `okojo-fast-list`.
+
+Closed on 2026-10-17: after checking that each was an ancestor of `okojo-fast-list` (and that
+`okojo-local` is identical to the local `okojo` branch), these twelve were deleted from `origin`.
+Any can be restored with `git push origin <sha>:refs/heads/<name>`.
+
+| Branch | Tip |
+| --- | --- |
+| `okojo-accel-letters` | `7804302d7` |
+| `okojo-dialog-retire` | `12871a8f1` |
+| `okojo-drag-format` | `01b9d70a6` |
+| `okojo-drag-image` | `acfde14fc` |
+| `okojo-drop-other` | `07d4d2ec3` |
+| `okojo-listview-item-click` | `abf0a135c` |
+| `okojo-live-setting` | `a4b5992a9` |
+| `okojo-local` | `37f87d6fa` |
+| `okojo-nav-item-invoked` | `c594a87fe` |
+| `okojo-nav-scroll` | `1f9242fe3` |
+| `okojo-open-inactive` | `2a7f1e258` |
+| `okojo-review-fixes` | `981798f05` |
+
+`okojo`, `okojo-fast-list` and `okojo-infobar-action` stay because Okojo pins SHAs reachable
+through them; they can go once Okojo vendors `okojo-rebased`.
 
 ## C. Generator bugs found
 
-`tool-reactor` fixes that ride inside feature commits. Each is a defect in the generator, and the
-first two are still present on upstream.
+`tool-reactor` fixes that rode inside feature commits. Each is a defect in the generator and now
+has its own output-neutral commit on `okojo-rebased`. The first two are still present on upstream.
 
 | Bug | Symptom | Fork commit | Present on upstream |
 | --- | --- | --- | --- |
-| Attached enum properties are probed with a hard-coded `::None` variant | Fails to compile for any enum without a `None` variant, such as `AutomationLiveSetting` | `a4b5992a9` | Yes: the string is still in `main.rs` |
-| Event args are assumed to expose the payload getter on the default interface | `InvokedItemContainer` lives on the args class's second interface; the generated call does not compile | `c594a87fe` | Yes: no secondary-interface lookup |
-| `?` emitted in `set_content` for a single-child relation with a `native_item` cast | Does not compile in a function returning `Option` | `7e9aea584` | Not re-checked |
+| Attached enum properties are probed with a hard-coded `::None` variant | Fails to compile for any enum without a `None` variant, such as `AutomationLiveSetting` | 2 | Yes: the string is still in `main.rs` |
+| Event args are assumed to expose the payload getter on the default interface | `InvokedItemContainer` lives on the args class's second interface; the generated call does not compile | 3 | Yes: no secondary-interface lookup |
+| `?` emitted in `set_content` for a single-child relation with a `native_item` cast | Does not compile in a function returning `Option` | 4 | Not re-checked |
 
 Each should be a pull request on its own, with a test in the generator, since it unblocks
-properties and events the schema cannot express today.
+properties and events the schema cannot express today. The generator crate has no unit tests; the
+commits rely on regeneration producing no diff.
 
 ## D. Verification debt
 
@@ -253,12 +309,13 @@ What the claims in this directory rest on, and what is missing:
 
 | Gap | Detail |
 | --- | --- |
-| Unit and generated tests only | Every behaviour was checked headless in the commit. Native paths such as the live `SetContextFlyout`, restoring a `TextBox`'s own flyout, scoped accelerators, and the `TitleBar` icon have no live test |
-| Okojo's in-app check is old | It ran on 2026-10-10 against `660a63bec`. Commits 31 to 58 (about half) were not part of it |
-| Several bugs were never seen unfixed | The `MenuBarItem` duplication ("four entries instead of two"), the capture-lost ordering and the upward menu are inferred from code. Okojo confirmed only the fixed behaviour |
-| Not run on current upstream | No patch was applied to or tested against `ffe56ded6`. The status in [patches.md](patches.md) comes from reading upstream source and issues |
-| Live tests not run for these pages | The generator check and the headless unit tests were run on `dcfb63c07` (see [readme.md](readme.md#build-and-test)); no window was opened |
-| No regression test | `7804302d7` (recycled containers), `01b9d70a6` (drop without deferral) |
+| Unit and generated tests only | Every behaviour was checked headless in its commit. Native paths such as the live `SetContextFlyout`, restoring a `TextBox`'s own flyout, scoped accelerators, and the `TitleBar` icon have no run in a real window |
+| Live tests not run on the rebuilt stack | The live self-test and integration binaries open windows and need a desktop. They were not run, and nothing was run in the Okojo application |
+| Okojo's in-app check is old | It ran on 2026-10-10 against the original `660a63bec`. About half of the stack's commits came after it |
+| Several bugs were never seen unfixed | The upward menu and the capture-lost ordering are inferred from code. Okojo confirmed only the fixed behaviour |
+| Not run on current upstream | The patches were rebuilt on `ffe56ded6` and pass its headless gates, but no behaviour was observed there |
+| No regression test for recycled containers | Commit 40's container handling is native behaviour a headless test cannot reach; its live case is unrun |
+| Okojo not built against the stack | The migration notes in [readme.md](readme.md#moving-okojo-to-the-rebuilt-stack) come from reading Okojo's sources |
 
 Before any proposal: rebase that proposal onto current upstream, run the headless gates, run the
 live self-test for the touched control on a desktop, and say in the issue what was and was not
