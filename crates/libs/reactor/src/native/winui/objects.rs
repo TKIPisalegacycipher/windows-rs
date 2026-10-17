@@ -216,6 +216,8 @@ impl WinUiAdapter {
                     let container_min_height = Rc::clone(&item_min_height);
                     let data_items = Rc::clone(&self.data_items);
                     let container_resources = Rc::clone(&self.container_resources);
+                    let deferred_content = Rc::clone(&self.deferred_content);
+                    let content_queue = Rc::clone(&self.event_queue);
                     // The container each item was last prepared in, by item identity.
                     let hosts = RefCell::new(HashMap::<usize, native::DependencyObject>::new());
                     let _container_content_changing = value
@@ -258,7 +260,18 @@ impl WinUiAdapter {
                                 set_list_container_min_height(
                                     &container,
                                     container_min_height.get(),
-                                )
+                                )?;
+                                // The item's content waits for a container: ask for it now.
+                                // Until it is mounted the container shows the item's text, and
+                                // the binding hands it the content once the item's map holds it.
+                                let waiting = data_items.borrow().get(&id).copied().filter(
+                                    |object| deferred_content.borrow_mut().remove(object),
+                                );
+                                if let Some(item) = waiting {
+                                    content_queue
+                                        .queue_realization(RealizationRequest::Content { item });
+                                }
+                                Ok(())
                             });
                             if let Err(error) = result {
                                 report_error(error);
@@ -740,6 +753,7 @@ impl WinUiAdapter {
             }
             Handle::Data(value) => {
                 self.data_items.borrow_mut().remove(&com_identity(&value)?);
+                self.deferred_content.borrow_mut().remove(&object);
                 self.container_resources.borrow_mut().items.remove(&object);
             }
             Handle::Generated(GeneratedHandle::ContentDialog(dialog)) => {

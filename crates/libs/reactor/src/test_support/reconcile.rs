@@ -105,6 +105,7 @@ impl NativeEvent {
                         RealizationRequest::Realize { collection, .. }
                         | RealizationRequest::Recycle { collection, .. }
                         | RealizationRequest::Cancel { collection, .. } => collection,
+                        RealizationRequest::Content { item } => item,
                     })
                 })
         })
@@ -370,6 +371,9 @@ impl<A: Adapter> Runtime<A> {
                 }) => {
                     self.cancel_virtual(collection, relation, container)?;
                 }
+                NativeWork::Virtual(VirtualWork::Content { item }) => {
+                    self.realize_content(item)?;
+                }
                 NativeWork::Maintenance => {}
             }
         }
@@ -406,7 +410,7 @@ impl<A: Adapter> Runtime<A> {
                 RetainedRelationValue::Many(children) => {
                     children.iter().position(|current| *current == child)
                 }
-                RetainedRelationValue::One(_) => None,
+                RetainedRelationValue::One(_) | RetainedRelationValue::Deferred(_) => None,
             })
             .ok_or(UpdateError::Graph(GraphError::MissingChild(
                 relation, child,

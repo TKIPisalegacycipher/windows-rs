@@ -153,6 +153,14 @@ pub enum Mutation {
         removed: Vec<ObjectId>,
         children: Vec<ObjectId>,
     },
+    /// A `DataItem`'s content waits for its container (`deferred`), or no longer does because
+    /// the item has no content now. The adapter asks for waiting content with
+    /// `RealizationRequest::Content` when it prepares a container for the item; an `Attach` of
+    /// the content ends the wait as well.
+    DeferContent {
+        item: ObjectId,
+        deferred: bool,
+    },
     Retire {
         root: ObjectId,
         nodes: Vec<ObjectId>,
@@ -224,6 +232,9 @@ pub enum RealizationRequest {
         container: RealizedContainer,
         source_revision: u64,
     },
+    /// A ListView prepared a container for `item`, a `DataItem` whose content waits for one
+    /// (`Mutation::DeferContent`).
+    Content { item: ObjectId },
 }
 
 #[derive(Clone)]
@@ -241,6 +252,10 @@ pub(crate) enum VirtualWork {
         collection: ObjectId,
         relation: RelationId,
         container: RealizedContainer,
+    },
+    /// Mounts the waiting content of `item` (`Runtime::realize_content`).
+    Content {
+        item: ObjectId,
     },
 }
 
@@ -544,6 +559,9 @@ impl Drop for NativeEventDispatch {
 enum RetainedRelationValue {
     One(Option<ObjectId>),
     Many(Vec<ObjectId>),
+    /// A `DataItem`'s declared content, not mounted until the ListView realizes a container for
+    /// the item (`RealizationRequest::Content`). Only content that `mounts_alone` waits.
+    Deferred(Rc<DeclaredNode>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -611,6 +629,52 @@ struct RetainedRealization {
     revision: u64,
     index: usize,
     child: Option<ObjectId>,
+}
+
+/// Whether `content`, declared for `relation` of a `kind` object, waits to be mounted until a
+/// container is realized for the object: a `DataItem`'s content does (a ListView would otherwise
+/// build every item's elements up front, while it presents only the items in view), unless it
+/// cannot wait (`mounts_alone`).
+fn defers_content(kind: ObjectType, relation: RelationId, content: &DeclaredNode) -> bool {
+    kind == ObjectType::DataItem
+        && relation == RelationId::Content
+        && matches!(content, DeclaredNode::Object(content) if mounts_alone(content))
+}
+
+/// Whether `declaration` can be mounted at any later time on its own: nothing in it is a
+/// component's root, whose scope needs its object at once, an element reference, which callers
+/// expect to resolve after the update, or a virtual or window-level item.
+fn mounts_alone(declaration: &Declaration) -> bool {
+    let node =
+        |node: &DeclaredNode| matches!(node, DeclaredNode::Object(node) if mounts_alone(node));
+    declaration.component.is_none()
+        && declaration.reference.is_none()
+        && declaration.virtual_items.is_none()
+        && declaration.window_title_bar.is_none()
+        && declaration
+            .attachments
+            .as_deref()
+            .is_none_or(|attachments| {
+                attachments
+                    .tooltip
+                    .as_ref()
+                    .is_none_or(|tooltip| node(&tooltip.content))
+                    && attachments
+                        .flyout
+                        .as_ref()
+                        .is_none_or(|flyout| node(&flyout.content))
+                    && attachments
+                        .content_dialog
+                        .as_ref()
+                        .is_none_or(|dialog| mounts_alone(&dialog.declaration))
+            })
+        && declaration
+            .relations
+            .iter()
+            .all(|relation| match &relation.value {
+                RelationValue::One(child) => child.as_deref().is_none_or(node),
+                RelationValue::Many(children) => children.iter().all(node),
+            })
 }
 
 fn virtual_relation(kind: ObjectType) -> Option<RelationId> {
@@ -818,6 +882,7 @@ impl RetainedGraph {
                 let contains = match &relation.value {
                     RetainedRelationValue::One(current) => *current == Some(child),
                     RetainedRelationValue::Many(children) => children.contains(&child),
+                    RetainedRelationValue::Deferred(_) => false,
                 };
                 if contains {
                     Some((
@@ -944,7 +1009,7 @@ impl RetainedGraph {
                 .iter()
                 .filter_map(|relation| match &relation.value {
                     RetainedRelationValue::Many(children) => Some(children),
-                    RetainedRelationValue::One(_) => None,
+                    RetainedRelationValue::One(_) | RetainedRelationValue::Deferred(_) => None,
                 })
                 .flatten()
                 .collect::<HashSet<_>>();
@@ -1206,6 +1271,10 @@ impl RetainedGraph {
                         _ => return Ok(false),
                     }
                 }
+                (
+                    RetainedRelationValue::Deferred(previous),
+                    Some(RelationValue::One(Some(next))),
+                ) if Rc::ptr_eq(previous, next) || previous == next => {}
                 (RetainedRelationValue::Many(previous), Some(RelationValue::Many(next))) => {
                     if previous.len() != next.len() {
                         return Ok(false);
@@ -1232,6 +1301,14 @@ impl RetainedGraph {
         request: RealizationRequest,
     ) -> Result<bool, GraphError> {
         let (collection, source_revision, index) = match request {
+            // An item removed since its container was prepared asks for nothing.
+            RealizationRequest::Content { item } => {
+                return match self.get(item) {
+                    None => Ok(false),
+                    Some(object) if object.kind == ObjectType::DataItem => Ok(true),
+                    Some(_) => Err(GraphError::InvalidRealization(item, 0)),
+                };
+            }
             RealizationRequest::Realize {
                 collection,
                 source_revision,
@@ -1347,6 +1424,13 @@ impl RetainedGraph {
                     container,
                 }))
             }
+            // Content mounted already (a container prepared again) or dropped needs nothing.
+            RealizationRequest::Content { item } => Ok(self
+                .relation(item, RelationId::Content)
+                .is_some_and(|relation| {
+                    matches!(relation.value, RetainedRelationValue::Deferred(_))
+                })
+                .then_some(VirtualWork::Content { item })),
         }
     }
 }
@@ -2358,6 +2442,65 @@ impl<A: Adapter> Runtime<A> {
         Ok(self.finish_update())
     }
 
+    /// Mounts the content of `item`, a `DataItem` whose content waited for its container
+    /// (`RetainedRelationValue::Deferred`), and attaches it. Content that no longer waits needs
+    /// nothing.
+    pub(crate) fn realize_content(
+        &mut self,
+        item: ObjectId,
+    ) -> Result<UpdateStats, UpdateError<A::Error>> {
+        self.mutations.clear();
+        let Some(RetainedRelationValue::Deferred(content)) = self
+            .graph
+            .relation(item, RelationId::Content)
+            .map(|relation| relation.value.clone())
+        else {
+            return Ok(self.finish_update());
+        };
+        let poison_references = self.graph.references();
+        let mut transaction = GraphTransaction::new(&mut self.graph);
+        let mut references = Vec::new();
+        let plan = (|| {
+            let mut planner = Planner {
+                retained: &mut transaction,
+                mutations: &mut self.mutations,
+                references: &mut references,
+                virtual_refreshes: None,
+            };
+            let child = planner.mount(content.as_object()?)?;
+            planner.mutations.push(Mutation::Attach {
+                parent: item,
+                relation: RelationId::Content,
+                child,
+            });
+            planner
+                .retained
+                .relation_mut(item, RelationId::Content)
+                .value = RetainedRelationValue::One(Some(child));
+            Ok::<(), GraphError>(())
+        })();
+        if let Err(error) = plan {
+            transaction.rollback();
+            self.mutations.clear();
+            return Err(UpdateError::Graph(error));
+        }
+        self.poisoned = true;
+        if let Err(error) = validate_adapter(&self.adapter, &self.mutations, &poison_references) {
+            transaction.commit();
+            self.poison_and_discard(&poison_references);
+            return Err(UpdateError::Adapter(error));
+        }
+        if let Err(error) = apply_adapter(&mut self.adapter, &self.mutations, &poison_references) {
+            transaction.commit();
+            self.poison_and_discard(&poison_references);
+            return Err(UpdateError::Adapter(error));
+        }
+        transaction.commit();
+        self.poisoned = false;
+        apply_reference_changes(&self.references, references);
+        Ok(self.finish_update())
+    }
+
     pub(crate) fn virtual_lease_active(&self, collection: ObjectId, key: &Key) -> bool {
         self.graph
             .get(collection)
@@ -2481,6 +2624,7 @@ impl<A: Adapter> Runtime<A> {
                     .is_some_and(|owned| match &owned.value {
                         RetainedRelationValue::One(child) => *child == Some(object),
                         RetainedRelationValue::Many(children) => children.contains(&object),
+                        RetainedRelationValue::Deferred(_) => false,
                     });
             if !owns_object {
                 return Err(UpdateError::Graph(GraphError::MissingChild(
@@ -3149,7 +3293,7 @@ impl Planner<'_, '_> {
                         self.retire(child);
                     }
                 }
-                RetainedRelationValue::One(None) => {}
+                RetainedRelationValue::One(None) | RetainedRelationValue::Deferred(_) => {}
             }
         }
         let retained = self.retained.get_mut(object);
@@ -3374,11 +3518,22 @@ impl Planner<'_, '_> {
             .find(|relation| relation.id == contract.id);
         match contract.cardinality {
             Cardinality::One => {
-                let child = relation
-                    .and_then(|relation| match &relation.value {
-                        RelationValue::One(child) => child.as_deref(),
-                        RelationValue::Many(_) => unreachable!(),
-                    })
+                let declared = relation.and_then(|relation| match &relation.value {
+                    RelationValue::One(child) => child.as_ref(),
+                    RelationValue::Many(_) => unreachable!(),
+                });
+                if let Some(content) = declared
+                    && defers_content(declaration.kind, contract.id, content)
+                {
+                    self.mutations.push(Mutation::DeferContent {
+                        item: object,
+                        deferred: true,
+                    });
+                    self.retained.relation_mut(object, contract.id).value =
+                        RetainedRelationValue::Deferred(Rc::clone(content));
+                    return Ok(());
+                }
+                let child = declared
                     .map(|child| child.as_object().and_then(|child| self.mount(child)))
                     .transpose()?;
                 if let Some(child) = child {
@@ -3680,6 +3835,12 @@ impl Planner<'_, '_> {
             .find(|relation| relation.id == contract.id);
         match contract.cardinality {
             Cardinality::One => {
+                if let RetainedRelationValue::Deferred(pending) =
+                    &self.retained.relation(object, contract.id).unwrap().value
+                {
+                    let pending = Rc::clone(pending);
+                    return self.reconcile_deferred(object, declaration, contract.id, &pending);
+                }
                 let RetainedRelationValue::One(previous) =
                     self.retained.relation(object, contract.id).unwrap().value
                 else {
@@ -3739,6 +3900,52 @@ impl Planner<'_, '_> {
                 }
             },
         }
+        Ok(())
+    }
+
+    /// Reconciles a `DataItem`'s content that waits for its container (`pending`): new content
+    /// that can wait only replaces the stored declaration; content that cannot (`mounts_alone`)
+    /// is mounted now, and no content ends the wait.
+    fn reconcile_deferred(
+        &mut self,
+        object: ObjectId,
+        declaration: &Declaration,
+        relation: RelationId,
+        pending: &Rc<DeclaredNode>,
+    ) -> Result<(), GraphError> {
+        let declared = declaration
+            .relations
+            .iter()
+            .find(|current| current.id == relation)
+            .and_then(|current| match &current.value {
+                RelationValue::One(child) => child.as_ref(),
+                RelationValue::Many(_) => unreachable!(),
+            });
+        let next = match declared {
+            Some(content) if defers_content(declaration.kind, relation, content) => {
+                if Rc::ptr_eq(pending, content) {
+                    return Ok(());
+                }
+                RetainedRelationValue::Deferred(Rc::clone(content))
+            }
+            Some(content) => {
+                let child = self.mount(content.as_object()?)?;
+                self.mutations.push(Mutation::Attach {
+                    parent: object,
+                    relation,
+                    child,
+                });
+                RetainedRelationValue::One(Some(child))
+            }
+            None => {
+                self.mutations.push(Mutation::DeferContent {
+                    item: object,
+                    deferred: false,
+                });
+                RetainedRelationValue::One(None)
+            }
+        };
+        self.retained.relation_mut(object, relation).value = next;
         Ok(())
     }
 
@@ -4325,7 +4532,7 @@ impl Planner<'_, '_> {
                         }
                     }
                 }
-                RetainedRelationValue::One(None) => {}
+                RetainedRelationValue::One(None) | RetainedRelationValue::Deferred(_) => {}
             }
         }
         self.mutations.push(Mutation::Destroy { object });
@@ -4400,7 +4607,7 @@ impl Planner<'_, '_> {
                         self.collect_subtree_postorder(*child, nodes);
                     }
                 }
-                RetainedRelationValue::One(None) => {}
+                RetainedRelationValue::One(None) | RetainedRelationValue::Deferred(_) => {}
             }
         }
         nodes.push(object);

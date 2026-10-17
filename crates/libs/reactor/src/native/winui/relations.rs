@@ -43,6 +43,7 @@ impl WinUiAdapter {
         }
         let child_element = self.ui_element(child)?;
         let data_content_key = self.data_content_key.clone();
+        let parent_id = parent;
         match (self.handle(parent)?, relation) {
             (Handle::Generated(value), relation) => {
                 value
@@ -61,6 +62,7 @@ impl WinUiAdapter {
                     parent.cast::<IMap<HSTRING, IInspectable>>()?;
                 let content: IInspectable = child_element.cast()?;
                 properties.Insert(&data_content_key, &content)?;
+                self.deferred_content.borrow_mut().remove(&parent_id);
             }
             _ => return Err(WinUiError::InvalidRelation(parent, relation)),
         }
@@ -948,6 +950,23 @@ impl WinUiAdapter {
         }
         let item = value.cast::<IInspectable>()?;
         self.rename_list_container(object, &item, &text_key)
+    }
+
+    /// Records that a `DataItem`'s content waits for a container (`Mutation::DeferContent`), or
+    /// no longer does. A waiting item shows its text, as one without content does: the text gives
+    /// the row a height, so the list realizes about the containers that fill its view, not all of
+    /// them as it would for rows of no height.
+    fn defer_content(&mut self, item: ObjectId, deferred: bool) -> Result<(), WinUiError> {
+        let Handle::Data(_) = self.handle(item)? else {
+            return Err(WinUiError::InvalidObject(item));
+        };
+        let mut waiting = self.deferred_content.borrow_mut();
+        if deferred {
+            waiting.insert(item);
+        } else {
+            waiting.remove(&item);
+        }
+        Ok(())
     }
 
     fn set_data_automation_id(&mut self, object: ObjectId, id: &str) -> Result<(), WinUiError> {

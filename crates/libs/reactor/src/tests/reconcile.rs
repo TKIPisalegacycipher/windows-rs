@@ -809,6 +809,7 @@ fn list_view_replace_keeps_the_objects_and_content_of_kept_keys() {
         .children(list, RelationId::Items)
         .unwrap()
         .to_vec();
+    realize_item_content(&mut runtime, &[before[5], before[30]]);
     let kept_content = [5, 30].map(|index| {
         runtime
             .graph()
@@ -853,6 +854,192 @@ fn list_view_replace_keeps_the_objects_and_content_of_kept_keys() {
         .unwrap();
     assert_eq!(removed.len(), 38);
     assert!(!removed.contains(&before[5]) && !removed.contains(&before[30]));
+    // The new items' content waits for their containers.
+    assert!(!mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::Create {
+            kind: ObjectType::TextBlock,
+            ..
+        }
+    )));
+}
+
+/// Mounts the content of `items`, as a ListView asks when it prepares their containers.
+fn realize_item_content(runtime: &mut Runtime<RecordingAdapter>, items: &[ObjectId]) {
+    for item in items {
+        runtime.queue_realization(RealizationRequest::Content { item: *item });
+    }
+    runtime.dispatch_native_events().unwrap();
+}
+
+fn list_items(runtime: &Runtime<RecordingAdapter>) -> Vec<ObjectId> {
+    let list = runtime.graph().root().unwrap();
+    runtime
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec()
+}
+
+#[test]
+fn list_view_mounts_item_content_only_when_its_container_is_realized() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(keyed_list(&list_keys("m", 0..500), Some(0)))
+        .unwrap();
+    let items = list_items(&runtime);
+
+    // The list and its 500 items, but none of the items' content.
+    assert_eq!(runtime.adapter().object_count(), 501);
+    assert!(!mutations.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::Create {
+            kind: ObjectType::TextBlock,
+            ..
+        }
+    )));
+    assert_eq!(
+        mutations
+            .iter()
+            .filter(|mutation| matches!(mutation, Mutation::DeferContent { deferred: true, .. }))
+            .count(),
+        500
+    );
+    assert!(
+        items
+            .iter()
+            .all(|item| runtime.graph().child(*item, RelationId::Content).is_none())
+    );
+
+    realize_item_content(&mut runtime, &items[..3]);
+
+    assert_eq!(runtime.adapter().object_count(), 504);
+    for (index, item) in items.iter().enumerate() {
+        assert_eq!(
+            runtime.graph().child(*item, RelationId::Content).is_some(),
+            index < 3,
+            "item {index}"
+        );
+    }
+    // An unchanged list stays unchanged, realized or not.
+    assert!(
+        runtime
+            .update(keyed_list(&list_keys("m", 0..500), Some(0)))
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[test]
+fn list_view_item_content_changes_in_place_once_realized_and_is_only_stored_before() {
+    let item = |key: &str, text: &str| DataItem::new(key, key).content(TextBlock::new().text(text));
+    let list = |text: &str| ListView::new().items([item("a", text), item("b", text)]);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(list("one")).unwrap();
+    let items = list_items(&runtime);
+    realize_item_content(&mut runtime, &items[..1]);
+    let content = runtime
+        .graph()
+        .child(items[0], RelationId::Content)
+        .unwrap();
+
+    let mutations = runtime.update(list("two")).unwrap();
+
+    // The realized item's text block changes; the other item only keeps the new declaration.
+    assert_eq!(mutations.len(), 1);
+    assert!(matches!(
+        mutations.iter().next(),
+        Some(Mutation::SetProperties { object, .. }) if *object == content
+    ));
+    assert_eq!(
+        runtime.graph().child(items[0], RelationId::Content),
+        Some(content)
+    );
+    assert_eq!(runtime.graph().child(items[1], RelationId::Content), None);
+
+    runtime.record_batches(true);
+    realize_item_content(&mut runtime, &items[1..]);
+    let batch = runtime.adapter().batches().last().unwrap();
+    assert!(batch.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::SetProperties { set, .. }
+            if set.iter().any(|property| property.value == PropertyValue::String(Rc::from("two")))
+    )));
+    assert!(batch.iter().any(|mutation| matches!(
+        mutation,
+        Mutation::Attach { parent, relation: RelationId::Content, .. } if *parent == items[1]
+    )));
+}
+
+#[test]
+fn list_view_ignores_content_requests_for_realized_or_removed_items() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(keyed_list(&list_keys("m", 0..3), None))
+        .unwrap();
+    let items = list_items(&runtime);
+    realize_item_content(&mut runtime, &items[..1]);
+    let content = runtime.graph().child(items[0], RelationId::Content);
+    assert_eq!(runtime.adapter().object_count(), 5);
+
+    // Prepared again, as a recycled container is.
+    realize_item_content(&mut runtime, &items[..1]);
+    assert_eq!(runtime.adapter().object_count(), 5);
+    assert_eq!(
+        runtime.graph().child(items[0], RelationId::Content),
+        content
+    );
+
+    // Removing items whose content was never mounted detaches nothing.
+    let mutations = runtime
+        .update(keyed_list(&list_keys("m", 0..1), None))
+        .unwrap();
+    assert!(
+        !mutations
+            .iter()
+            .any(|mutation| matches!(mutation, Mutation::Detach { .. }))
+    );
+    assert_eq!(runtime.adapter().object_count(), 3);
+    realize_item_content(&mut runtime, &items[1..]);
+    assert_eq!(runtime.adapter().object_count(), 3);
+}
+
+#[test]
+fn list_view_item_content_dropped_before_realization_restores_the_item_text() {
+    let with = || ListView::new().items([DataItem::new("a", "a").content(text("a"))]);
+    let without = || ListView::new().items([DataItem::new("a", "a")]);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(with()).unwrap();
+    let item = list_items(&runtime)[0];
+
+    let mutations = runtime.update(without()).unwrap();
+    assert_eq!(
+        mutations.as_slice(),
+        [Mutation::DeferContent {
+            item,
+            deferred: false
+        }]
+    );
+
+    // Content added to a mounted item is mounted at once: its container may be showing it.
+    runtime.update(with()).unwrap();
+    assert!(runtime.graph().child(item, RelationId::Content).is_some());
+}
+
+#[test]
+fn list_view_mounts_item_content_holding_references_at_once() {
+    let reference: ElementRef = ElementRef::default();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            ListView::new()
+                .items([DataItem::new("a", "a").content(Button::new().element_ref(&reference))]),
+        )
+        .unwrap();
+    let item = list_items(&runtime)[0];
+    let content = runtime.graph().child(item, RelationId::Content);
+    assert!(content.is_some());
+    assert_eq!(reference.get(), content);
 }
 
 #[test]
