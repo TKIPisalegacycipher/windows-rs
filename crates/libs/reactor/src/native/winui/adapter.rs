@@ -153,6 +153,12 @@ impl WinUiAdapter {
                     moves,
                     children,
                 } => self.reorder(*parent, *relation, moves, children)?,
+                Mutation::ReplaceItems {
+                    parent,
+                    relation,
+                    removed,
+                    children,
+                } => self.replace_items(*parent, *relation, removed, children)?,
                 Mutation::Retire {
                     root,
                     nodes,

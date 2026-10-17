@@ -28,6 +28,15 @@ impl ObjectId {
     }
 }
 
+/// A keyed change to a container relation (a ListView's items) is applied as one
+/// `Mutation::ReplaceItems` when its removes plus inserts exceed both this and half the longer
+/// of the old and new lists. Each native `Remove` or `Insert` costs a collection change, a
+/// container lookup and layout work, while one `ReplaceAll` costs a single reset; past half the
+/// list, most items change anyway, so the reset is cheaper and loses nothing. The floor keeps
+/// short lists, and small edits to any list, on single mutations, which keep the realized
+/// containers and scroll position of the items that stay.
+const REPLACE_ITEMS_MIN_CHANGES: usize = 16;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Move {
     pub child: ObjectId,
@@ -133,6 +142,15 @@ pub enum Mutation {
         parent: ObjectId,
         relation: RelationId,
         moves: Vec<Move>,
+        children: Vec<ObjectId>,
+    },
+    /// Replaces all of a container relation's items with `children` at once: the items in
+    /// `removed` leave, those of `children` it does not hold yet join, and the others stay the
+    /// same objects (with their content) in their new places.
+    ReplaceItems {
+        parent: ObjectId,
+        relation: RelationId,
+        removed: Vec<ObjectId>,
         children: Vec<ObjectId>,
     },
     Retire {
@@ -3571,6 +3589,7 @@ impl Planner<'_, '_> {
                 Mutation::Insert { parent, .. }
                     | Mutation::Remove { parent, .. }
                     | Mutation::Reorder { parent, .. }
+                    | Mutation::ReplaceItems { parent, .. }
                     if *parent == object
             )
         });
@@ -3910,6 +3929,9 @@ impl Planner<'_, '_> {
             matched.push((previous, desired));
         }
         removed.extend(by_key.into_values());
+        if self.replaces_items(object, relation_id, previous.len(), &matched, &removed) {
+            return self.replace_keyed_items(object, relation_id, matched, removed);
+        }
         removed.sort_unstable_by_key(|(_, index)| std::cmp::Reverse(*index));
         let mut current = previous.clone();
         for (child, index) in removed {
@@ -4014,6 +4036,70 @@ impl Planner<'_, '_> {
                 cursor = predecessors[sequence_index];
             }
             positions
+        }
+        Ok(())
+    }
+
+    /// Whether a keyed change to a container relation (a ListView's items) is applied as one
+    /// `Mutation::ReplaceItems` rather than a `Remove` per dropped key and an `Insert` per new one:
+    /// when it changes more keys than `REPLACE_ITEMS_MIN_CHANGES` and half the longer of the old
+    /// and new lists, and no dropped item has an exit transition.
+    fn replaces_items(
+        &self,
+        object: ObjectId,
+        relation_id: RelationId,
+        previous_len: usize,
+        matched: &[(Option<ObjectId>, &Declaration)],
+        removed: &[(ObjectId, usize)],
+    ) -> bool {
+        let container = relation_contracts(self.retained.get(object).unwrap().kind)
+            .iter()
+            .any(|contract| {
+                contract.id == relation_id && contract.realization == Realization::Container
+            });
+        let inserts = matched
+            .iter()
+            .filter(|(previous, _)| previous.is_none())
+            .count();
+        container
+            && removed.len() + inserts
+                > REPLACE_ITEMS_MIN_CHANGES.max(previous_len.max(matched.len()) / 2)
+            && removed
+                .iter()
+                .all(|(child, _)| self.retained.get(*child).unwrap().exit_transition.is_none())
+    }
+
+    /// Applies a keyed change to a container relation as one `Mutation::ReplaceItems`
+    /// (`replaces_items`): new items are mounted first, kept items are reconciled in place and
+    /// keep their objects and content, and dropped items retire after they leave.
+    fn replace_keyed_items(
+        &mut self,
+        object: ObjectId,
+        relation_id: RelationId,
+        matched: Vec<(Option<ObjectId>, &Declaration)>,
+        mut removed: Vec<(ObjectId, usize)>,
+    ) -> Result<(), GraphError> {
+        let mut next = Vec::with_capacity(matched.len());
+        for (previous, desired) in matched {
+            next.push(match previous {
+                Some(previous) => self.reconcile_object(previous, desired)?,
+                None => self.mount(desired)?,
+            });
+        }
+        removed.sort_unstable_by_key(|(_, index)| *index);
+        let removed = removed
+            .into_iter()
+            .map(|(child, _)| child)
+            .collect::<Vec<_>>();
+        self.mutations.push(Mutation::ReplaceItems {
+            parent: object,
+            relation: relation_id,
+            removed: removed.clone(),
+            children: next.clone(),
+        });
+        self.retained.relation_mut(object, relation_id).value = RetainedRelationValue::Many(next);
+        for child in removed {
+            self.retire(child);
         }
         Ok(())
     }
