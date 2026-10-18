@@ -25,7 +25,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 27 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 28 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 6 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -89,6 +89,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 21 | `2c839cb71` | `ListView::on_selected_keys_changed` for multi-select | 18 | Delete or move several selected messages | unit; live; app |
 | 24 | `3c5ed057c` | `ListView` item containers take the `DataItem` text as their automation name | 21 | Screen readers announce rows instead of an unnamed item | unit; live; app |
 | 37 | `ba0749bf0` | Automation ids on menu items, `DataItem` rows and `ContentDialog` | 43 | UI tests that find controls by id | unit; live |
+| 47 | `6348288cf` | `ListView::item_container_transitions`, which sets `ItemsControl.ItemContainerTransitions` (an empty list turns the entrance transitions off) | none | A message list whose rows show at once instead of fading and sliding in | unit; live |
 
 ## 4. Theming, icons and menus
 
