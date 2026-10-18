@@ -136,8 +136,8 @@ Microsoft::UI::Xaml::Controls::IItemClickEventArgs::get_ClickedItem
 Microsoft::UI::Xaml::Controls::IItemContainer::{get_IsSelected, put_IsSelected}
 Microsoft::UI::Xaml::Controls::IItemContainerMapping::{ContainerFromIndex, ContainerFromItem}
 Microsoft::UI::Xaml::Controls::IItemContainerStatics::get_IsSelectedProperty
-Microsoft::UI::Xaml::Controls::IItemsControl::{get_Items, put_ItemsSource, put_ItemTemplate}
-Microsoft::UI::Xaml::Controls::IItemsControlStatics::get_ItemsSourceProperty
+Microsoft::UI::Xaml::Controls::IItemsControl::{get_ItemContainerTransitions, get_Items, put_ItemContainerTransitions, put_ItemsSource, put_ItemTemplate}
+Microsoft::UI::Xaml::Controls::IItemsControlStatics::{get_ItemContainerTransitionsProperty, get_ItemsSourceProperty}
 Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate}
 Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, add_ItemClick, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_IsItemClickEnabled, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted, remove_ItemClick, ScrollIntoView}
 Microsoft::UI::Xaml::Controls::IListViewBaseStatics::{get_CanDragItemsProperty, get_CanReorderItemsProperty, get_SelectionModeProperty}

@@ -818,6 +818,27 @@ impl WinUiAdapter {
         Ok(heights)
     }
 
+    /// Returns how many transitions a ListView's `ItemContainerTransitions` holds; none when the
+    /// property is unset and the style supplies no collection.
+    pub fn list_item_container_transition_count(
+        &self,
+        object: ObjectId,
+    ) -> Result<usize, WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&object) else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        list.value.cast::<native::IUIElement>()?.UpdateLayout()?;
+        match list
+            .value
+            .cast::<native::IItemsControl>()?
+            .ItemContainerTransitions()
+        {
+            Ok(transitions) => Ok(transitions.Size()? as usize),
+            Err(error) if error.code().is_ok() => Ok(0),
+            Err(error) => Err(error.into()),
+        }
+    }
+
     /// Lays out a ListView and returns the pointer-over fill of each realized item container's
     /// presenter, when it is a solid color.
     pub fn list_item_pointer_over_colors(

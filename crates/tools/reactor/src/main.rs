@@ -186,6 +186,7 @@ enum PropertyAdapter {
     InspectableString,
     InspectableStringList,
     ItemContainerMinHeight,
+    ItemContainerTransitions,
     KeyAccelerators,
     NativeColor,
     NumberBoxValue,
@@ -236,7 +237,7 @@ impl PropertyAdapter {
             Self::SelectionIndex => "SelectionIndex",
             Self::SystemCursor => "InputSystemCursorShape",
             Self::ThemeBrush => "Brush",
-            Self::ThemeTransitions => "ThemeTransitions",
+            Self::ItemContainerTransitions | Self::ThemeTransitions => "ThemeTransitions",
         }
     }
 
@@ -253,7 +254,10 @@ impl PropertyAdapter {
 
     /// Applied by the handwritten adapter rather than through a native property.
     fn is_handwritten(self) -> bool {
-        matches!(self, Self::AutomationId | Self::ItemContainerMinHeight)
+        matches!(
+            self,
+            Self::AutomationId | Self::ItemContainerMinHeight | Self::ItemContainerTransitions
+        )
     }
 
     fn has_managed_state(self) -> bool {
@@ -3955,6 +3959,7 @@ fn property_argument_parts(name: &str, value: &str) -> String {
         "ResourceOverrides" => format!("{name}: ResourceOverrides"),
         "SelectionIndex" => format!("{name}: impl Into<Option<usize>>"),
         "StringList" => format!("{name}: impl IntoIterator<Item = impl Into<Rc<str>>>"),
+        "ThemeTransitions" => format!("{name}: impl IntoIterator<Item = ThemeTransition>"),
         "Thickness" => format!("{name}: impl Into<Thickness>"),
         "Vector2" => "x: f64, y: f64".to_string(),
         value => format!("{name}: {value}"),
@@ -3993,6 +3998,9 @@ fn property_value_parts(value: &str, name: &str) -> String {
         "RichText" => format!("PropertyValue::RichText({name})"),
         "StringList" => {
             format!("PropertyValue::StringList({name}.into_iter().map(Into::into).collect())")
+        }
+        "ThemeTransitions" => {
+            format!("PropertyValue::ThemeTransitions({name}.into_iter().collect())")
         }
         "Thickness" => format!("PropertyValue::Thickness({name})"),
         "Vector2" => format!("PropertyValue::Vector2({name})"),

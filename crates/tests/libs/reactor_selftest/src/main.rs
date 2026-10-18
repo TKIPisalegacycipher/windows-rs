@@ -3577,6 +3577,30 @@ impl reactor::Component for Fixture {
                     .unwrap(),
                 default_heights
             );
+            let default_transitions = list_names_runtime
+                .adapter()
+                .list_item_container_transition_count(list)
+                .unwrap();
+            list_names_runtime
+                .update(Self::named_list("Renamed").item_container_transitions([]))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_container_transition_count(list)
+                    .unwrap(),
+                0
+            );
+            list_names_runtime
+                .update(Self::named_list("Renamed"))
+                .unwrap();
+            assert_eq!(
+                list_names_runtime
+                    .adapter()
+                    .list_item_container_transition_count(list)
+                    .unwrap(),
+                default_transitions
+            );
             let default_colors = list_names_runtime
                 .adapter()
                 .list_item_pointer_over_colors(list)

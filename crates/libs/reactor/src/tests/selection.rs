@@ -446,6 +446,40 @@ fn list_view_item_min_height_updates_clears_and_rejects_invalid_values() {
 }
 
 #[test]
+fn list_view_item_container_transitions_update_and_clear() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    // An empty list is a value, not an absent property: it turns the style's transitions off.
+    let mutations = runtime
+        .update(ListView::new().item_container_transitions([]))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let set = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == list => Some(set),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(
+        &**set,
+        [Property {
+            id: PropertyId::ItemContainerTransitions,
+            value: PropertyValue::ThemeTransitions(Rc::from([])),
+        }]
+    );
+
+    let mutations = runtime.update(ListView::new()).unwrap();
+    let clear = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, clear, .. } if *object == list => Some(clear),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(&**clear, [PropertyId::ItemContainerTransitions]);
+}
+
+#[test]
 fn list_view_selection_and_reorder_callbacks_replace_remove_and_reject_stale_events() {
     let first_selections = Rc::new(RefCell::new(Vec::new()));
     let first_selection = {

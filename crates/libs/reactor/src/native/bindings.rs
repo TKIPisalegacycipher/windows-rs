@@ -13030,6 +13030,28 @@ impl IItemsControl {
             .ok()
         }
     }
+    pub(crate) fn ItemContainerTransitions(&self) -> windows_core::Result<TransitionCollection> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).ItemContainerTransitions)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+    pub(crate) fn SetItemContainerTransitions<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<TransitionCollection>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetItemContainerTransitions)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
 }
 #[repr(C)]
 pub struct IItemsControl_Vtbl {
@@ -13048,6 +13070,26 @@ pub struct IItemsControl_Vtbl {
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
+    ItemTemplateSelector: usize,
+    SetItemTemplateSelector: usize,
+    ItemsPanel: usize,
+    SetItemsPanel: usize,
+    DisplayMemberPath: usize,
+    SetDisplayMemberPath: usize,
+    ItemsPanelRoot: usize,
+    ItemContainerStyle: usize,
+    SetItemContainerStyle: usize,
+    ItemContainerStyleSelector: usize,
+    SetItemContainerStyleSelector: usize,
+    ItemContainerGenerator: usize,
+    pub ItemContainerTransitions: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    pub SetItemContainerTransitions: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     IItemsControlStatics,
@@ -13062,6 +13104,16 @@ impl windows_core::RuntimeType for IItemsControlStatics {
 pub struct IItemsControlStatics_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
     pub ItemsSourceProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    ItemTemplateProperty: usize,
+    ItemTemplateSelectorProperty: usize,
+    ItemsPanelProperty: usize,
+    DisplayMemberPathProperty: usize,
+    ItemContainerStyleProperty: usize,
+    ItemContainerStyleSelectorProperty: usize,
+    pub ItemContainerTransitionsProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
@@ -26283,6 +26335,16 @@ impl ItemsControl {
         Self::IItemsControlStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
             (windows_core::Interface::vtable(this).ItemsSourceProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn ItemContainerTransitionsProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IItemsControlStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).ItemContainerTransitionsProperty)(
                 windows_core::Interface::as_raw(this),
                 &mut result__,
             )

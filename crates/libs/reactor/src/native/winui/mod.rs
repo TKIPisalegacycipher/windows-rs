@@ -2788,6 +2788,23 @@ fn set_list_container_resources(
     container.ClearValue(&native::Control::TemplateProperty()?)
 }
 
+/// Builds the native collection for a list of theme transitions; an empty list gives an empty
+/// collection, which turns the transitions off rather than leaving a style's in place.
+fn theme_transition_collection(
+    transitions: &[ThemeTransition],
+) -> windows_core::Result<native::TransitionCollection> {
+    let collection = native::TransitionCollection::new()?;
+    for transition in transitions {
+        let transition = match transition {
+            ThemeTransition::Reposition => {
+                native::RepositionThemeTransition::new()?.cast::<native::Transition>()?
+            }
+        };
+        collection.Append(&transition)?;
+    }
+    Ok(collection)
+}
+
 /// Applies a ListView's item minimum height to one of its containers; clearing restores the
 /// height from the container's style.
 fn set_list_container_min_height(

@@ -3297,6 +3297,16 @@ impl ListView {
         );
         self
     }
+    pub fn item_container_transitions(
+        mut self,
+        item_container_transitions: impl IntoIterator<Item = ThemeTransition>,
+    ) -> Self {
+        self.0 = self.0.property(
+            PropertyId::ItemContainerTransitions,
+            PropertyValue::ThemeTransitions(item_container_transitions.into_iter().collect()),
+        );
+        self
+    }
     pub fn selected_index(mut self, selected_index: impl Into<Option<usize>>) -> Self {
         self.0 = self.0.property(
             PropertyId::SelectedIndex,

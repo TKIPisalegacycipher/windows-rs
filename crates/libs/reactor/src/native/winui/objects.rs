@@ -508,6 +508,14 @@ impl WinUiAdapter {
                     (Handle::ListView(value), PropertyId::ItemMinHeight) => {
                         value.set_item_min_height(None)
                     }
+                    (Handle::ListView(value), PropertyId::ItemContainerTransitions) => value
+                        .value
+                        .cast::<native::IDependencyObject>()
+                        .and_then(|list| {
+                            native::ItemsControl::ItemContainerTransitionsProperty()
+                                .and_then(|property| list.ClearValue(&property))
+                        })
+                        .map_err(Into::into),
                     _ => Err(WinUiError::InvalidObject(object)),
                 };
             };
@@ -690,6 +698,18 @@ impl WinUiAdapter {
                         PropertyId::ItemMinHeight,
                         PropertyValue::F64(height),
                     ) => value.set_item_min_height(Some(*height)),
+                    (
+                        Handle::ListView(value),
+                        PropertyId::ItemContainerTransitions,
+                        PropertyValue::ThemeTransitions(transitions),
+                    ) => theme_transition_collection(transitions)
+                        .and_then(|collection| {
+                            value
+                                .value
+                                .cast::<native::IItemsControl>()?
+                                .SetItemContainerTransitions(&collection)
+                        })
+                        .map_err(Into::into),
                     _ => Err(WinUiError::InvalidObject(object)),
                 };
             };

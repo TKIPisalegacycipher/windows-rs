@@ -663,6 +663,10 @@ adapter = "item_container_min_height"
 validation = "finite_non_negative"
 
 [[objects.properties]]
+name = "ItemContainerTransitions"
+adapter = "item_container_transitions"
+
+[[objects.properties]]
 name = "SelectedIndex"
 adapter = "selection_index"
 controlled = "SelectionChanged"
