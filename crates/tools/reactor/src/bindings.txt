@@ -138,7 +138,8 @@ Microsoft::UI::Xaml::Controls::IItemContainerMapping::{ContainerFromIndex, Conta
 Microsoft::UI::Xaml::Controls::IItemContainerStatics::get_IsSelectedProperty
 Microsoft::UI::Xaml::Controls::IItemsControl::{get_ItemContainerTransitions, get_Items, put_ItemContainerTransitions, put_ItemsSource, put_ItemTemplate}
 Microsoft::UI::Xaml::Controls::IItemsControlStatics::{get_ItemContainerTransitionsProperty, get_ItemsSourceProperty}
-Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate}
+Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate, put_Layout}
+Microsoft::UI::Xaml::Controls::ILinedFlowLayout::{put_ItemsStretch, put_LineHeight, put_LineSpacing, put_MinItemSpacing}
 Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, add_ItemClick, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_IsItemClickEnabled, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted, remove_ItemClick, ScrollIntoView}
 Microsoft::UI::Xaml::Controls::IListViewBaseStatics::{get_CanDragItemsProperty, get_CanReorderItemsProperty, get_SelectionModeProperty}
 Microsoft::UI::Xaml::Controls::Image::CreateInstance
@@ -246,6 +247,7 @@ Microsoft::UI::Xaml::Controls::IVariableSizedWrapGridStatics::{get_ItemHeightPro
 Microsoft::UI::Xaml::Controls::IViewbox::{put_Child, put_Stretch}
 Microsoft::UI::Xaml::Controls::IViewboxStatics::get_StretchProperty
 Microsoft::UI::Xaml::Controls::IWebView2::{add_CoreWebView2Initialized, EnsureCoreWebView2Async, get_CoreWebView2, remove_CoreWebView2Initialized}
+Microsoft::UI::Xaml::Controls::LinedFlowLayout::CreateInstance
 Microsoft::UI::Xaml::Controls::ListBox::CreateInstance
 Microsoft::UI::Xaml::Controls::ListBoxItem::CreateInstance
 Microsoft::UI::Xaml::Controls::ListView::CreateInstance

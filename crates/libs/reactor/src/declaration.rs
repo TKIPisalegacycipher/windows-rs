@@ -1364,6 +1364,7 @@ pub enum PropertyValue {
     Duration(Duration),
     DragDropPolicy(Rc<DragDropPolicy>),
     F64(f64),
+    FlowLayout(FlowLayout),
     FontWeight(FontWeight),
     GridLengths(Rc<[GridLength]>),
     I32(i32),
@@ -1635,6 +1636,51 @@ impl DragDropAction {
 
     pub fn caption(mut self, caption: impl Into<String>) -> Self {
         self.caption = Some(caption.into());
+        self
+    }
+}
+
+/// A wrapping line layout for `ItemsRepeater::layout`: items flow left to right and wrap onto
+/// lines of a fixed height (WinUI `LinedFlowLayout`, items never stretched).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FlowLayout {
+    pub(crate) line_height: f64,
+    pub(crate) min_item_spacing: f64,
+    pub(crate) line_spacing: f64,
+}
+
+impl FlowLayout {
+    /// A flow layout with lines `line_height` tall and no spacing. Panics unless
+    /// `line_height` is finite and positive.
+    pub fn new(line_height: f64) -> Self {
+        assert!(
+            line_height.is_finite() && line_height > 0.0,
+            "FlowLayout.LineHeight requires finite_positive"
+        );
+        Self {
+            line_height,
+            min_item_spacing: 0.0,
+            line_spacing: 0.0,
+        }
+    }
+
+    /// The least horizontal gap between items on a line. Panics unless finite and non-negative.
+    pub fn min_item_spacing(mut self, value: f64) -> Self {
+        assert!(
+            value.is_finite() && value >= 0.0,
+            "FlowLayout.MinItemSpacing requires non_negative"
+        );
+        self.min_item_spacing = value;
+        self
+    }
+
+    /// The vertical gap between lines. Panics unless finite and non-negative.
+    pub fn line_spacing(mut self, value: f64) -> Self {
+        assert!(
+            value.is_finite() && value >= 0.0,
+            "FlowLayout.LineSpacing requires non_negative"
+        );
+        self.line_spacing = value;
         self
     }
 }

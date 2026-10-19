@@ -6236,6 +6236,18 @@ impl GeneratedHandle {
                 native_selection_index(*value)
                     .and_then(|value| object.value.SetSelectedIndex(value).map_err(Into::into)),
             ),
+            (Self::ItemsRepeater(object), PropertyId::Layout, None) => Some(
+                object
+                    .SetLayout(None::<&native::Layout>)
+                    .map_err(Into::into),
+            ),
+            (
+                Self::ItemsRepeater(object),
+                PropertyId::Layout,
+                Some(PropertyValue::FlowLayout(value)),
+            ) => Some(
+                flow_layout(value).and_then(|layout| object.SetLayout(&layout).map_err(Into::into)),
+            ),
             (Self::InfoBadge(object), PropertyId::Value, None) => Some(
                 object
                     .cast::<native::IDependencyObject>()

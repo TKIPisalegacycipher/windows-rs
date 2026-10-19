@@ -1310,6 +1310,15 @@ impl NativeImageSource {
     }
 }
 
+fn flow_layout(value: &FlowLayout) -> Result<native::Layout, WinUiError> {
+    let layout = native::LinedFlowLayout::new()?;
+    layout.SetLineHeight(value.line_height)?;
+    layout.SetMinItemSpacing(value.min_item_spacing)?;
+    layout.SetLineSpacing(value.line_spacing)?;
+    layout.SetItemsStretch(native::LinedFlowLayoutItemsStretch::None)?;
+    Ok(layout.cast()?)
+}
+
 fn icon_element(
     value: &Icon,
     image_source: Option<&native::ImageSource>,

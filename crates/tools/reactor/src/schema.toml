@@ -1189,6 +1189,10 @@ observes = "SelectedIndex"
 name = "ItemsRepeater"
 virtual_items = true
 
+[[objects.properties]]
+name = "Layout"
+adapter = "flow_layout"
+
 [[objects.relations]]
 name = "Items"
 cardinality = "Many"

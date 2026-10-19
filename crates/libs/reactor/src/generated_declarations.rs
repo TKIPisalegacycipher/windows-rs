@@ -4710,6 +4710,12 @@ impl ItemsRepeater {
         let declaration = Declaration::new(ObjectType::ItemsRepeater);
         Self(declaration)
     }
+    pub fn layout(mut self, layout: FlowLayout) -> Self {
+        self.0 = self
+            .0
+            .property(PropertyId::Layout, PropertyValue::FlowLayout(layout));
+        self
+    }
     visual_methods!();
     pub fn item(mut self, key: impl Into<Key>, visual: impl Into<View>) -> Self {
         self.0 = self.0.virtual_item(RelationId::Items, keyed(key, visual));

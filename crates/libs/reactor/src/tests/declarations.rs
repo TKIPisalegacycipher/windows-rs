@@ -9,6 +9,34 @@ fn font_icon_font_size_requires_finite_positive_values() {
 }
 
 #[test]
+fn flow_layout_line_height_requires_finite_positive_values() {
+    for value in [0.0, -1.0, f64::NAN, f64::INFINITY] {
+        assert!(std::panic::catch_unwind(|| FlowLayout::new(value)).is_err());
+    }
+    FlowLayout::new(22.0);
+}
+
+#[test]
+fn flow_layout_spacing_rejects_negative() {
+    assert!(std::panic::catch_unwind(|| FlowLayout::new(22.0).min_item_spacing(-1.0)).is_err());
+    FlowLayout::new(22.0)
+        .min_item_spacing(4.0)
+        .line_spacing(4.0);
+}
+
+#[test]
+fn items_repeater_layout_records_flow_layout() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            ItemsRepeater::new()
+                .layout(FlowLayout::new(22.0).min_item_spacing(4.0))
+                .item("a", TextBlock::new().text("a")),
+        )
+        .unwrap();
+}
+
+#[test]
 fn text_block_alignment_shares_the_text_box_contract_and_clears() {
     assert_eq!(
         property_contract(ObjectType::TextBlock, PropertyId::TextAlignment),

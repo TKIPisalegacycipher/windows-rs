@@ -1683,6 +1683,11 @@ impl core::convert::From<windows_reactor::FlipView> for windows_reactor::View
 pub fn windows_reactor::View::from(windows_reactor::FlipView) -> Self
 impl core::default::Default for windows_reactor::FlipView
 pub fn windows_reactor::FlipView::default() -> Self
+pub struct windows_reactor::FlowLayout
+impl windows_reactor::FlowLayout
+pub fn windows_reactor::FlowLayout::line_spacing(self, f64) -> Self
+pub fn windows_reactor::FlowLayout::min_item_spacing(self, f64) -> Self
+pub fn windows_reactor::FlowLayout::new(f64) -> Self
 pub struct windows_reactor::Flyout
 impl windows_reactor::Flyout
 pub fn windows_reactor::Flyout::placement(self, windows_reactor::FlyoutPlacement) -> Self
@@ -2176,6 +2181,7 @@ pub fn windows_reactor::ItemsRepeater::horizontal_alignment(self, windows_reacto
 pub fn windows_reactor::ItemsRepeater::is_hit_test_visible(self, bool) -> Self
 pub fn windows_reactor::ItemsRepeater::item(self, impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<windows_reactor::View>) -> Self
 pub fn windows_reactor::ItemsRepeater::items(self, impl core::iter::traits::collect::IntoIterator<Item = windows_reactor::KeyedView>) -> Self
+pub fn windows_reactor::ItemsRepeater::layout(self, windows_reactor::FlowLayout) -> Self
 pub fn windows_reactor::ItemsRepeater::margin(self, impl core::convert::Into<windows_reactor::Thickness>) -> Self
 pub fn windows_reactor::ItemsRepeater::max_height(self, f64) -> Self
 pub fn windows_reactor::ItemsRepeater::max_width(self, f64) -> Self

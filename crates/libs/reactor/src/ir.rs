@@ -386,6 +386,7 @@ pub(crate) fn validate_property(kind: ObjectType, property: &Property) -> Result
         | (ValueType::Duration, PropertyValue::Duration(_))
         | (ValueType::DragDropPolicy, PropertyValue::DragDropPolicy(_))
         | (ValueType::F64, PropertyValue::F64(_))
+        | (ValueType::FlowLayout, PropertyValue::FlowLayout(_))
         | (ValueType::FontWeight, PropertyValue::FontWeight(_))
         | (ValueType::GridLengths, PropertyValue::GridLengths(_))
         | (ValueType::I32, PropertyValue::I32(_))

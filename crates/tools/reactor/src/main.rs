@@ -173,6 +173,7 @@ enum PropertyAdapter {
     #[serde(rename = "datetime")]
     DateTime,
     DropPolicy,
+    FlowLayout,
     GridColumns,
     GridRows,
     IconElement,
@@ -212,6 +213,7 @@ impl PropertyAdapter {
         match self {
             Self::DateTime => "DateTime",
             Self::DropPolicy => "DragDropPolicy",
+            Self::FlowLayout => "FlowLayout",
             Self::GridColumns | Self::GridRows => "GridLengths",
             Self::IconElement | Self::IconSource => "Icon",
             Self::ImageUri => "ImageSource",
@@ -2680,6 +2682,23 @@ fn emit_native_property_arms(
         output.push_str(&format!("{pattern}None) => Some({clear}),\n"));
         return;
     }
+    if adapter == Some(PropertyAdapter::FlowLayout) {
+        let clear = native_interface_call(target, target_class, interface, metadata, |object| {
+            format!("{object}.Set{native}(None::<&native::Layout>).map_err(Into::into)")
+        });
+        let set = native_interface_call(target, target_class, interface, metadata, |object| {
+            format!(
+                "flow_layout(value).and_then(|layout| \
+                     {object}.Set{native}(&layout).map_err(Into::into))"
+            )
+        });
+        output.push_str(&format!(
+            "{pattern}None) => Some({clear}),\n\
+             {pattern}Some(PropertyValue::FlowLayout(value))) => \
+             Some({set}),\n"
+        ));
+        return;
+    }
     if matches!(
         adapter,
         Some(PropertyAdapter::IconElement | PropertyAdapter::IconSource)
@@ -2988,6 +3007,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
              Duration,\n\
              DragDropPolicy,\n\
              DragKind,\n\
+             FlowLayout,\n\
              DroppedData,\n\
              F64,\n\
              FocusEventInfo,\n\
@@ -3946,6 +3966,7 @@ fn property_argument_parts(name: &str, value: &str) -> String {
         "CornerRadius" => format!("{name}: impl Into<CornerRadius>"),
         "Duration" => format!("{name}: Duration"),
         "DragDropPolicy" => format!("{name}: DragDropPolicy"),
+        "FlowLayout" => format!("{name}: FlowLayout"),
         "F64" => format!("{name}: f64"),
         "FontWeight" => format!("{name}: FontWeight"),
         "GridLengths" => format!("{name}: impl IntoIterator<Item = GridLength>"),
@@ -3981,6 +4002,7 @@ fn property_value_parts(value: &str, name: &str) -> String {
         "DateTime" => format!("PropertyValue::DateTime({name})"),
         "Duration" => format!("PropertyValue::Duration({name})"),
         "DragDropPolicy" => format!("PropertyValue::DragDropPolicy(Rc::new({name}))"),
+        "FlowLayout" => format!("PropertyValue::FlowLayout({name})"),
         "F64" => format!("PropertyValue::F64({name})"),
         "FontWeight" => format!("PropertyValue::FontWeight({name})"),
         "GridLengths" => {
@@ -4226,6 +4248,7 @@ fn live_property_sample(
         "DateTime" | "OptionalDateTime" => "DateTime::now()".to_string(),
         "Duration" => "std::time::Duration::from_millis(1)".to_string(),
         "DragDropPolicy" => "DragDropPolicy::new()".to_string(),
+        "FlowLayout" => "FlowLayout::new(22.0)".to_string(),
         "FontWeight" => "FontWeight::SEMI_BOLD".to_string(),
         "GridLengths" => "[GridLength::Auto]".to_string(),
         "KeyAccelerators" => "KeyAccelerators::default()".to_string(),
@@ -4317,6 +4340,7 @@ fn is_builtin_value(value: &str) -> bool {
             | "DragKind"
             | "DroppedData"
             | "F64"
+            | "FlowLayout"
             | "FontWeight"
             | "GridLengths"
             | "I32"
