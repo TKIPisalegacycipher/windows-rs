@@ -1,5 +1,6 @@
 use super::bindings as native;
 use super::*;
+use native::{INonVirtualizingLayoutOverrides, INonVirtualizingLayoutOverrides_Impl};
 
 mod window_placement;
 
@@ -1311,12 +1312,106 @@ impl NativeImageSource {
 }
 
 fn flow_layout(value: &FlowLayout) -> Result<native::Layout, WinUiError> {
-    let layout = native::LinedFlowLayout::new()?;
-    layout.SetLineHeight(value.line_height)?;
-    layout.SetMinItemSpacing(value.min_item_spacing)?;
-    layout.SetLineSpacing(value.line_spacing)?;
-    layout.SetItemsStretch(native::LinedFlowLayoutItemsStretch::None)?;
-    Ok(layout.cast()?)
+    Ok(native::NonVirtualizingLayout::compose(NativeFlowLayout { value: *value })?.cast()?)
+}
+
+implement_decl! {
+    impl NativeFlowLayout as NativeFlowLayout_Impl: [INonVirtualizingLayoutOverrides]
+}
+
+/// `FlowLayout` as a composed `NonVirtualizingLayout`: every child is measured, so items always
+/// sit at their natural width (clamped to the line), unlike `LinedFlowLayout`'s estimates.
+struct NativeFlowLayout {
+    value: FlowLayout,
+}
+
+impl NativeFlowLayout {
+    fn pack(
+        &self,
+        context: Ref<native::NonVirtualizingLayoutContext>,
+        width: f32,
+        measure: Option<f32>,
+    ) -> windows_core::Result<(
+        Vec<native::UIElement>,
+        Vec<(f64, f64)>,
+        Vec<(f64, f64)>,
+        (f64, f64),
+    )> {
+        let children = context
+            .ok()?
+            .cast::<native::INonVirtualizingLayoutContext>()?
+            .Children()?;
+        let count = children.Size()?;
+        let mut elements = Vec::with_capacity(count as usize);
+        let mut sizes = Vec::with_capacity(count as usize);
+        for index in 0..count {
+            let child = children.GetAt(index)?;
+            if let Some(width) = measure {
+                child.Measure(native::Size {
+                    width,
+                    height: f32::INFINITY,
+                })?;
+            }
+            let desired = child.DesiredSize()?;
+            sizes.push((f64::from(desired.width), f64::from(desired.height)));
+            elements.push(child);
+        }
+        let (positions, total) = flow_pack(
+            &sizes,
+            f64::from(width),
+            self.value.min_item_spacing,
+            self.value.line_spacing,
+            self.value.line_height,
+        );
+        Ok((elements, sizes, positions, total))
+    }
+}
+
+impl INonVirtualizingLayoutOverrides_Impl for NativeFlowLayout_Impl {
+    fn InitializeForContextCore(
+        &self,
+        _context: Ref<native::NonVirtualizingLayoutContext>,
+    ) -> windows_core::Result<()> {
+        Ok(())
+    }
+
+    fn UninitializeForContextCore(
+        &self,
+        _context: Ref<native::NonVirtualizingLayoutContext>,
+    ) -> windows_core::Result<()> {
+        Ok(())
+    }
+
+    fn MeasureOverride(
+        &self,
+        context: Ref<native::NonVirtualizingLayoutContext>,
+        available: &native::Size,
+    ) -> windows_core::Result<native::Size> {
+        let (_, _, _, (width, height)) =
+            self.pack(context, available.width, Some(available.width))?;
+        Ok(native::Size {
+            width: width as f32,
+            height: height as f32,
+        })
+    }
+
+    fn ArrangeOverride(
+        &self,
+        context: Ref<native::NonVirtualizingLayoutContext>,
+        final_size: &native::Size,
+    ) -> windows_core::Result<native::Size> {
+        let (elements, sizes, positions, _) = self.pack(context, final_size.width, None)?;
+        for ((element, (w, h)), (x, y)) in elements.iter().zip(sizes).zip(positions) {
+            let w = w.min(f64::from(final_size.width).max(0.0));
+            element.Arrange(native::Rect {
+                x: x as f32,
+                y: y as f32,
+                width: w as f32,
+                height: h as f32,
+            })?;
+        }
+        Ok(*final_size)
+    }
 }
 
 fn icon_element(

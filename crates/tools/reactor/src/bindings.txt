@@ -139,7 +139,8 @@ Microsoft::UI::Xaml::Controls::IItemContainerStatics::get_IsSelectedProperty
 Microsoft::UI::Xaml::Controls::IItemsControl::{get_ItemContainerTransitions, get_Items, put_ItemContainerTransitions, put_ItemsSource, put_ItemTemplate}
 Microsoft::UI::Xaml::Controls::IItemsControlStatics::{get_ItemContainerTransitionsProperty, get_ItemsSourceProperty}
 Microsoft::UI::Xaml::Controls::IItemsRepeater::{GetOrCreateElement, put_ItemsSource, put_ItemTemplate, put_Layout}
-Microsoft::UI::Xaml::Controls::ILinedFlowLayout::{put_ItemsStretch, put_LineHeight, put_LineSpacing, put_MinItemSpacing}
+Microsoft::UI::Xaml::Controls::INonVirtualizingLayoutContext::get_Children
+Microsoft::UI::Xaml::Controls::INonVirtualizingLayoutOverrides::{}
 Microsoft::UI::Xaml::Controls::IListViewBase::{add_ContainerContentChanging, add_DragItemsCompleted, add_ItemClick, get_CanDragItems, get_CanReorderItems, get_SelectedItems, get_SelectionMode, put_CanDragItems, put_CanReorderItems, put_IsItemClickEnabled, put_SelectionMode, remove_ContainerContentChanging, remove_DragItemsCompleted, remove_ItemClick, ScrollIntoView}
 Microsoft::UI::Xaml::Controls::IListViewBaseStatics::{get_CanDragItemsProperty, get_CanReorderItemsProperty, get_SelectionModeProperty}
 Microsoft::UI::Xaml::Controls::Image::CreateInstance
@@ -247,7 +248,7 @@ Microsoft::UI::Xaml::Controls::IVariableSizedWrapGridStatics::{get_ItemHeightPro
 Microsoft::UI::Xaml::Controls::IViewbox::{put_Child, put_Stretch}
 Microsoft::UI::Xaml::Controls::IViewboxStatics::get_StretchProperty
 Microsoft::UI::Xaml::Controls::IWebView2::{add_CoreWebView2Initialized, EnsureCoreWebView2Async, get_CoreWebView2, remove_CoreWebView2Initialized}
-Microsoft::UI::Xaml::Controls::LinedFlowLayout::CreateInstance
+Microsoft::UI::Xaml::Controls::NonVirtualizingLayout::CreateInstance
 Microsoft::UI::Xaml::Controls::ListBox::CreateInstance
 Microsoft::UI::Xaml::Controls::ListBoxItem::CreateInstance
 Microsoft::UI::Xaml::Controls::ListView::CreateInstance
@@ -379,7 +380,7 @@ Microsoft::UI::Xaml::IResourceDictionary::get_MergedDictionaries
 Microsoft::UI::Xaml::IRoutedEventArgs::get_OriginalSource
 Microsoft::UI::Xaml::IScalarTransition::put_Duration
 Microsoft::UI::Xaml::ISizeChangedEventArgs::get_NewSize
-Microsoft::UI::Xaml::IUIElement::{add_CharacterReceived, add_DragEnter, add_DragLeave, add_DragOver, add_Drop, add_GotFocus, add_KeyUp, add_LostFocus, add_PointerCanceled, add_PointerCaptureLost, add_PointerEntered, add_PointerExited, add_PointerMoved, add_PointerPressed, add_PointerReleased, add_PreviewKeyDown, CapturePointer, Focus, get_AllowDrop, get_ContextFlyout, get_FocusState, get_KeyboardAccelerators, get_Opacity, get_PointerCaptures, get_Translation, get_XamlRoot, put_AllowDrop, put_CenterPoint, put_ContextFlyout, put_IsHitTestVisible, put_IsTabStop, put_KeyboardAcceleratorPlacementMode, put_Opacity, put_OpacityTransition, put_Scale, put_ScaleTransition, put_Transitions, put_Translation, put_TranslationTransition, put_XamlRoot, ReleasePointerCapture, remove_CharacterReceived, remove_DragEnter, remove_DragLeave, remove_DragOver, remove_Drop, remove_GotFocus, remove_KeyUp, remove_LostFocus, remove_PointerCanceled, remove_PointerCaptureLost, remove_PointerEntered, remove_PointerExited, remove_PointerMoved, remove_PointerPressed, remove_PointerReleased, remove_PreviewKeyDown, TransformToVisual, UpdateLayout}
+Microsoft::UI::Xaml::IUIElement::{add_CharacterReceived, add_DragEnter, add_DragLeave, add_DragOver, add_Drop, add_GotFocus, add_KeyUp, add_LostFocus, add_PointerCanceled, add_PointerCaptureLost, add_PointerEntered, add_PointerExited, add_PointerMoved, add_PointerPressed, add_PointerReleased, add_PreviewKeyDown, Arrange, CapturePointer, Focus, get_AllowDrop, get_ContextFlyout, get_DesiredSize, get_FocusState, get_KeyboardAccelerators, get_Opacity, get_PointerCaptures, get_Translation, get_XamlRoot, put_AllowDrop, put_CenterPoint, put_ContextFlyout, put_IsHitTestVisible, put_IsTabStop, put_KeyboardAcceleratorPlacementMode, put_Opacity, put_OpacityTransition, put_Scale, put_ScaleTransition, put_Transitions, put_Translation, put_TranslationTransition, put_XamlRoot, ReleasePointerCapture, remove_CharacterReceived, remove_DragEnter, remove_DragLeave, remove_DragOver, remove_Drop, remove_GotFocus, remove_KeyUp, remove_LostFocus, remove_PointerCanceled, remove_PointerCaptureLost, remove_PointerEntered, remove_PointerExited, remove_PointerMoved, remove_PointerPressed, remove_PointerReleased, Measure, remove_PreviewKeyDown, TransformToVisual, UpdateLayout}
 Microsoft::UI::Xaml::IUIElementProtected::put_ProtectedCursor
 Microsoft::UI::Xaml::IUIElementStatics::{get_AllowDropProperty, get_IsHitTestVisibleProperty, get_IsTabStopProperty, get_OpacityProperty, get_TransitionsProperty}
 Microsoft::UI::Xaml::IVector3Transition::put_Duration

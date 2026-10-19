@@ -519,10 +519,12 @@ fn main() {
         .output(workspace_path(BINDINGS_OUTPUT))
         .implements([
             "Microsoft.UI.Xaml.IApplicationOverrides",
+            "Microsoft.UI.Xaml.Controls.INonVirtualizingLayoutOverrides",
             "Microsoft.UI.Xaml.IElementFactory",
             "Microsoft.UI.Xaml.Markup.IXamlMetadataProvider",
         ])
         .compose("Microsoft.UI.Xaml.Application")
+        .compose("Microsoft.UI.Xaml.Controls.NonVirtualizingLayout")
         .minimal()
         .dead_code()
         .flat()

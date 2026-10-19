@@ -13469,6 +13469,19 @@ impl windows_core::RuntimeType for ILayout {
 pub struct ILayout_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
 }
+windows_core::imp::define_interface!(
+    ILayoutContext,
+    ILayoutContext_Vtbl,
+    0xb45a2e55_2ecc_5462_bb26_d47c455bb48e
+);
+impl windows_core::RuntimeType for ILayoutContext {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ILayoutContext_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
 windows_core::imp::define_interface!(ILine, ILine_Vtbl, 0x507b3858_af7e_559b_a87e_4cc6a5d8ba96);
 impl windows_core::RuntimeType for ILine {
     const SIGNATURE: windows_core::imp::ConstBuffer =
@@ -13563,99 +13576,6 @@ pub struct ILineStatics_Vtbl {
     ) -> windows_core::HRESULT,
     pub Y2Property: unsafe extern "system" fn(
         *mut core::ffi::c_void,
-        *mut *mut core::ffi::c_void,
-    ) -> windows_core::HRESULT,
-}
-windows_core::imp::define_interface!(
-    ILinedFlowLayout,
-    ILinedFlowLayout_Vtbl,
-    0xf887a64b_b146_540c_8953_d8184b79ba6e
-);
-impl windows_core::RuntimeType for ILinedFlowLayout {
-    const SIGNATURE: windows_core::imp::ConstBuffer =
-        windows_core::imp::ConstBuffer::for_interface::<Self>();
-}
-impl ILinedFlowLayout {
-    pub(crate) fn SetItemsStretch(
-        &self,
-        value: LinedFlowLayoutItemsStretch,
-    ) -> windows_core::Result<()> {
-        unsafe {
-            (windows_core::Interface::vtable(self).SetItemsStretch)(
-                windows_core::Interface::as_raw(self),
-                value,
-            )
-            .ok()
-        }
-    }
-    pub(crate) fn SetMinItemSpacing(&self, value: f64) -> windows_core::Result<()> {
-        unsafe {
-            (windows_core::Interface::vtable(self).SetMinItemSpacing)(
-                windows_core::Interface::as_raw(self),
-                value,
-            )
-            .ok()
-        }
-    }
-    pub(crate) fn SetLineSpacing(&self, value: f64) -> windows_core::Result<()> {
-        unsafe {
-            (windows_core::Interface::vtable(self).SetLineSpacing)(
-                windows_core::Interface::as_raw(self),
-                value,
-            )
-            .ok()
-        }
-    }
-    pub(crate) fn SetLineHeight(&self, value: f64) -> windows_core::Result<()> {
-        unsafe {
-            (windows_core::Interface::vtable(self).SetLineHeight)(
-                windows_core::Interface::as_raw(self),
-                value,
-            )
-            .ok()
-        }
-    }
-}
-#[repr(C)]
-pub struct ILinedFlowLayout_Vtbl {
-    pub base__: windows_core::IInspectable_Vtbl,
-    ItemsInfoRequested: usize,
-    RemoveItemsInfoRequested: usize,
-    ItemsUnlocked: usize,
-    RemoveItemsUnlocked: usize,
-    ItemsJustification: usize,
-    SetItemsJustification: usize,
-    ItemsStretch: usize,
-    pub SetItemsStretch: unsafe extern "system" fn(
-        *mut core::ffi::c_void,
-        LinedFlowLayoutItemsStretch,
-    ) -> windows_core::HRESULT,
-    MinItemSpacing: usize,
-    pub SetMinItemSpacing:
-        unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
-    LineSpacing: usize,
-    pub SetLineSpacing:
-        unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
-    LineHeight: usize,
-    pub SetLineHeight:
-        unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
-}
-windows_core::imp::define_interface!(
-    ILinedFlowLayoutFactory,
-    ILinedFlowLayoutFactory_Vtbl,
-    0x507b841e_fcdf_5cea_b271_94d7a6af355f
-);
-impl windows_core::RuntimeType for ILinedFlowLayoutFactory {
-    const SIGNATURE: windows_core::imp::ConstBuffer =
-        windows_core::imp::ConstBuffer::for_interface::<Self>();
-}
-#[repr(C)]
-pub struct ILinedFlowLayoutFactory_Vtbl {
-    pub base__: windows_core::IInspectable_Vtbl,
-    pub CreateInstance: unsafe extern "system" fn(
-        *mut core::ffi::c_void,
-        *mut core::ffi::c_void,
-        *mut *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
 }
@@ -15612,6 +15532,231 @@ pub struct INavigationViewStatics2_Vtbl {
     pub IsPaneVisibleProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    INonVirtualizingLayout,
+    INonVirtualizingLayout_Vtbl,
+    0x0c24defd_f68f_51d9_998e_4cbad48be012
+);
+impl windows_core::RuntimeType for INonVirtualizingLayout {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct INonVirtualizingLayout_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    INonVirtualizingLayoutContext,
+    INonVirtualizingLayoutContext_Vtbl,
+    0x1e378538_f33c_5410_82cc_ca6f06d5e259
+);
+impl windows_core::RuntimeType for INonVirtualizingLayoutContext {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl INonVirtualizingLayoutContext {
+    pub(crate) fn Children(
+        &self,
+    ) -> windows_core::Result<windows_collections::IVectorView<UIElement>> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Children)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+}
+#[repr(C)]
+pub struct INonVirtualizingLayoutContext_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub Children: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    INonVirtualizingLayoutFactory,
+    INonVirtualizingLayoutFactory_Vtbl,
+    0xa16d2d12_dbac_5ce0_aef5_09171a4d3571
+);
+impl windows_core::RuntimeType for INonVirtualizingLayoutFactory {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct INonVirtualizingLayoutFactory_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub CreateInstance: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    INonVirtualizingLayoutOverrides,
+    INonVirtualizingLayoutOverrides_Vtbl,
+    0x3c28b831_35c1_5182_a843_a43f339b6687
+);
+impl windows_core::RuntimeType for INonVirtualizingLayoutOverrides {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+    const NAME: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
+        b"Microsoft.UI.Xaml.Controls.INonVirtualizingLayoutOverrides",
+    );
+}
+impl windows_core::RuntimeName for INonVirtualizingLayoutOverrides {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.INonVirtualizingLayoutOverrides";
+}
+pub trait INonVirtualizingLayoutOverrides_Impl: windows_core::IUnknownImpl {
+    fn InitializeForContextCore(
+        &self,
+        context: windows_core::Ref<NonVirtualizingLayoutContext>,
+    ) -> windows_core::Result<()>;
+    fn UninitializeForContextCore(
+        &self,
+        context: windows_core::Ref<NonVirtualizingLayoutContext>,
+    ) -> windows_core::Result<()>;
+    fn MeasureOverride(
+        &self,
+        context: windows_core::Ref<NonVirtualizingLayoutContext>,
+        availableSize: &Size,
+    ) -> windows_core::Result<Size>;
+    fn ArrangeOverride(
+        &self,
+        context: windows_core::Ref<NonVirtualizingLayoutContext>,
+        finalSize: &Size,
+    ) -> windows_core::Result<Size>;
+}
+impl INonVirtualizingLayoutOverrides_Vtbl {
+    pub const fn new<Identity: INonVirtualizingLayoutOverrides_Impl, const OFFSET: isize>() -> Self
+    {
+        unsafe extern "system" fn InitializeForContextCore<
+            Identity: INonVirtualizingLayoutOverrides_Impl,
+            const OFFSET: isize,
+        >(
+            this: *mut core::ffi::c_void,
+            context: *mut core::ffi::c_void,
+        ) -> windows_core::HRESULT {
+            unsafe {
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                INonVirtualizingLayoutOverrides_Impl::InitializeForContextCore(
+                    this,
+                    core::mem::transmute_copy(&context),
+                )
+                .into()
+            }
+        }
+        unsafe extern "system" fn UninitializeForContextCore<
+            Identity: INonVirtualizingLayoutOverrides_Impl,
+            const OFFSET: isize,
+        >(
+            this: *mut core::ffi::c_void,
+            context: *mut core::ffi::c_void,
+        ) -> windows_core::HRESULT {
+            unsafe {
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                INonVirtualizingLayoutOverrides_Impl::UninitializeForContextCore(
+                    this,
+                    core::mem::transmute_copy(&context),
+                )
+                .into()
+            }
+        }
+        unsafe extern "system" fn MeasureOverride<
+            Identity: INonVirtualizingLayoutOverrides_Impl,
+            const OFFSET: isize,
+        >(
+            this: *mut core::ffi::c_void,
+            context: *mut core::ffi::c_void,
+            availablesize: Size,
+            result__: *mut Size,
+        ) -> windows_core::HRESULT {
+            unsafe {
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                match INonVirtualizingLayoutOverrides_Impl::MeasureOverride(
+                    this,
+                    core::mem::transmute_copy(&context),
+                    core::mem::transmute(&availablesize),
+                ) {
+                    Ok(ok__) => {
+                        result__.write(ok__);
+                        windows_core::HRESULT(0)
+                    }
+                    Err(err) => err.into(),
+                }
+            }
+        }
+        unsafe extern "system" fn ArrangeOverride<
+            Identity: INonVirtualizingLayoutOverrides_Impl,
+            const OFFSET: isize,
+        >(
+            this: *mut core::ffi::c_void,
+            context: *mut core::ffi::c_void,
+            finalsize: Size,
+            result__: *mut Size,
+        ) -> windows_core::HRESULT {
+            unsafe {
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                match INonVirtualizingLayoutOverrides_Impl::ArrangeOverride(
+                    this,
+                    core::mem::transmute_copy(&context),
+                    core::mem::transmute(&finalsize),
+                ) {
+                    Ok(ok__) => {
+                        result__.write(ok__);
+                        windows_core::HRESULT(0)
+                    }
+                    Err(err) => err.into(),
+                }
+            }
+        }
+        Self {
+            base__: windows_core::IInspectable_Vtbl::new::<
+                Identity,
+                INonVirtualizingLayoutOverrides,
+                OFFSET,
+            >(),
+            InitializeForContextCore: InitializeForContextCore::<Identity, OFFSET>,
+            UninitializeForContextCore: UninitializeForContextCore::<Identity, OFFSET>,
+            MeasureOverride: MeasureOverride::<Identity, OFFSET>,
+            ArrangeOverride: ArrangeOverride::<Identity, OFFSET>,
+        }
+    }
+    pub fn matches(iid: &windows_core::GUID) -> bool {
+        iid == &<INonVirtualizingLayoutOverrides as windows_core::Interface>::IID
+    }
+}
+#[repr(C)]
+pub struct INonVirtualizingLayoutOverrides_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub InitializeForContextCore: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    pub UninitializeForContextCore: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    pub MeasureOverride: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        Size,
+        *mut Size,
+    ) -> windows_core::HRESULT,
+    pub ArrangeOverride: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        Size,
+        *mut Size,
     ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
@@ -23276,6 +23421,16 @@ impl windows_core::RuntimeType for IUIElement {
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
 impl IUIElement {
+    pub(crate) fn DesiredSize(&self) -> windows_core::Result<Size> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).DesiredSize)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
     pub(crate) fn AllowDrop(&self) -> windows_core::Result<bool> {
         unsafe {
             let mut result__ = core::mem::zeroed();
@@ -23992,6 +24147,24 @@ impl IUIElement {
             ))
         }
     }
+    pub(crate) fn Measure(&self, availablesize: Size) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).Measure)(
+                windows_core::Interface::as_raw(self),
+                availablesize,
+            )
+            .ok()
+        }
+    }
+    pub(crate) fn Arrange(&self, finalrect: Rect) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).Arrange)(
+                windows_core::Interface::as_raw(self),
+                finalrect,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn CapturePointer<P0>(&self, value: P0) -> windows_core::Result<bool>
     where
         P0: windows_core::Param<Pointer>,
@@ -24055,7 +24228,8 @@ impl IUIElement {
 #[repr(C)]
 pub struct IUIElement_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
-    DesiredSize: usize,
+    pub DesiredSize:
+        unsafe extern "system" fn(*mut core::ffi::c_void, *mut Size) -> windows_core::HRESULT,
     pub AllowDrop:
         unsafe extern "system" fn(*mut core::ffi::c_void, *mut bool) -> windows_core::HRESULT,
     pub SetAllowDrop:
@@ -24382,8 +24556,8 @@ pub struct IUIElement_Vtbl {
     RemovePreviewKeyUp: usize,
     BringIntoViewRequested: usize,
     RemoveBringIntoViewRequested: usize,
-    Measure: usize,
-    Arrange: usize,
+    pub Measure: unsafe extern "system" fn(*mut core::ffi::c_void, Size) -> windows_core::HRESULT,
+    pub Arrange: unsafe extern "system" fn(*mut core::ffi::c_void, Rect) -> windows_core::HRESULT,
     pub CapturePointer: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
@@ -24802,19 +24976,6 @@ pub struct IViewboxStatics_Vtbl {
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
-}
-windows_core::imp::define_interface!(
-    IVirtualizingLayout,
-    IVirtualizingLayout_Vtbl,
-    0x54857ce0_b9e6_51a3_bfa8_dcd8ee306d5c
-);
-impl windows_core::RuntimeType for IVirtualizingLayout {
-    const SIGNATURE: windows_core::imp::ConstBuffer =
-        windows_core::imp::ConstBuffer::for_interface::<Self>();
-}
-#[repr(C)]
-pub struct IVirtualizingLayout_Vtbl {
-    pub base__: windows_core::IInspectable_Vtbl,
 }
 windows_core::imp::define_interface!(
     IVisual,
@@ -26801,6 +26962,34 @@ unsafe impl Send for Layout {}
 unsafe impl Sync for Layout {}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LayoutContext(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    LayoutContext,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(LayoutContext, DependencyObject);
+impl windows_core::RuntimeType for LayoutContext {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ILayoutContext>();
+}
+unsafe impl windows_core::Interface for LayoutContext {
+    type Vtable = <ILayoutContext as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <ILayoutContext as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for LayoutContext {
+    type Target = ILayoutContext;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for LayoutContext {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.LayoutContext";
+}
+unsafe impl Send for LayoutContext {}
+unsafe impl Sync for LayoutContext {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Line(windows_core::IUnknown);
 windows_core::imp::interface_hierarchy!(Line, windows_core::IUnknown, windows_core::IInspectable);
 windows_core::imp::required_hierarchy!(Line, Shape, FrameworkElement, UIElement, DependencyObject);
@@ -26930,78 +27119,6 @@ impl windows_core::RuntimeName for LineBreak {
 }
 unsafe impl Send for LineBreak {}
 unsafe impl Sync for LineBreak {}
-#[repr(transparent)]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct LinedFlowLayout(windows_core::IUnknown);
-windows_core::imp::interface_hierarchy!(
-    LinedFlowLayout,
-    windows_core::IUnknown,
-    windows_core::IInspectable
-);
-windows_core::imp::required_hierarchy!(
-    LinedFlowLayout,
-    VirtualizingLayout,
-    Layout,
-    DependencyObject
-);
-impl LinedFlowLayout {
-    pub(crate) fn new() -> windows_core::Result<Self> {
-        Self::ILinedFlowLayoutFactory(|this| unsafe {
-            let mut result__ = core::mem::zeroed();
-            (windows_core::Interface::vtable(this).CreateInstance)(
-                windows_core::Interface::as_raw(this),
-                core::ptr::null_mut(),
-                core::ptr::null_mut(),
-                &mut result__,
-            )
-            .and_then(|| windows_core::imp::Type::from_abi(result__))
-        })
-    }
-    fn ILinedFlowLayoutFactory<
-        R,
-        F: FnOnce(&ILinedFlowLayoutFactory) -> windows_core::Result<R>,
-    >(
-        callback: F,
-    ) -> windows_core::Result<R> {
-        static SHARED: windows_core::imp::FactoryCache<LinedFlowLayout, ILinedFlowLayoutFactory> =
-            windows_core::imp::FactoryCache::new();
-        SHARED.call(callback)
-    }
-}
-impl windows_core::RuntimeType for LinedFlowLayout {
-    const SIGNATURE: windows_core::imp::ConstBuffer =
-        windows_core::imp::ConstBuffer::for_class::<Self, ILinedFlowLayout>();
-}
-unsafe impl windows_core::Interface for LinedFlowLayout {
-    type Vtable = <ILinedFlowLayout as windows_core::Interface>::Vtable;
-    const IID: windows_core::GUID = <ILinedFlowLayout as windows_core::Interface>::IID;
-}
-impl core::ops::Deref for LinedFlowLayout {
-    type Target = ILinedFlowLayout;
-    fn deref(&self) -> &Self::Target {
-        unsafe { core::mem::transmute(self) }
-    }
-}
-impl windows_core::RuntimeName for LinedFlowLayout {
-    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.LinedFlowLayout";
-}
-unsafe impl Send for LinedFlowLayout {}
-unsafe impl Sync for LinedFlowLayout {}
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct LinedFlowLayoutItemsStretch(pub i32);
-impl LinedFlowLayoutItemsStretch {
-    pub const None: Self = Self(0);
-    pub const Fill: Self = Self(1);
-}
-impl windows_core::imp::TypeKind for LinedFlowLayoutItemsStretch {
-    type TypeKind = windows_core::imp::CopyType;
-}
-impl windows_core::RuntimeType for LinedFlowLayoutItemsStretch {
-    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
-        b"enum(Microsoft.UI.Xaml.Controls.LinedFlowLayoutItemsStretch;i4)",
-    );
-}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ListBox(windows_core::IUnknown);
@@ -28313,6 +28430,98 @@ impl windows_core::RuntimeName for NavigationViewSelectionChangedEventArgs {
 }
 unsafe impl Send for NavigationViewSelectionChangedEventArgs {}
 unsafe impl Sync for NavigationViewSelectionChangedEventArgs {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NonVirtualizingLayout(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    NonVirtualizingLayout,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(NonVirtualizingLayout, Layout, DependencyObject);
+impl NonVirtualizingLayout {
+    pub(crate) fn compose<T>(compose: T) -> windows_core::Result<Self>
+    where
+        T: windows_core::Compose,
+    {
+        Self::INonVirtualizingLayoutFactory(|this| unsafe {
+            let (derived__, base__) = windows_core::Compose::compose(compose);
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).CreateInstance)(
+                windows_core::Interface::as_raw(this),
+                core::mem::transmute_copy(&derived__),
+                base__ as *mut _ as _,
+                &mut result__,
+            )
+            .ok()?;
+            let _ = &derived__;
+            windows_core::imp::Type::from_abi(result__)
+        })
+    }
+    fn INonVirtualizingLayoutFactory<
+        R,
+        F: FnOnce(&INonVirtualizingLayoutFactory) -> windows_core::Result<R>,
+    >(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<
+            NonVirtualizingLayout,
+            INonVirtualizingLayoutFactory,
+        > = windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
+impl windows_core::RuntimeType for NonVirtualizingLayout {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, INonVirtualizingLayout>();
+}
+unsafe impl windows_core::Interface for NonVirtualizingLayout {
+    type Vtable = <INonVirtualizingLayout as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <INonVirtualizingLayout as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for NonVirtualizingLayout {
+    type Target = INonVirtualizingLayout;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for NonVirtualizingLayout {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.NonVirtualizingLayout";
+}
+unsafe impl Send for NonVirtualizingLayout {}
+unsafe impl Sync for NonVirtualizingLayout {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NonVirtualizingLayoutContext(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    NonVirtualizingLayoutContext,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(
+    NonVirtualizingLayoutContext,
+    LayoutContext,
+    DependencyObject
+);
+impl windows_core::RuntimeType for NonVirtualizingLayoutContext {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, INonVirtualizingLayoutContext>();
+}
+unsafe impl windows_core::Interface for NonVirtualizingLayoutContext {
+    type Vtable = <INonVirtualizingLayoutContext as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <INonVirtualizingLayoutContext as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for NonVirtualizingLayoutContext {
+    type Target = INonVirtualizingLayoutContext;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for NonVirtualizingLayoutContext {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.NonVirtualizingLayoutContext";
+}
+unsafe impl Send for NonVirtualizingLayoutContext {}
+unsafe impl Sync for NonVirtualizingLayoutContext {}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NumberBox(windows_core::IUnknown);
@@ -35027,34 +35236,6 @@ impl core::ops::Not for VirtualKeyModifiers {
         Self(self.0.not())
     }
 }
-#[repr(transparent)]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct VirtualizingLayout(windows_core::IUnknown);
-windows_core::imp::interface_hierarchy!(
-    VirtualizingLayout,
-    windows_core::IUnknown,
-    windows_core::IInspectable
-);
-windows_core::imp::required_hierarchy!(VirtualizingLayout, Layout, DependencyObject);
-impl windows_core::RuntimeType for VirtualizingLayout {
-    const SIGNATURE: windows_core::imp::ConstBuffer =
-        windows_core::imp::ConstBuffer::for_class::<Self, IVirtualizingLayout>();
-}
-unsafe impl windows_core::Interface for VirtualizingLayout {
-    type Vtable = <IVirtualizingLayout as windows_core::Interface>::Vtable;
-    const IID: windows_core::GUID = <IVirtualizingLayout as windows_core::Interface>::IID;
-}
-impl core::ops::Deref for VirtualizingLayout {
-    type Target = IVirtualizingLayout;
-    fn deref(&self) -> &Self::Target {
-        unsafe { core::mem::transmute(self) }
-    }
-}
-impl windows_core::RuntimeName for VirtualizingLayout {
-    const NAME: &'static str = "Microsoft.UI.Xaml.Controls.VirtualizingLayout";
-}
-unsafe impl Send for VirtualizingLayout {}
-unsafe impl Sync for VirtualizingLayout {}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Visual(windows_core::IUnknown);

@@ -25,6 +25,42 @@ fn flow_layout_spacing_rejects_negative() {
 }
 
 #[test]
+fn flow_pack_wraps_greedily_and_centres_vertically() {
+    let sizes = [(40.0, 20.0), (50.0, 24.0), (30.0, 20.0), (60.0, 10.0)];
+    let (positions, total) = flow_pack(&sizes, 100.0, 4.0, 2.0, 22.0);
+    // Line 1: 40 + 4 + 50 = 94 (30 more would overflow); height 24.
+    // Line 2: 30 + 4 + 60 = 94; height 22.
+    assert_eq!(
+        positions,
+        vec![(0.0, 2.0), (44.0, 0.0), (0.0, 27.0), (34.0, 32.0)]
+    );
+    assert_eq!(total, (94.0, 48.0));
+}
+
+#[test]
+fn flow_pack_puts_an_oversize_item_alone_on_a_clamped_line() {
+    let sizes = [(30.0, 20.0), (500.0, 20.0), (30.0, 20.0)];
+    let (positions, total) = flow_pack(&sizes, 100.0, 4.0, 0.0, 20.0);
+    assert_eq!(positions, vec![(0.0, 0.0), (0.0, 20.0), (0.0, 40.0)]);
+    assert_eq!(total, (100.0, 60.0));
+}
+
+#[test]
+fn flow_pack_handles_no_items() {
+    let (positions, total) = flow_pack(&[], 100.0, 4.0, 2.0, 22.0);
+    assert!(positions.is_empty());
+    assert_eq!(total, (0.0, 0.0));
+}
+
+#[test]
+fn flow_pack_infinite_width_is_one_line() {
+    let sizes = [(400.0, 20.0), (500.0, 20.0), (600.0, 20.0)];
+    let (positions, total) = flow_pack(&sizes, f64::INFINITY, 4.0, 2.0, 22.0);
+    assert_eq!(positions, vec![(0.0, 1.0), (404.0, 1.0), (908.0, 1.0)]);
+    assert_eq!(total, (1508.0, 22.0));
+}
+
+#[test]
 fn items_repeater_layout_records_flow_layout() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime

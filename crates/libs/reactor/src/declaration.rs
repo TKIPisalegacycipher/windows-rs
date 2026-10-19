@@ -1641,7 +1641,8 @@ impl DragDropAction {
 }
 
 /// A wrapping line layout for `ItemsRepeater::layout`: items flow left to right and wrap onto
-/// lines of a fixed height (WinUI `LinedFlowLayout`, items never stretched).
+/// lines at least `line_height` tall. Every item is measured and keeps its natural width,
+/// clamped to the line width; items are never stretched.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FlowLayout {
     pub(crate) line_height: f64,
@@ -1683,6 +1684,60 @@ impl FlowLayout {
         self.line_spacing = value;
         self
     }
+}
+
+/// Packs items of the given `(width, height)` sizes into lines no wider than `available`
+/// (greedy, left to right; an item wraps onto a new line unless it is first on its line).
+/// Each line is `max(min_line_height, tallest item)` tall and items are centred vertically in
+/// it. Returns each item's top-left position and the total `(width, height)`, width being the
+/// widest line.
+pub(crate) fn flow_pack(
+    sizes: &[(f64, f64)],
+    available: f64,
+    spacing: f64,
+    line_spacing: f64,
+    min_line_height: f64,
+) -> (Vec<(f64, f64)>, (f64, f64)) {
+    let mut positions = Vec::with_capacity(sizes.len());
+    let mut lines: Vec<(usize, usize, f64)> = Vec::new();
+    let (mut x, mut width) = (0.0_f64, 0.0_f64);
+    let mut start = 0;
+    let mut line_height = min_line_height;
+    for (index, &(w, h)) in sizes.iter().enumerate() {
+        let w = if available.is_finite() {
+            w.min(available.max(0.0))
+        } else {
+            w
+        };
+        if index > start && x + spacing + w > available {
+            lines.push((start, index, line_height));
+            width = width.max(x);
+            start = index;
+            x = 0.0;
+            line_height = min_line_height;
+        }
+        if index > start {
+            x += spacing;
+        }
+        positions.push((x, 0.0));
+        x += w;
+        line_height = line_height.max(h);
+    }
+    if !sizes.is_empty() {
+        lines.push((start, sizes.len(), line_height));
+        width = width.max(x);
+    }
+    let mut y = 0.0;
+    for (line, &(first, end, height)) in lines.iter().enumerate() {
+        if line > 0 {
+            y += line_spacing;
+        }
+        for index in first..end {
+            positions[index].1 = y + (height - sizes[index].1).max(0.0) / 2.0;
+        }
+        y += height;
+    }
+    (positions, (width, y))
 }
 
 #[non_exhaustive]
