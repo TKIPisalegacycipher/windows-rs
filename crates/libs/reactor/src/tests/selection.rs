@@ -480,6 +480,41 @@ fn list_view_item_container_transitions_update_and_clear() {
 }
 
 #[test]
+fn list_view_resource_overrides_update_and_clear() {
+    let resources =
+        ResourceOverrides::new().set("ListViewItemBackgroundSelected", Color::transparent());
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(ListView::new().resource_overrides(resources.clone()))
+        .unwrap();
+    let list = runtime.graph().root().unwrap();
+    let set = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == list => Some(set),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(
+        &**set,
+        [Property {
+            id: PropertyId::Resources,
+            value: PropertyValue::ResourceOverrides(resources),
+        }]
+    );
+
+    let mutations = runtime.update(ListView::new()).unwrap();
+    let clear = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, clear, .. } if *object == list => Some(clear),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(&**clear, [PropertyId::Resources]);
+}
+
+#[test]
 fn list_view_selection_and_reorder_callbacks_replace_remove_and_reject_stale_events() {
     let first_selections = Rc::new(RefCell::new(Vec::new()));
     let first_selection = {

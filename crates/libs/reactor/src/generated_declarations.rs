@@ -3307,6 +3307,13 @@ impl ListView {
         );
         self
     }
+    pub fn resource_overrides(mut self, resource_overrides: ResourceOverrides) -> Self {
+        self.0 = self.0.property(
+            PropertyId::Resources,
+            PropertyValue::ResourceOverrides(resource_overrides),
+        );
+        self
+    }
     pub fn selected_index(mut self, selected_index: impl Into<Option<usize>>) -> Self {
         self.0 = self.0.property(
             PropertyId::SelectedIndex,

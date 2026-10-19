@@ -667,6 +667,10 @@ name = "ItemContainerTransitions"
 adapter = "item_container_transitions"
 
 [[objects.properties]]
+name = "Resources"
+adapter = "resource_overrides"
+
+[[objects.properties]]
 name = "SelectedIndex"
 adapter = "selection_index"
 controlled = "SelectionChanged"

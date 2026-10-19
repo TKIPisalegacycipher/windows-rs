@@ -1558,6 +1558,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::ThemeTransitions,
         }),
+        (ObjectType::ListView, PropertyId::Resources) => Some(PropertyContract {
+            id,
+            value: ValueType::ResourceOverrides,
+        }),
         (ObjectType::ListView, PropertyId::SelectedIndex) => Some(PropertyContract {
             id,
             value: ValueType::SelectionIndex,
@@ -2632,8 +2636,9 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::ListView, PropertyId::AllowDrop) => 32,
         (ObjectType::ListView, PropertyId::ItemMinHeight) => 33,
         (ObjectType::ListView, PropertyId::ItemContainerTransitions) => 34,
-        (ObjectType::ListView, PropertyId::SelectedIndex) => 35,
-        (ObjectType::ListView, PropertyId::IsEnabled) => 36,
+        (ObjectType::ListView, PropertyId::Resources) => 35,
+        (ObjectType::ListView, PropertyId::SelectedIndex) => 36,
+        (ObjectType::ListView, PropertyId::IsEnabled) => 37,
         (ObjectType::DataItem, PropertyId::Text) => 29,
         (ObjectType::DataItem, PropertyId::ContainerResources) => 30,
         (ObjectType::DataItem, PropertyId::AutomationId) => 31,

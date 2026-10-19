@@ -2404,6 +2404,7 @@ pub fn windows_reactor::ListView::relative_align_left(self) -> Self
 pub fn windows_reactor::ListView::relative_align_right(self) -> Self
 pub fn windows_reactor::ListView::relative_align_top(self) -> Self
 pub fn windows_reactor::ListView::relative_align_vertical_center(self) -> Self
+pub fn windows_reactor::ListView::resource_overrides(self, windows_reactor::ResourceOverrides) -> Self
 pub fn windows_reactor::ListView::selected_index(self, impl core::convert::Into<core::option::Option<usize>>) -> Self
 pub fn windows_reactor::ListView::selection_mode(self, windows_reactor::ListViewSelectionMode) -> Self
 pub fn windows_reactor::ListView::transitions<T>(self, T) -> Self where T: core::iter::traits::collect::IntoIterator<Item = windows_reactor::ThemeTransition>
