@@ -1841,6 +1841,8 @@ pub struct WinUiAdapter {
     pending_focus_states: Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
     tree_node_texts: Rc<RefCell<HashMap<usize, Rc<str>>>>,
     data_items: Rc<RefCell<HashMap<usize, ObjectId>>>,
+    /// The container each ListView item was last prepared in, by item identity.
+    list_hosts: Rc<RefCell<ListHosts<native::DependencyObject>>>,
     /// `DataItem`s whose content waits for a container (`Mutation::DeferContent`): the ListView
     /// asks for it as it prepares one for the item.
     deferred_content: Rc<RefCell<WaitingContent<ObjectId>>>,
@@ -1899,6 +1901,7 @@ impl Default for WinUiAdapter {
             pending_focus_states: Rc::new(RefCell::new(HashMap::new())),
             tree_node_texts: Rc::new(RefCell::new(HashMap::new())),
             data_items: Rc::new(RefCell::new(HashMap::new())),
+            list_hosts: Rc::new(RefCell::new(ListHosts::default())),
             deferred_content: Rc::new(RefCell::new(WaitingContent::default())),
             container_resources: Rc::new(RefCell::new(ContainerResources::default())),
             controlled_index_selectors: HashSet::new(),
@@ -2504,6 +2507,12 @@ impl<C: Clone + PartialEq> ListHosts<C> {
         self.hosts
             .insert(item, container.clone())
             .filter(|previous| previous != container)
+    }
+
+    /// Drops what is recorded for `item`, whose identity (an address) another item may reuse once
+    /// it is released, and which would otherwise keep its container alive.
+    fn forget(&mut self, item: usize) {
+        self.hosts.remove(&item);
     }
 }
 

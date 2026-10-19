@@ -1020,6 +1020,20 @@ fn list_hosts_return_the_container_an_item_leaves() {
 }
 
 #[test]
+fn list_hosts_forget_an_item_so_a_reused_identity_starts_clean() {
+    let mut hosts = ListHosts::<&str>::default();
+    assert_eq!(hosts.prepare(1, &"c1"), None);
+
+    // The item is released and a new one gets its address: it has no previous container to release.
+    hosts.forget(1);
+    assert_eq!(hosts.prepare(1, &"c2"), None);
+    assert_eq!(hosts.hosts.len(), 1);
+
+    // Forgetting an item that was never prepared is harmless.
+    hosts.forget(7);
+}
+
+#[test]
 fn a_list_container_shows_other_content_only_when_both_elements_are_known_and_differ() {
     assert!(shows_other_content(Some(1), Some(2)));
     assert!(!shows_other_content(Some(2), Some(2)));

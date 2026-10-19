@@ -218,8 +218,7 @@ impl WinUiAdapter {
                     let container_resources = Rc::clone(&self.container_resources);
                     let deferred_content = Rc::clone(&self.deferred_content);
                     let content_queue = Rc::clone(&self.event_queue);
-                    // The container each item was last prepared in, by item identity.
-                    let hosts = RefCell::new(ListHosts::<native::DependencyObject>::default());
+                    let hosts = Rc::clone(&self.list_hosts);
                     // The rows' bindings are applied by the next layout pass: see `ListSettle`.
                     let rows = Rc::new(RefCell::new(
                         ListRows::<native::DependencyObject>::default(),
@@ -791,7 +790,9 @@ impl WinUiAdapter {
                     .remove(&com_identity(&node.value)?);
             }
             Handle::Data(value) => {
-                self.data_items.borrow_mut().remove(&com_identity(&value)?);
+                let id = com_identity(&value)?;
+                self.data_items.borrow_mut().remove(&id);
+                self.list_hosts.borrow_mut().forget(id);
                 self.deferred_content.borrow_mut().end(object);
                 self.container_resources.borrow_mut().items.remove(&object);
             }
