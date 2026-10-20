@@ -633,6 +633,17 @@ impl WinUiAdapter {
             current.menu.clone_from(menu);
             return Ok(());
         }
+        // A context menu keeps its flyout and builds the new items as it next opens; open, it
+        // keeps the items it shows.
+        if let Some(menu) = menu
+            && let Some(current) = self.menus.get_mut(&target)
+            && let Some(lazy) = &current.lazy
+        {
+            lazy.borrow_mut().update(&menu.items, revision);
+            current.menu.clone_from(menu);
+            current.revision = revision;
+            return Ok(());
+        }
         let mut previous_context = None;
         if let Some(previous) = self.menus.remove(&target) {
             if let Some(flyout) = &previous.flyout {
@@ -674,6 +685,7 @@ impl WinUiAdapter {
         };
         let mut revokers = Vec::new();
         let mut context_flyout = None;
+        let mut lazy = None;
         let flyout = match host {
             MenuHost::Button => {
                 let flyout = native::MenuFlyout::new()?;
@@ -711,14 +723,25 @@ impl WinUiAdapter {
             }
             MenuHost::Context => {
                 let flyout = native::MenuFlyout::new()?;
-                build_menu_items(
-                    &menu.items,
-                    &flyout.Items()?,
-                    &mut revokers,
-                    &self.event_queue,
-                    target,
+                let state = Rc::new(RefCell::new(LazyMenu::new(
+                    Rc::clone(&menu.items),
                     revision,
-                )?;
+                )));
+                let (opening, queue) = (Rc::clone(&state), Rc::clone(&self.event_queue));
+                revokers.push(flyout.cast::<native::IFlyoutBase>()?.Opening(
+                    move |sender, _| {
+                        let Some(flyout) = sender
+                            .as_ref()
+                            .and_then(|s| s.cast::<native::MenuFlyout>().ok())
+                        else {
+                            return;
+                        };
+                        if let Err(error) = fill_lazy_menu(&flyout, &opening, &queue, target) {
+                            queue.errors.borrow_mut().push_back(error);
+                        }
+                    },
+                )?);
+                lazy = Some(state);
                 let element = self.ui_element(target)?;
                 context_flyout =
                     original_context_flyout(previous_context, || match element.ContextFlyout() {
@@ -737,6 +760,7 @@ impl WinUiAdapter {
                 revision,
                 flyout,
                 context_flyout,
+                lazy,
                 _revokers: revokers,
             },
         );

@@ -192,12 +192,96 @@ struct NativeContentDialogState {
     retained_handle: Option<GeneratedContentDialog>,
 }
 
+impl NativeMenu {
+    /// Whether a click on an item built at `revision` counts.
+    fn accepts(&self, revision: u64) -> bool {
+        match &self.lazy {
+            Some(lazy) => lazy.borrow().accepts(revision),
+            None => self.revision == revision,
+        }
+    }
+}
+
 struct NativeMenu {
     menu: Menu,
     revision: u64,
     flyout: Option<native::MenuFlyout>,
     context_flyout: Option<native::FlyoutBase>,
+    /// A context menu's items, built as it opens (`LazyMenu`).
+    lazy: Option<Rc<RefCell<LazyMenu>>>,
     _revokers: Vec<windows_core::EventRevoker>,
+}
+
+/// A context menu's items, built from the latest declaration as its flyout opens: the element
+/// keeps one flyout while its menu changes, and a menu nobody opens builds no items. A menu on
+/// every row of a long list then costs one empty flyout per realized row, and a row's menu can
+/// change (its row selected by the right-click that opened it) while it is open: the open items
+/// stay, and their clicks still count.
+struct LazyMenu {
+    items: Rc<Vec<MenuItem>>,
+    revision: u64,
+    /// The flyout holds `items` at `revision`.
+    built: bool,
+    /// The revision of the items the flyout holds, whose clicks count too.
+    shown: Option<u64>,
+    revokers: Vec<windows_core::EventRevoker>,
+}
+
+impl LazyMenu {
+    fn new(items: Rc<Vec<MenuItem>>, revision: u64) -> Self {
+        Self {
+            items,
+            revision,
+            built: false,
+            shown: None,
+            revokers: Vec::new(),
+        }
+    }
+
+    /// Whether a click on an item built at `revision` counts: the latest, or the one shown.
+    fn accepts(&self, revision: u64) -> bool {
+        self.revision == revision || self.shown == Some(revision)
+    }
+
+    /// A new declaration: built again as the flyout next opens.
+    fn update(&mut self, items: &Rc<Vec<MenuItem>>, revision: u64) {
+        self.items = Rc::clone(items);
+        self.revision = revision;
+        self.built = false;
+    }
+
+    /// Whether opening has to build the items.
+    fn needs_build(&self) -> bool {
+        !self.built
+    }
+}
+
+/// Fills `flyout` with `lazy`'s items as it opens, unless it holds them already.
+fn fill_lazy_menu(
+    flyout: &native::MenuFlyout,
+    lazy: &RefCell<LazyMenu>,
+    event_queue: &Rc<NativeEventQueue>,
+    target: ObjectId,
+) -> Result<(), WinUiError> {
+    let mut lazy = lazy.borrow_mut();
+    if !lazy.needs_build() {
+        return Ok(());
+    }
+    let output = flyout.Items()?;
+    output.Clear()?;
+    let mut revokers = Vec::new();
+    build_menu_items(
+        &lazy.items,
+        &output,
+        &mut revokers,
+        event_queue,
+        target,
+        lazy.revision,
+    )?;
+    lazy.revokers = revokers;
+    lazy.built = true;
+    lazy.shown = Some(lazy.revision);
+    Ok(())
 }
 
 struct NativeCommandBarFlyout {

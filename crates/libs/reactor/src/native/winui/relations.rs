@@ -1137,7 +1137,7 @@ impl WinUiAdapter {
         let event = queued.event.as_ref().and_then(|queued| {
             if queued.event == EventId::MenuItemInvoked {
                 let menu = self.menus.get(&queued.object)?;
-                return (menu.revision == queued.revision).then(|| {
+                return menu.accepts(queued.revision).then(|| {
                     EventDispatch::new(
                         queued.object,
                         queued.event,

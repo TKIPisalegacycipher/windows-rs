@@ -33,6 +33,7 @@ fn native_queue_preview_uses_current_callback_and_preserves_order() {
             revision: 1,
             flyout: None,
             context_flyout: None,
+            lazy: None,
             _revokers: Vec::new(),
         },
     );
@@ -925,6 +926,36 @@ fn menus_on_other_elements_become_context_flyouts() {
         assert_eq!(menu_host(kind), MenuHost::Context);
         assert_eq!(menu_placement(kind), None);
     }
+}
+
+#[test]
+fn context_menus_build_their_items_as_they_open_from_the_latest_menu() {
+    let first: Rc<Vec<MenuItem>> = Rc::new(vec![MenuItem::item("a", "A")]);
+    let second: Rc<Vec<MenuItem>> = Rc::new(vec![MenuItem::item("b", "B")]);
+    let mut lazy = LazyMenu::new(Rc::clone(&first), 1);
+    assert!(lazy.needs_build(), "nothing is built before it opens");
+    lazy.built = true;
+    assert!(!lazy.needs_build(), "a second opening keeps its items");
+    lazy.update(&second, 2);
+    assert!(
+        lazy.needs_build(),
+        "a new menu is built at the next opening"
+    );
+    assert!(Rc::ptr_eq(&lazy.items, &second));
+    assert_eq!(lazy.revision, 2, "its clicks carry the new revision");
+}
+
+#[test]
+fn an_open_context_menu_keeps_its_clicks_when_its_menu_changes() {
+    let items: Rc<Vec<MenuItem>> = Rc::new(vec![MenuItem::item("a", "A")]);
+    let mut lazy = LazyMenu::new(Rc::clone(&items), 1);
+    assert!(!lazy.accepts(0));
+    lazy.built = true;
+    lazy.shown = Some(1);
+    lazy.update(&items, 2);
+    assert!(lazy.accepts(1), "the items on screen still click");
+    assert!(lazy.accepts(2));
+    assert!(!lazy.accepts(3));
 }
 
 #[test]
