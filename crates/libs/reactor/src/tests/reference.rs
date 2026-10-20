@@ -129,6 +129,28 @@ fn navigation_view_reference_queues_menu_offset_and_observation() {
 }
 
 #[test]
+fn list_view_reference_queues_visible_range_observation() {
+    let reference = ElementRef::<ListView>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let _observation = reference.observe_visible_range(|_range| {});
+    runtime
+        .update(ListView::new().element_ref(&reference))
+        .unwrap();
+    let object = reference.get().unwrap();
+    runtime.dispatch_native_events().unwrap();
+    assert!(
+        runtime
+            .adapter()
+            .imperatives()
+            .iter()
+            .any(|request| matches!(
+                request,
+                ImperativeRequest::ObserveVisibleRange { object: o, .. } if *o == object
+            ))
+    );
+}
+
+#[test]
 fn navigation_view_menu_vertical_offset_must_be_finite() {
     assert!(
         std::panic::catch_unwind(|| {

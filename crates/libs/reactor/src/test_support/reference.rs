@@ -18,6 +18,7 @@ impl ImperativeRequest {
             | Self::ObserveImageScale { object, .. }
             | Self::ObserveCompositionHost { object, .. }
             | Self::ObserveMenuScroll { object, .. }
+            | Self::ObserveVisibleRange { object, .. }
             | Self::RevokeObservation { object, .. }
             | Self::SetCompositionChildVisual { object, .. }
             | Self::ChangeView { object, .. }

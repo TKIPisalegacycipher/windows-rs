@@ -692,6 +692,41 @@ impl Adapter for WinUiAdapter {
                     },
                 );
             }
+            ImperativeRequest::ObserveVisibleRange {
+                object,
+                observation,
+                callback,
+            } => {
+                let Some(Handle::ListView(control)) = self.handles.get(&object) else {
+                    return Ok(());
+                };
+                let root = control.value.cast::<native::DependencyObject>()?;
+                let framework = control.value.cast::<native::IFrameworkElement>()?;
+                let view = Rc::new(RefCell::new(None));
+                observe_visible_range(&root, &view, &callback)?;
+                // The template and the items panel may come later: retried when the list loads
+                // and when it resizes, until both are found.
+                let retry = {
+                    let view = Rc::clone(&view);
+                    let errors = Rc::clone(&self.event_queue);
+                    move || {
+                        if let Err(error) = observe_visible_range(&root, &view, &callback) {
+                            errors.errors.borrow_mut().push_back(error.into());
+                        }
+                    }
+                };
+                let on_loaded = retry.clone();
+                let loaded = framework.Loaded(move |_, _| on_loaded())?;
+                let size = framework.SizeChanged(move |_, _| retry())?;
+                self.observations.insert(
+                    (object, observation),
+                    ObservationSubscription::VisibleRange {
+                        _view: view,
+                        _loaded: loaded,
+                        _size: size,
+                    },
+                );
+            }
             ImperativeRequest::RevokeObservation {
                 object,
                 observation,

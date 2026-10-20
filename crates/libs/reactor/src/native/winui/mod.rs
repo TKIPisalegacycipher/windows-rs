@@ -1,4 +1,5 @@
 use super::bindings as native;
+use super::items_stack_panel::IItemsStackPanel;
 use super::*;
 use native::{INonVirtualizingLayoutOverrides, INonVirtualizingLayoutOverrides_Impl};
 
@@ -283,6 +284,17 @@ enum ObservationSubscription {
         _view: Rc<RefCell<Option<windows_core::EventRevoker>>>,
         _loaded: windows_core::EventRevoker,
     },
+    VisibleRange {
+        _view: Rc<RefCell<Option<VisibleRangeRevokers>>>,
+        _loaded: windows_core::EventRevoker,
+        _size: windows_core::EventRevoker,
+    },
+}
+
+/// What a list's visible-range observation holds once its scroller and items panel are found.
+struct VisibleRangeRevokers {
+    _view: windows_core::EventRevoker,
+    _panel_size: windows_core::EventRevoker,
 }
 
 struct WebViewInitialization {
@@ -1905,6 +1917,94 @@ fn observe_menu_scroll(
     Ok(())
 }
 
+/// The first ScrollViewer under `root` (a ListView's own, from its template).
+fn find_scroller(root: &native::DependencyObject) -> Option<native::ScrollViewer> {
+    let count = native::VisualTreeHelper::GetChildrenCount(root).ok()?;
+    for index in 0..count {
+        let child = native::VisualTreeHelper::GetChild(root, index).ok()?;
+        if let Ok(scroller) = child.cast::<native::ScrollViewer>() {
+            return Some(scroller);
+        }
+        if let Some(found) = find_scroller(&child) {
+            return Some(found);
+        }
+    }
+    None
+}
+
+/// The ItemsStackPanel under `root` (a ListView's items panel), as its element and its interface.
+fn find_items_stack_panel(
+    root: &native::DependencyObject,
+) -> Option<(native::DependencyObject, IItemsStackPanel)> {
+    let count = native::VisualTreeHelper::GetChildrenCount(root).ok()?;
+    for index in 0..count {
+        let child = native::VisualTreeHelper::GetChild(root, index).ok()?;
+        if let Ok(panel) = child.cast::<IItemsStackPanel>() {
+            return Some((child, panel));
+        }
+        if let Some(found) = find_items_stack_panel(&child) {
+            return Some(found);
+        }
+    }
+    None
+}
+
+/// The panel's first and last visible item indices; None while it shows no item (-1).
+fn visible_range(panel: &IItemsStackPanel) -> Option<(usize, usize)> {
+    let get = |f: unsafe extern "system" fn(*mut core::ffi::c_void, *mut i32) -> HRESULT| {
+        let mut value = -1;
+        // SAFETY: a getter of `panel`'s own vtable, given its pointer and an out slot.
+        unsafe { f(Interface::as_raw(panel), &mut value) }
+            .ok()
+            .ok()
+            .and_then(|()| usize::try_from(value).ok())
+    };
+    let vtable = Interface::vtable(panel);
+    Some((
+        get(vtable.FirstVisibleIndex)?,
+        get(vtable.LastVisibleIndex)?,
+    ))
+}
+
+/// Reports the list's visible range to `callback` now and after every scroll or resize of its
+/// items panel, once `root` has a scroller and an items panel. Does nothing while they are already
+/// observed or not there yet.
+fn observe_visible_range(
+    root: &native::DependencyObject,
+    view: &Rc<RefCell<Option<VisibleRangeRevokers>>>,
+    callback: &Callback<(usize, usize)>,
+) -> windows_core::Result<()> {
+    if view.borrow().is_some() {
+        return Ok(());
+    }
+    let (Some(scroller), Some((element, panel))) =
+        (find_scroller(root), find_items_stack_panel(root))
+    else {
+        return Ok(());
+    };
+    if let Some(range) = visible_range(&panel) {
+        callback.call(range);
+    }
+    let report = {
+        let callback = callback.clone();
+        move || {
+            if let Some(range) = visible_range(&panel) {
+                callback.call(range);
+            }
+        }
+    };
+    let on_view = report.clone();
+    let view_revoker = scroller.ViewChanged(move |_, _| on_view())?;
+    let panel_size = element
+        .cast::<native::IFrameworkElement>()?
+        .SizeChanged(move |_, _| report())?;
+    view.replace(Some(VisibleRangeRevokers {
+        _view: view_revoker,
+        _panel_size: panel_size,
+    }));
+    Ok(())
+}
+
 pub struct WinUiAdapter {
     handles: HashMap<ObjectId, Handle>,
     image_subscriptions: HashMap<ObjectId, ImageSubscription>,
@@ -2730,7 +2830,7 @@ impl ListSettle {
                 let result = set_list_container_connected(container, false)
                     .and_then(|()| set_list_container_connected(container, true));
                 if let Err(error) = result {
-                    report_error(error.into());
+                    report_error(error);
                 }
             }
             if stale.is_empty() || tick_attempts.get() >= SETTLE_ATTEMPTS {

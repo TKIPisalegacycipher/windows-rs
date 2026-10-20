@@ -351,6 +351,19 @@ impl ElementRef<NavigationView> {
     }
 }
 
+impl ElementRef<ListView> {
+    /// Observes which items of the currently published list are on screen: the callback gets the
+    /// first and last visible item indices (`ItemsStackPanel`'s) once the list has an items panel,
+    /// and after every scroll and every change of the panel's size (items added or removed).
+    #[must_use]
+    pub fn observe_visible_range(
+        &self,
+        callback: impl Fn((usize, usize)) + 'static,
+    ) -> ElementObservation {
+        self.observe(ReferenceObservation::VisibleRange(Callback::new(callback)))
+    }
+}
+
 impl ElementRef<Button> {
     /// Enqueues closing the flyout attached to the currently published button with `flyout_with`,
     /// such as after a command inside the flyout runs. Closing a flyout that is not open does
@@ -489,6 +502,7 @@ enum ReferenceObservation {
     ImageScale(Callback<f64>),
     CompositionHost(Callback<CompositionHostEvent>),
     MenuScroll(Callback<f64>),
+    VisibleRange(Callback<(usize, usize)>),
 }
 
 impl ObservationRegistration {
@@ -531,6 +545,18 @@ impl ObservationRegistration {
                     callback.clone(),
                 ),
             },
+            ReferenceObservation::VisibleRange(callback) => {
+                ImperativeRequest::ObserveVisibleRange {
+                    object: binding.object,
+                    observation: self.id,
+                    callback: current_observation(
+                        Rc::downgrade(target),
+                        binding.id,
+                        self.id,
+                        callback.clone(),
+                    ),
+                }
+            }
             ReferenceObservation::CompositionHost(callback) => {
                 ImperativeRequest::ObserveCompositionHost {
                     object: binding.object,
@@ -733,6 +759,11 @@ pub enum ImperativeRequest {
         observation: u64,
         callback: Callback<f64>,
     },
+    ObserveVisibleRange {
+        object: ObjectId,
+        observation: u64,
+        callback: Callback<(usize, usize)>,
+    },
     RevokeObservation {
         object: ObjectId,
         observation: u64,
@@ -774,6 +805,11 @@ impl ImperativeRequest {
                 ..
             }
             | Self::ObserveMenuScroll {
+                object,
+                observation,
+                ..
+            }
+            | Self::ObserveVisibleRange {
                 object,
                 observation,
                 ..

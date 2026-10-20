@@ -17,6 +17,7 @@ use windows_core::{
 )]
 #[cfg_attr(not(any(test, feature = "test")), allow(dead_code))]
 mod bindings;
+mod items_stack_panel;
 
 mod app;
 mod app_shim;

@@ -1513,6 +1513,7 @@ pub fn windows_reactor::ElementRef<windows_reactor::Image>::observe_rasterizatio
 pub fn windows_reactor::ElementRef<windows_reactor::Image>::request_set_native_source(&self, core::option::Option<windows_core::unknown::IUnknown>, impl core::ops::function::Fn(core::result::Result<(), windows_reactor::IntegrationError>) + 'static) -> bool
 impl windows_reactor::ElementRef<windows_reactor::NavigationView>
 pub fn windows_reactor::ElementRef<windows_reactor::NavigationView>::observe_menu_scroll(&self, impl core::ops::function::Fn(f64) + 'static) -> windows_reactor::ElementObservation
+pub fn windows_reactor::ElementRef<windows_reactor::ListView>::observe_visible_range(&self, impl core::ops::function::Fn((usize, usize)) + 'static) -> windows_reactor::ElementObservation
 pub fn windows_reactor::ElementRef<windows_reactor::NavigationView>::request_menu_vertical_offset(&self, f64) -> bool
 impl windows_reactor::ElementRef<windows_reactor::ScrollViewer>
 pub fn windows_reactor::ElementRef<windows_reactor::ScrollViewer>::request_vertical_offset(&self, f64) -> bool
@@ -2374,6 +2375,7 @@ pub fn windows_reactor::ListView::can_reorder_items(self, bool) -> Self
 pub fn windows_reactor::ListView::canvas_left(self, f64) -> Self
 pub fn windows_reactor::ListView::canvas_top(self, f64) -> Self
 pub fn windows_reactor::ListView::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
+pub fn windows_reactor::ListView::element_ref<R>(self, &R) -> Self where R: windows_reactor::CompatibleElementRef<windows_reactor::ListView>
 pub fn windows_reactor::ListView::exit_fade(self, core::time::Duration) -> Self
 pub fn windows_reactor::ListView::exit_transition(self, core::option::Option<windows_reactor::ExitTransition>) -> Self
 pub fn windows_reactor::ListView::grid_column(self, i32) -> Self
@@ -2414,6 +2416,7 @@ pub fn windows_reactor::ListView::width(self, f64) -> Self
 impl core::convert::From<windows_reactor::ListView> for windows_reactor::View
 pub fn windows_reactor::View::from(windows_reactor::ListView) -> Self
 impl core::default::Default for windows_reactor::ListView
+impl windows_reactor::ReferenceElement for windows_reactor::ListView
 pub fn windows_reactor::ListView::default() -> Self
 pub struct windows_reactor::ListViewItem(_)
 impl windows_reactor::ListViewItem

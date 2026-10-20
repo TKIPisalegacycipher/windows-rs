@@ -3255,11 +3255,14 @@ impl TreeNode {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct ListView(Declaration);
+impl Sealed for ListView {}
+impl ReferenceElement for ListView {}
 impl ListView {
     pub fn new() -> Self {
         let declaration = Declaration::new(ObjectType::ListView);
         Self(declaration)
     }
+    reference_methods!(ListView);
     pub fn selection_mode(mut self, selection_mode: ListViewSelectionMode) -> Self {
         self.0 = self
             .0
