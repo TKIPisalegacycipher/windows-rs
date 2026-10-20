@@ -2471,6 +2471,7 @@ pub fn windows_reactor::LocalSender<M>::clone(&self) -> Self
 pub struct windows_reactor::Menu
 impl windows_reactor::Menu
 pub fn windows_reactor::Menu::new(impl core::iter::traits::collect::IntoIterator<Item = windows_reactor::MenuItem>, impl windows_reactor::IntoPayloadCallback<windows_reactor::Key>) -> Self
+pub fn windows_reactor::Menu::on_opening(self, impl windows_reactor::IntoUnitCallback) -> Self
 pub struct windows_reactor::MenuBar(_)
 impl windows_reactor::MenuBar
 pub fn windows_reactor::MenuBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self

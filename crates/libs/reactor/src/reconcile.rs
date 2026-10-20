@@ -926,6 +926,20 @@ impl RetainedGraph {
                     if callback == &menu.menu.on_click
             ));
         }
+        if dispatch.event == EventId::MenuOpening {
+            let Some(menu) = object
+                .attachments
+                .as_ref()
+                .and_then(|attachments| attachments.menu.as_ref())
+            else {
+                return Ok(false);
+            };
+            return Ok(matches!(
+                (&dispatch.callback, &dispatch.payload),
+                (EventValue::Unit(callback), EventPayload::Unit)
+                    if menu.menu.on_opening.as_ref() == Some(callback)
+            ));
+        }
         if dispatch.event == EventId::CommandInvoked {
             let Some(flyout) = object
                 .attachments

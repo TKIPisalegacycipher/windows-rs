@@ -321,6 +321,7 @@ pub enum EventId {
     KeyUp,
     LostFocus,
     MenuItemInvoked,
+    MenuOpening,
     PaneClosed,
     PaneToggleRequested,
     PasswordChanged,

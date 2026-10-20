@@ -700,6 +700,12 @@ impl WinUiAdapter {
                 if let Some(placement) = menu_placement(kind) {
                     flyout.cast::<native::IFlyoutBase>()?.SetPlacement(placement)?;
                 }
+                let queue = Rc::clone(&self.event_queue);
+                revokers.push(
+                    flyout
+                        .cast::<native::IFlyoutBase>()?
+                        .Opening(move |_, _| queue_menu_opening(&queue, target))?,
+                );
                 self.ui_element(target)?
                     .cast::<native::IButton>()?
                     .SetFlyout(&flyout)?;
@@ -739,6 +745,7 @@ impl WinUiAdapter {
                         if let Err(error) = fill_lazy_menu(&flyout, &opening, &queue, target) {
                             queue.errors.borrow_mut().push_back(error);
                         }
+                        queue_menu_opening(&queue, target);
                     },
                 )?);
                 lazy = Some(state);

@@ -2957,6 +2957,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
     }
     events.insert("MenuItemInvoked", "String");
     events.insert("CommandInvoked", "String");
+    events.insert("MenuOpening", "Unit");
     for object in &schema.objects {
         for property in &object.properties {
             properties

@@ -101,6 +101,53 @@ fn native_queue_preview_uses_current_callback_and_preserves_order() {
 }
 
 #[test]
+fn menu_opening_resolves_to_the_current_on_opening_whatever_the_revision() {
+    let object = ObjectId::test(1);
+    let opening = Callback::new(|()| panic!("resolution must not invoke callbacks"));
+    let mut adapter = WinUiAdapter::default();
+    adapter.menus.insert(
+        object,
+        NativeMenu {
+            menu: Menu::new([], |_: Key| {}),
+            revision: 3,
+            flyout: None,
+            context_flyout: None,
+            lazy: None,
+            _revokers: Vec::new(),
+        },
+    );
+    queue_menu_opening(&adapter.event_queue, object);
+    assert_eq!(
+        adapter.pop_native_event(),
+        Some(NativeEvent::new(None, None)),
+        "no on_opening, nothing to call"
+    );
+
+    adapter.menus.get_mut(&object).unwrap().menu.on_opening = Some(opening.clone());
+    queue_menu_opening(&adapter.event_queue, object);
+    assert_eq!(
+        adapter.pop_native_event(),
+        Some(NativeEvent::new(
+            None,
+            Some(EventDispatch::new(
+                object,
+                EventId::MenuOpening,
+                EventValue::Unit(opening),
+                EventPayload::Unit,
+            )),
+        ))
+    );
+
+    adapter.menus.remove(&object);
+    queue_menu_opening(&adapter.event_queue, object);
+    assert_eq!(
+        adapter.pop_native_event(),
+        Some(NativeEvent::new(None, None)),
+        "the menu went"
+    );
+}
+
+#[test]
 fn placement_coordinates_round_trip_negative_monitors_and_taskbar_offsets() {
     let screen = native::RECT {
         left: -1600,

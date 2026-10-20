@@ -146,6 +146,24 @@ impl RecordingAdapter {
         ));
     }
 
+    /// Opens `target`'s menu, as WinUI's `FlyoutBase::Opening` does.
+    pub fn queue_menu_opening(&mut self, target: ObjectId) {
+        let callback = self
+            .menus
+            .get(&target)
+            .unwrap()
+            .0
+            .on_opening
+            .clone()
+            .unwrap();
+        self.queue_event(EventDispatch::new(
+            target,
+            EventId::MenuOpening,
+            EventValue::Unit(callback),
+            EventPayload::Unit,
+        ));
+    }
+
     pub fn command_bar_flyout(&self, target: ObjectId) -> Option<&CommandBarFlyout> {
         self.command_bar_flyouts
             .get(&target)

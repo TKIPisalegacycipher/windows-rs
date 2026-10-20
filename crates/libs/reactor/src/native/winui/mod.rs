@@ -284,6 +284,21 @@ fn fill_lazy_menu(
     Ok(())
 }
 
+/// Tells `target`'s menu that its flyout is opening (`Menu::on_opening`). The menu's current
+/// callback answers, whatever revision its items carry: it is the flyout itself that opens.
+fn queue_menu_opening(event_queue: &Rc<NativeEventQueue>, target: ObjectId) {
+    event_queue.queue(
+        None,
+        Some(QueuedEvent {
+            object: target,
+            event: EventId::MenuOpening,
+            revision: 0,
+            payload: EventPayload::Unit,
+        }),
+    );
+    WinUiAdapter::schedule_event_wake(event_queue);
+}
+
 struct NativeCommandBarFlyout {
     flyout: CommandBarFlyout,
     revision: u64,

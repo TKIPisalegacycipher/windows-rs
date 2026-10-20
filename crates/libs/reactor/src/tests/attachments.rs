@@ -308,6 +308,29 @@ fn flyout_target_replacement_detaches_before_replace_and_reattaches() {
 }
 
 #[test]
+fn menu_opening_reaches_the_current_callback() {
+    let opened = Rc::new(RefCell::new(Vec::new()));
+    let menu = |name: &'static str| {
+        let capture = Rc::clone(&opened);
+        Menu::new([MenuItem::item("new", "New")], |_: Key| {})
+            .on_opening(move || capture.borrow_mut().push(name))
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(Border::new().menu(menu("first"))).unwrap();
+    let target = runtime.graph().root().unwrap();
+
+    runtime.adapter_mut().queue_menu_opening(target);
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(&*opened.borrow(), &["first"]);
+
+    // A new callback with the same items answers the next opening.
+    runtime.update(Border::new().menu(menu("second"))).unwrap();
+    runtime.adapter_mut().queue_menu_opening(target);
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(&*opened.borrow(), &["first", "second"]);
+}
+
+#[test]
 fn menu_attachment_routes_nested_keys_and_suppresses_stale_clicks() {
     let clicked = Rc::new(RefCell::new(Vec::new()));
     let capture = Rc::clone(&clicked);

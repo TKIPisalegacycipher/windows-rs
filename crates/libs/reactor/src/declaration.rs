@@ -1051,6 +1051,7 @@ impl MenuItem {
 pub struct Menu {
     pub(crate) items: Rc<Vec<MenuItem>>,
     pub(crate) on_click: Callback<Key>,
+    pub(crate) on_opening: Option<Callback<()>>,
 }
 
 impl Menu {
@@ -1065,7 +1066,17 @@ impl Menu {
         Self {
             items: Rc::new(items.into_iter().collect()),
             on_click: on_click.into_payload_callback(),
+            on_opening: None,
         }
+    }
+
+    /// Calls `on_opening` each time the menu opens, before any of its items can be clicked.
+    /// A right-click that changes what the menu acts on (selects the row it is on, say) can do
+    /// it here rather than on the pointer's release: WinUI raises the context request after the
+    /// release, and a selection that lands first moves focus and cancels it.
+    pub fn on_opening(mut self, on_opening: impl IntoUnitCallback) -> Self {
+        self.on_opening = Some(on_opening.into_unit_callback());
+        self
     }
 }
 
