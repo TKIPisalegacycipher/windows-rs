@@ -643,6 +643,7 @@ item = "TreeNode"
 [[objects]]
 name = "ListView"
 enabled = true
+reference = true
 handwritten = true
 
 [[objects.properties]]

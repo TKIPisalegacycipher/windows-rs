@@ -3262,7 +3262,6 @@ impl ListView {
         let declaration = Declaration::new(ObjectType::ListView);
         Self(declaration)
     }
-    reference_methods!(ListView);
     pub fn selection_mode(mut self, selection_mode: ListViewSelectionMode) -> Self {
         self.0 = self
             .0
@@ -3325,6 +3324,7 @@ impl ListView {
         self
     }
     enabled_methods!();
+    reference_methods!(ListView);
     visual_methods!();
     /// Rejects values outside this relation's generated type contract.
     ///
