@@ -449,6 +449,13 @@ impl WinUiAdapter {
 
     /// Returns the event payload and, if `release_capture` is set, the pointer to release once the
     /// event is queued.
+    ///
+    /// `plain_presses` (`Border::handles_plain_presses`, on a press or a release only;
+    /// `plain_press_action`): a plain press (`is_plain_press`) is marked handled and captures the
+    /// pointer, and the release of a pointer the element holds is marked handled and lets it go. Marking it here, in the
+    /// element's own handler, keeps the event for the element's callback while its ancestors
+    /// don't see it.
+    #[allow(clippy::too_many_arguments)]
     fn pointer_event_info(
         object: ObjectId,
         element: &native::UIElement,
@@ -456,6 +463,7 @@ impl WinUiAdapter {
         capture_on_press: Option<bool>,
         release_capture: bool,
         focus_on_release: bool,
+        plain_presses: bool,
         pending_focus_states: &Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
     ) -> Result<(PointerEventInfo, Option<native::Pointer>), WinUiError> {
         let args = args.unwrap();
@@ -465,68 +473,65 @@ impl WinUiAdapter {
         let window_position = window.Position()?;
         let properties = local.Properties()?;
         let pointer = args.Pointer()?;
-        let capture_succeeded = if capture_on_press == Some(true) {
-            Some(element.CapturePointer(&pointer)?)
+        let modifiers = Self::input_modifiers_from_virtual_keys(args.KeyModifiers()?);
+        // Everything that can fail is read before the event is marked handled: an error after
+        // that would drop the callback of a press the ancestors no longer see.
+        let pointer_id = local.PointerId()?;
+        let is_left_button_pressed = properties.IsLeftButtonPressed()?;
+        let is_right_button_pressed = properties.IsRightButtonPressed()?;
+        let is_middle_button_pressed = properties.IsMiddleButtonPressed()?;
+        let pressed = capture_on_press.is_some();
+        let plain = plain_presses
+            && pressed
+            && is_plain_press(
+                is_left_button_pressed,
+                is_right_button_pressed || is_middle_button_pressed,
+                modifiers,
+            );
+        let is_captured_now = || {
+            let mut capture_index = 0;
+            element
+                .PointerCaptures()
+                .ok()
+                .and_then(|captures| captures.IndexOf(&pointer, &mut capture_index).ok())
+                .unwrap_or(false)
+        };
+        let action = if plain_presses {
+            plain_press_action(pressed, plain, !pressed && is_captured_now())
+        } else {
+            PlainPress::RouteOn
+        };
+        let mut release_capture = release_capture;
+        if action != PlainPress::RouteOn {
+            args.SetHandled(true)?;
+        }
+        let handled = action != PlainPress::RouteOn;
+        let capture_succeeded = if capture_on_press == Some(true) || action == PlainPress::Take {
+            match element.CapturePointer(&pointer) {
+                Ok(captured) => Some(captured),
+                // A handled press still reaches the callback, reporting the capture failed.
+                Err(error) if handled => {
+                    report_error(error);
+                    Some(false)
+                }
+                Err(error) => return Err(error.into()),
+            }
         } else {
             capture_on_press.map(|_| false)
         };
-        let mut capture_index = 0;
-        let is_captured = element
-            .PointerCaptures()
-            .ok()
-            .and_then(|captures| captures.IndexOf(&pointer, &mut capture_index).ok())
-            .unwrap_or(false);
+        if action == PlainPress::Take {
+            Self::focus_item_around(element);
+        }
+        if action == PlainPress::TakeRelease {
+            release_capture = true;
+        }
+        let is_captured = is_captured_now();
 
         if focus_on_release {
-            let element = element.clone();
-            let pending_focus_states = Rc::clone(pending_focus_states);
-            let handler = native::DispatcherQueueHandler::new(move || {
-                pending_focus_states
-                    .borrow_mut()
-                    .insert(object, ElementFocusState::Pointer);
-                match element.Focus(native::FocusState::Pointer) {
-                    Ok(true) => {
-                        let cleanup_states = Rc::clone(&pending_focus_states);
-                        let cleanup = native::DispatcherQueueHandler::new(move || {
-                            cleanup_states.borrow_mut().remove(&object);
-                        });
-                        match native::DispatcherQueue::GetForCurrentThread().and_then(|queue| {
-                            queue.TryEnqueueWithPriority(
-                                native::DispatcherQueuePriority::Low,
-                                &cleanup,
-                            )
-                        }) {
-                            Ok(true) => {}
-                            Ok(false) => {
-                                pending_focus_states.borrow_mut().remove(&object);
-                                report_error(windows_core::Error::new(
-                                    native::E_FAIL,
-                                    "dispatcher rejected pointer focus cleanup",
-                                ));
-                            }
-                            Err(error) => {
-                                pending_focus_states.borrow_mut().remove(&object);
-                                report_error(error);
-                            }
-                        }
-                    }
-                    Ok(false) => {
-                        pending_focus_states.borrow_mut().remove(&object);
-                    }
-                    Err(error) => {
-                        pending_focus_states.borrow_mut().remove(&object);
-                        report_error(error);
-                    }
-                }
-            });
-            let accepted = native::DispatcherQueue::GetForCurrentThread()?
-                .TryEnqueueWithPriority(native::DispatcherQueuePriority::Normal, &handler)?;
-            if !accepted {
-                return Err(windows_core::Error::new(
-                    native::E_FAIL,
-                    "dispatcher rejected pointer focus",
-                )
-                .into());
+            match Self::queue_pointer_focus(object, element, pending_focus_states) {
+                Err(error) if handled => report_error(error.into()),
+                Err(error) => return Err(error),
+                Ok(()) => {}
             }
         }
         let framework_element = element.cast::<native::IFrameworkElement>().ok();
@@ -543,15 +548,94 @@ impl WinUiAdapter {
             window_y: f64::from(window_position.y),
             width: size(native::IFrameworkElement::ActualWidth),
             height: size(native::IFrameworkElement::ActualHeight),
-            pointer_id: local.PointerId()?,
-            modifiers: Self::input_modifiers_from_virtual_keys(args.KeyModifiers()?),
+            pointer_id,
+            modifiers,
             capture_succeeded,
             is_captured,
-            is_left_button_pressed: properties.IsLeftButtonPressed()?,
-            is_right_button_pressed: properties.IsRightButtonPressed()?,
-            is_middle_button_pressed: properties.IsMiddleButtonPressed()?,
+            is_left_button_pressed,
+            is_right_button_pressed,
+            is_middle_button_pressed,
         };
         Ok((info, release_capture.then_some(pointer)))
+    }
+
+    /// Moves pointer focus to `element` once the event is through, as `focus_on_pointer_release`.
+    fn queue_pointer_focus(
+        object: ObjectId,
+        element: &native::UIElement,
+        pending_focus_states: &Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
+    ) -> Result<(), WinUiError> {
+        let element = element.clone();
+        let pending_focus_states = Rc::clone(pending_focus_states);
+        let handler = native::DispatcherQueueHandler::new(move || {
+            pending_focus_states
+                .borrow_mut()
+                .insert(object, ElementFocusState::Pointer);
+            match element.Focus(native::FocusState::Pointer) {
+                Ok(true) => {
+                    let cleanup_states = Rc::clone(&pending_focus_states);
+                    let cleanup = native::DispatcherQueueHandler::new(move || {
+                        cleanup_states.borrow_mut().remove(&object);
+                    });
+                    match native::DispatcherQueue::GetForCurrentThread().and_then(|queue| {
+                        queue.TryEnqueueWithPriority(native::DispatcherQueuePriority::Low, &cleanup)
+                    }) {
+                        Ok(true) => {}
+                        Ok(false) => {
+                            pending_focus_states.borrow_mut().remove(&object);
+                            report_error(windows_core::Error::new(
+                                native::E_FAIL,
+                                "dispatcher rejected pointer focus cleanup",
+                            ));
+                        }
+                        Err(error) => {
+                            pending_focus_states.borrow_mut().remove(&object);
+                            report_error(error);
+                        }
+                    }
+                }
+                Ok(false) => {
+                    pending_focus_states.borrow_mut().remove(&object);
+                }
+                Err(error) => {
+                    pending_focus_states.borrow_mut().remove(&object);
+                    report_error(error);
+                }
+            }
+        });
+        let accepted = native::DispatcherQueue::GetForCurrentThread()?
+            .TryEnqueueWithPriority(native::DispatcherQueuePriority::Normal, &handler)?;
+        if !accepted {
+            return Err(windows_core::Error::new(
+                native::E_FAIL,
+                "dispatcher rejected pointer focus",
+            )
+            .into());
+        }
+        Ok(())
+    }
+
+    /// Gives pointer focus to the list item (`SelectorItem`) around `element`, if any, as the
+    /// press a Border with `handles_plain_presses` took would have: the item keeps the keyboard
+    /// focus a click on it leaves, and a flyout the press opens hands focus back to it (not to an
+    /// element elsewhere in the list, which would scroll there). Focus doesn't select.
+    fn focus_item_around(element: &native::UIElement) {
+        let mut node = element.cast::<native::DependencyObject>().ok();
+        for _ in 0..64 {
+            let Some(parent) = node.and_then(|n| native::VisualTreeHelper::GetParent(&n).ok())
+            else {
+                return;
+            };
+            if let Ok(item) = parent.cast::<native::SelectorItem>() {
+                if let Ok(item) = item.cast::<native::UIElement>()
+                    && let Err(error) = item.Focus(native::FocusState::Pointer)
+                {
+                    report_error(error);
+                }
+                return;
+            }
+            node = Some(parent);
+        }
     }
 
     /// Queues `PointerReleased` before releasing the capture. `ReleasePointerCapture` raises
@@ -838,5 +922,36 @@ impl WinUiAdapter {
         value.value.SetSelectionStart(selection_start)?;
         value.value.SetSelectionLength(selection_length)?;
         Ok(())
+    }
+}
+
+/// Whether a press is plain: the left button (or a touch or pen contact) with no other button
+/// down, and neither Ctrl nor Shift held, the keys a list's selection reads. Alt and Windows don't
+/// count.
+pub(super) fn is_plain_press(left: bool, other_button: bool, modifiers: InputModifiers) -> bool {
+    left && !other_button
+        && !modifiers.contains(InputModifiers::CONTROL)
+        && !modifiers.contains(InputModifiers::SHIFT)
+}
+
+/// What a Border with `handles_plain_presses` does with a pointer press or release.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum PlainPress {
+    /// The event routes on to the Border's ancestors (a ListViewItem selects with it).
+    RouteOn,
+    /// A plain press: marked handled, and the Border captures its pointer until the release.
+    Take,
+    /// The release of a pointer the Border holds: marked handled, and its capture let go.
+    TakeRelease,
+}
+
+/// What a Border with `handles_plain_presses` does with a press (`pressed`, `plain` per
+/// `is_plain_press`) or a release (`captured`: the Border holds its pointer, so it took the press).
+/// A release the Border doesn't hold routes on: its press did too, or the capture was lost.
+pub(super) fn plain_press_action(pressed: bool, plain: bool, captured: bool) -> PlainPress {
+    match (pressed, plain, captured) {
+        (true, true, _) => PlainPress::Take,
+        (false, _, true) => PlainPress::TakeRelease,
+        _ => PlainPress::RouteOn,
     }
 }

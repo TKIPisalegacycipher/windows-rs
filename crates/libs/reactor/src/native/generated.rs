@@ -216,6 +216,7 @@ struct GeneratedBorder {
     value: native::Border,
     capture_pointer_on_press: Rc<Cell<bool>>,
     focus_on_pointer_release: Rc<Cell<bool>>,
+    handles_plain_presses: Rc<Cell<bool>>,
     drop_policy: Rc<RefCell<Option<Rc<DragDropPolicy>>>>,
     pointer_pressed: Rc<RefCell<NativePointerEventInfoEvent>>,
     _pointer_pressed: Option<GeneratedRevoker>,
@@ -781,6 +782,7 @@ impl GeneratedHandle {
                 let value = native::Border::new()?;
                 let capture_pointer_on_press = Rc::new(Cell::new(false));
                 let focus_on_pointer_release = Rc::new(Cell::new(false));
+                let handles_plain_presses = Rc::new(Cell::new(false));
                 let drop_policy = Rc::new(RefCell::new(None));
                 let pointer_pressed = Rc::new(RefCell::new(NativePointerEventInfoEvent::default()));
                 let _pointer_pressed = None;
@@ -820,6 +822,7 @@ impl GeneratedHandle {
                     value,
                     capture_pointer_on_press,
                     focus_on_pointer_release,
+                    handles_plain_presses,
                     drop_policy,
                     pointer_pressed,
                     _pointer_pressed,
@@ -4605,6 +4608,18 @@ impl GeneratedHandle {
                 Some(PropertyValue::Bool(value)),
             ) => {
                 object.focus_on_pointer_release.set(*value);
+                Some(Ok(()))
+            }
+            (Self::Border(object), PropertyId::HandlesPlainPresses, None) => {
+                object.handles_plain_presses.set(false);
+                Some(Ok(()))
+            }
+            (
+                Self::Border(object),
+                PropertyId::HandlesPlainPresses,
+                Some(PropertyValue::Bool(value)),
+            ) => {
+                object.handles_plain_presses.set(*value);
                 Some(Ok(()))
             }
             (Self::Border(object), PropertyId::DropPolicy, None) => {
@@ -9966,6 +9981,10 @@ impl GeneratedHandle {
             (Self::Border(object), PropertyId::FocusOnPointerRelease) => {
                 object.subscribe_pointer_released(object_id, context)?;
             }
+            (Self::Border(object), PropertyId::HandlesPlainPresses) => {
+                object.subscribe_pointer_pressed(object_id, context)?;
+                object.subscribe_pointer_released(object_id, context)?;
+            }
             (Self::Border(object), PropertyId::DropPolicy) => {
                 object.subscribe_drag_enter(object_id, context)?;
                 object.subscribe_drag_over(object_id, context)?;
@@ -10956,6 +10975,7 @@ impl GeneratedBorder {
         let source_pointer_pressed = value.cast::<native::UIElement>()?;
         let pending_focus_states_pointer_pressed = Rc::clone(context.pending_focus_states);
         let capture_pointer_on_press_pointer_pressed = Rc::clone(&self.capture_pointer_on_press);
+        let handles_plain_presses_pointer_pressed = Rc::clone(&self.handles_plain_presses);
         let revoker = value
             .cast::<native::IUIElement>()?
             .PointerPressed(move |_, args| {
@@ -10968,6 +10988,7 @@ impl GeneratedBorder {
                     Some(capture_pointer_on_press_pointer_pressed.get()),
                     false,
                     false,
+                    handles_plain_presses_pointer_pressed.get(),
                     &pending_focus_states_pointer_pressed,
                 ) {
                     Ok(value) => value,
@@ -11013,6 +11034,7 @@ impl GeneratedBorder {
                     &source_pointer_moved,
                     args,
                     None,
+                    false,
                     false,
                     false,
                     &pending_focus_states_pointer_moved,
@@ -11062,6 +11084,7 @@ impl GeneratedBorder {
                     None,
                     false,
                     false,
+                    false,
                     &pending_focus_states_pointer_entered,
                 ) {
                     Ok(value) => value,
@@ -11109,6 +11132,7 @@ impl GeneratedBorder {
                     None,
                     false,
                     false,
+                    false,
                     &pending_focus_states_pointer_exited,
                 ) {
                     Ok(value) => value,
@@ -11146,6 +11170,7 @@ impl GeneratedBorder {
         let pending_focus_states_pointer_released = Rc::clone(context.pending_focus_states);
         let capture_pointer_on_press_pointer_released = Rc::clone(&self.capture_pointer_on_press);
         let focus_on_pointer_release_pointer_released = Rc::clone(&self.focus_on_pointer_release);
+        let handles_plain_presses_pointer_released = Rc::clone(&self.handles_plain_presses);
         let revoker = value
             .cast::<native::IUIElement>()?
             .PointerReleased(move |_, args| {
@@ -11158,6 +11183,7 @@ impl GeneratedBorder {
                     None,
                     capture_pointer_on_press_pointer_released.get(),
                     focus_on_pointer_release_pointer_released.get(),
+                    handles_plain_presses_pointer_released.get(),
                     &pending_focus_states_pointer_released,
                 ) {
                     Ok(value) => value,

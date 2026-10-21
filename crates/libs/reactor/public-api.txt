@@ -808,6 +808,7 @@ pub fn windows_reactor::Border::grid_column(self, i32) -> Self
 pub fn windows_reactor::Border::grid_column_span(self, i32) -> Self
 pub fn windows_reactor::Border::grid_row(self, i32) -> Self
 pub fn windows_reactor::Border::grid_row_span(self, i32) -> Self
+pub fn windows_reactor::Border::handles_plain_presses(self, bool) -> Self
 pub fn windows_reactor::Border::height(self, f64) -> Self
 pub fn windows_reactor::Border::horizontal_alignment(self, windows_reactor::HorizontalAlignment) -> Self
 pub fn windows_reactor::Border::is_hit_test_visible(self, bool) -> Self

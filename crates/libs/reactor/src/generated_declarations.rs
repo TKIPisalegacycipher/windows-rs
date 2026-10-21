@@ -2513,6 +2513,13 @@ impl Border {
         );
         self
     }
+    pub fn handles_plain_presses(mut self, handles_plain_presses: bool) -> Self {
+        self.0 = self.0.property(
+            PropertyId::HandlesPlainPresses,
+            PropertyValue::Bool(handles_plain_presses),
+        );
+        self
+    }
     pub fn drop_policy(mut self, drop_policy: DragDropPolicy) -> Self {
         self.0 = self.0.property(
             PropertyId::DropPolicy,

@@ -960,6 +960,68 @@ fn button_menus_open_below_the_button() {
 }
 
 #[test]
+fn a_plain_press_is_a_left_one_without_ctrl_or_shift() {
+    type M = InputModifiers;
+    assert!(is_plain_press(true, false, M::NONE));
+    assert!(is_plain_press(true, false, M::ALT), "Alt doesn't select");
+    assert!(is_plain_press(true, false, M::WINDOWS));
+    for selecting in [
+        M::CONTROL,
+        M::SHIFT,
+        M::CONTROL | M::SHIFT,
+        M::CONTROL | M::ALT,
+    ] {
+        assert!(!is_plain_press(true, false, selecting), "{selecting:?}");
+    }
+    assert!(
+        !is_plain_press(false, true, M::NONE),
+        "a right or middle press"
+    );
+    assert!(
+        !is_plain_press(true, true, M::NONE),
+        "left with another button"
+    );
+    assert!(!is_plain_press(false, false, M::NONE));
+}
+
+#[test]
+fn a_plain_press_is_taken_and_so_is_the_release_of_the_pointer_it_captured() {
+    use PlainPress::{RouteOn, Take, TakeRelease};
+    assert_eq!(plain_press_action(true, true, false), Take);
+    assert_eq!(
+        plain_press_action(true, true, true),
+        Take,
+        "already captured"
+    );
+    assert_eq!(
+        plain_press_action(true, false, false),
+        RouteOn,
+        "a Ctrl/Shift or right press reaches the list item"
+    );
+    assert_eq!(
+        plain_press_action(true, false, true),
+        RouteOn,
+        "a press that isn't plain routes on whatever holds the pointer"
+    );
+    assert_eq!(plain_press_action(false, false, true), TakeRelease);
+    assert_eq!(
+        plain_press_action(false, true, true),
+        TakeRelease,
+        "a release's buttons don't matter"
+    );
+    assert_eq!(
+        plain_press_action(false, false, false),
+        RouteOn,
+        "the release of a press the list item took"
+    );
+    assert_eq!(
+        plain_press_action(false, true, false),
+        RouteOn,
+        "capture lost before the release"
+    );
+}
+
+#[test]
 fn menus_on_other_elements_become_context_flyouts() {
     for kind in [ObjectType::Button, ObjectType::DropDownButton] {
         assert_eq!(menu_host(kind), MenuHost::Button);
