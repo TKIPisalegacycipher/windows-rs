@@ -375,6 +375,42 @@ impl ElementRef<Button> {
     }
 }
 
+impl ElementRef<Border> {
+    /// Enqueues opening the flyout attached to the currently published border with
+    /// `flyout_with`, at its placement around the border. A Border has no click of its own, so
+    /// its flyout opens only on this request (the app decides what a click on it is). While the
+    /// flyout is open, a press on the border still reaches it (WinUI's
+    /// `OverlayInputPassThroughElement`), so the app sees a double click's second press. Opening
+    /// an open flyout does nothing; without a flyout the request is dropped.
+    #[must_use]
+    pub fn request_show_flyout(&self) -> bool {
+        self.enqueue(|object, _, _| ImperativeRequest::ShowFlyout {
+            object,
+            on_closed: None,
+        })
+    }
+
+    /// As `request_show_flyout`, and `on_closed` is called when this opening's flyout closes, from
+    /// any cause (light dismiss, `request_hide_flyout`, Esc). It replaces the callback of an
+    /// earlier request, also when this request finds the flyout already open (the flyout stays
+    /// as it is), and is dropped with the flyout.
+    #[must_use]
+    pub fn request_show_flyout_then(&self, on_closed: impl Fn(()) + 'static) -> bool {
+        let on_closed = Callback::new(on_closed);
+        self.enqueue(move |object, _, _| ImperativeRequest::ShowFlyout {
+            object,
+            on_closed: Some(on_closed),
+        })
+    }
+
+    /// Enqueues closing the flyout attached to the currently published border with
+    /// `flyout_with`. Closing a flyout that is not open does nothing.
+    #[must_use]
+    pub fn request_hide_flyout(&self) -> bool {
+        self.enqueue(|object, _, _| ImperativeRequest::HideFlyout { object })
+    }
+}
+
 impl ElementRef<Grid> {
     #[must_use]
     pub fn observe_composition_host(
@@ -783,6 +819,10 @@ pub enum ImperativeRequest {
     },
     HideFlyout {
         object: ObjectId,
+    },
+    ShowFlyout {
+        object: ObjectId,
+        on_closed: Option<Callback<()>>,
     },
 }
 

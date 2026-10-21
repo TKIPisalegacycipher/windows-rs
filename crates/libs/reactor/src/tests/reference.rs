@@ -191,6 +191,76 @@ fn button_reference_queues_flyout_hide() {
 }
 
 #[test]
+fn border_reference_queues_flyout_show_and_hide() {
+    let reference = ElementRef::<Border>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    assert!(!reference.request_show_flyout());
+    assert!(!reference.request_hide_flyout());
+
+    let border = || {
+        Border::new()
+            .content(TextBlock::new().text("Tile"))
+            .element_ref(&reference)
+            .flyout_with(Flyout::text("Card"))
+    };
+    runtime.update(border()).unwrap();
+    let object = reference.get().unwrap();
+    assert!(runtime.adapter().flyout(object).is_some());
+    assert!(reference.request_show_flyout());
+    assert!(reference.request_hide_flyout());
+    runtime.dispatch_native_events().unwrap();
+    assert_eq!(
+        runtime.adapter().imperatives(),
+        [
+            ImperativeRequest::ShowFlyout {
+                object,
+                on_closed: None
+            },
+            ImperativeRequest::HideFlyout { object }
+        ]
+    );
+
+    runtime
+        .update(Border::new().content(TextBlock::new().text("Tile")))
+        .unwrap();
+    runtime.dispatch_native_events().unwrap();
+    assert!(runtime.adapter().flyout(object).is_none());
+    assert!(!reference.request_show_flyout());
+}
+
+#[test]
+fn border_reference_queues_flyout_show_with_a_close_callback() {
+    let reference = ElementRef::<Border>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            Border::new()
+                .content(TextBlock::new().text("Tile"))
+                .element_ref(&reference)
+                .flyout_with(Flyout::text("Card")),
+        )
+        .unwrap();
+    let object = reference.get().unwrap();
+    let closed = Rc::new(Cell::new(0));
+    let seen = Rc::clone(&closed);
+    assert!(reference.request_show_flyout_then(move |()| seen.set(seen.get() + 1)));
+    runtime.dispatch_native_events().unwrap();
+    let requests = runtime.adapter().imperatives();
+    let [
+        ImperativeRequest::ShowFlyout {
+            object: shown,
+            on_closed: Some(on_closed),
+        },
+    ] = requests
+    else {
+        panic!("expected one ShowFlyout with a callback, got {requests:?}");
+    };
+    assert_eq!(*shown, object);
+    on_closed.call(());
+    assert_eq!(closed.get(), 1);
+}
+
+#[test]
 fn scroll_viewer_vertical_offset_must_be_finite() {
     for offset in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
         assert!(

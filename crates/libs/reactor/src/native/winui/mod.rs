@@ -2125,6 +2125,8 @@ pub struct WinUiAdapter {
     tooltip_owners: HashMap<ObjectId, ObjectId>,
     flyouts: HashMap<ObjectId, (native::Flyout, ObjectId, FlyoutPlacement)>,
     flyout_owners: HashMap<ObjectId, ObjectId>,
+    /// A Border flyout's `Closed` subscription (`ElementRef<Border>::request_show_flyout_then`).
+    flyout_closed: HashMap<ObjectId, windows_core::EventRevoker>,
     menus: HashMap<ObjectId, NativeMenu>,
     command_bar_flyouts: HashMap<ObjectId, NativeCommandBarFlyout>,
     content_dialogs: HashMap<ObjectId, ObjectId>,
@@ -2185,6 +2187,7 @@ impl Default for WinUiAdapter {
             tooltip_owners: HashMap::new(),
             flyouts: HashMap::new(),
             flyout_owners: HashMap::new(),
+            flyout_closed: HashMap::new(),
             menus: HashMap::new(),
             command_bar_flyouts: HashMap::new(),
             content_dialogs: HashMap::new(),
@@ -2218,6 +2221,7 @@ impl Drop for WinUiAdapter {
         for target in self.command_bar_flyouts.keys().copied().collect::<Vec<_>>() {
             _ = self.set_command_bar_flyout(target, None, 0);
         }
+        self.flyout_closed.clear();
         for (target, (flyout, _, _)) in self.flyouts.drain() {
             _ = flyout.SetContent(None::<&native::UIElement>);
             match self.handles.get(&target) {

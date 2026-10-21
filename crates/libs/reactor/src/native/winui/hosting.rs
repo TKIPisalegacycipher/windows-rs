@@ -555,6 +555,14 @@ impl WinUiAdapter {
                     Handle::Generated(GeneratedHandle::SplitButton(control)) => {
                         control.value.SetFlyout(&flyout)?;
                     }
+                    // A Border has no Flyout property: the flyout opens on
+                    // `ElementRef<Border>::request_show_flyout`. A press on the Border while it
+                    // is open reaches the Border, as the second click of a double click must.
+                    Handle::Generated(GeneratedHandle::Border(control)) => {
+                        flyout
+                            .cast::<native::IFlyoutBase>()?
+                            .SetOverlayInputPassThroughElement(&control.value)?;
+                    }
                     _ => return Err(WinUiError::InvalidObject(target)),
                 }
                 flyout
@@ -601,19 +609,32 @@ impl WinUiAdapter {
             }
             self.flyout_owners.insert(content, target);
         } else {
-            if let Some((flyout, previous, _)) = self.flyouts.remove(&target) {
-                flyout.SetContent(None::<&native::UIElement>)?;
-                self.flyout_owners.remove(&previous);
+            let removed = self.flyouts.remove(&target);
+            self.flyout_closed.remove(&target);
+            // The bookkeeping goes even when native refuses to let go, so the content is not
+            // left "owned" by a flyout that no longer exists here.
+            if let Some((_, previous, _)) = &removed {
+                self.flyout_owners.remove(previous);
             }
-            match handle {
+            let detached = match handle {
                 Handle::Generated(GeneratedHandle::Button(control)) => {
-                    control.value.SetFlyout(None::<&native::FlyoutBase>)?;
+                    control.value.SetFlyout(None::<&native::FlyoutBase>)
                 }
                 Handle::Generated(GeneratedHandle::SplitButton(control)) => {
-                    control.value.SetFlyout(None::<&native::FlyoutBase>)?;
+                    control.value.SetFlyout(None::<&native::FlyoutBase>)
                 }
+                Handle::Generated(GeneratedHandle::Border(_)) => match &removed {
+                    Some((flyout, _, _)) => flyout
+                        .cast::<native::IFlyoutBase>()
+                        .and_then(|flyout| flyout.Hide()),
+                    None => Ok(()),
+                },
                 _ => return Err(WinUiError::InvalidObject(target)),
+            };
+            if let Some((flyout, _, _)) = removed {
+                flyout.SetContent(None::<&native::UIElement>)?;
             }
+            detached?;
         }
         Ok(())
     }

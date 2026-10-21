@@ -474,7 +474,10 @@ impl RecordingAdapter {
                 } => {
                     self.require_object(*target)?;
                     let target_kind = self.objects.get(target).unwrap().kind;
-                    if !matches!(target_kind, ObjectType::Button | ObjectType::SplitButton) {
+                    if !matches!(
+                        target_kind,
+                        ObjectType::Button | ObjectType::SplitButton | ObjectType::Border
+                    ) {
                         return Err(AdapterError::InvalidReplacement(*target));
                     }
                     if content.is_some()

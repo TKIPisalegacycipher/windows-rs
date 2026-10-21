@@ -10880,6 +10880,21 @@ impl IFlyoutBase {
             .ok()
         }
     }
+    pub(crate) fn SetOverlayInputPassThroughElement<P0>(
+        &self,
+        value: P0,
+    ) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<DependencyObject>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetOverlayInputPassThroughElement)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
     pub(crate) fn IsOpen(&self) -> windows_core::Result<bool> {
         unsafe {
             let mut result__ = core::mem::zeroed();
@@ -11007,7 +11022,10 @@ pub struct IFlyoutBase_Vtbl {
     ElementSoundMode: usize,
     SetElementSoundMode: usize,
     OverlayInputPassThroughElement: usize,
-    SetOverlayInputPassThroughElement: usize,
+    pub SetOverlayInputPassThroughElement: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub IsOpen:
         unsafe extern "system" fn(*mut core::ffi::c_void, *mut bool) -> windows_core::HRESULT,
     XamlRoot: usize,

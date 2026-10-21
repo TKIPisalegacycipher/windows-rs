@@ -23,7 +23,8 @@ impl ImperativeRequest {
             | Self::SetCompositionChildVisual { object, .. }
             | Self::ChangeView { object, .. }
             | Self::ChangeMenuView { object, .. }
-            | Self::HideFlyout { object } => *object,
+            | Self::HideFlyout { object }
+            | Self::ShowFlyout { object, .. } => *object,
         }
     }
 }

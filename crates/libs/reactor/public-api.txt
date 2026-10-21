@@ -1503,6 +1503,10 @@ pub struct windows_reactor::ElementObservation(_)
 impl core::ops::drop::Drop for windows_reactor::ElementObservation
 pub fn windows_reactor::ElementObservation::drop(&mut self)
 pub struct windows_reactor::ElementRef<T>
+impl windows_reactor::ElementRef<windows_reactor::Border>
+pub fn windows_reactor::ElementRef<windows_reactor::Border>::request_hide_flyout(&self) -> bool
+pub fn windows_reactor::ElementRef<windows_reactor::Border>::request_show_flyout(&self) -> bool
+pub fn windows_reactor::ElementRef<windows_reactor::Border>::request_show_flyout_then(&self, impl core::ops::function::Fn(()) + 'static) -> bool
 impl windows_reactor::ElementRef<windows_reactor::Button>
 pub fn windows_reactor::ElementRef<windows_reactor::Button>::request_hide_flyout(&self) -> bool
 impl windows_reactor::ElementRef<windows_reactor::Grid>
@@ -1511,9 +1515,10 @@ pub fn windows_reactor::ElementRef<windows_reactor::Grid>::request_set_child_vis
 impl windows_reactor::ElementRef<windows_reactor::Image>
 pub fn windows_reactor::ElementRef<windows_reactor::Image>::observe_rasterization_scale(&self, impl core::ops::function::Fn(f64) + 'static) -> windows_reactor::ElementObservation
 pub fn windows_reactor::ElementRef<windows_reactor::Image>::request_set_native_source(&self, core::option::Option<windows_core::unknown::IUnknown>, impl core::ops::function::Fn(core::result::Result<(), windows_reactor::IntegrationError>) + 'static) -> bool
+impl windows_reactor::ElementRef<windows_reactor::ListView>
+pub fn windows_reactor::ElementRef<windows_reactor::ListView>::observe_visible_range(&self, impl core::ops::function::Fn((usize, usize)) + 'static) -> windows_reactor::ElementObservation
 impl windows_reactor::ElementRef<windows_reactor::NavigationView>
 pub fn windows_reactor::ElementRef<windows_reactor::NavigationView>::observe_menu_scroll(&self, impl core::ops::function::Fn(f64) + 'static) -> windows_reactor::ElementObservation
-pub fn windows_reactor::ElementRef<windows_reactor::ListView>::observe_visible_range(&self, impl core::ops::function::Fn((usize, usize)) + 'static) -> windows_reactor::ElementObservation
 pub fn windows_reactor::ElementRef<windows_reactor::NavigationView>::request_menu_vertical_offset(&self, f64) -> bool
 impl windows_reactor::ElementRef<windows_reactor::ScrollViewer>
 pub fn windows_reactor::ElementRef<windows_reactor::ScrollViewer>::request_vertical_offset(&self, f64) -> bool
@@ -2416,8 +2421,8 @@ pub fn windows_reactor::ListView::width(self, f64) -> Self
 impl core::convert::From<windows_reactor::ListView> for windows_reactor::View
 pub fn windows_reactor::View::from(windows_reactor::ListView) -> Self
 impl core::default::Default for windows_reactor::ListView
-impl windows_reactor::ReferenceElement for windows_reactor::ListView
 pub fn windows_reactor::ListView::default() -> Self
+impl windows_reactor::ReferenceElement for windows_reactor::ListView
 pub struct windows_reactor::ListViewItem(_)
 impl windows_reactor::ListViewItem
 pub fn windows_reactor::ListViewItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
@@ -4869,6 +4874,7 @@ impl windows_reactor::ReferenceElement for windows_reactor::ComboBox
 impl windows_reactor::ReferenceElement for windows_reactor::Grid
 impl windows_reactor::ReferenceElement for windows_reactor::HyperlinkButton
 impl windows_reactor::ReferenceElement for windows_reactor::Image
+impl windows_reactor::ReferenceElement for windows_reactor::ListView
 impl windows_reactor::ReferenceElement for windows_reactor::NavigationView
 impl windows_reactor::ReferenceElement for windows_reactor::NumberBox
 impl windows_reactor::ReferenceElement for windows_reactor::PasswordBox

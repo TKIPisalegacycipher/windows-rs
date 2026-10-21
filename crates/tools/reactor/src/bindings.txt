@@ -274,7 +274,7 @@ Microsoft::UI::Xaml::Controls::Pivot::CreateInstance
 Microsoft::UI::Xaml::Controls::PivotItem::CreateInstance
 Microsoft::UI::Xaml::Controls::Primitives::FlyoutPlacementMode
 Microsoft::UI::Xaml::Controls::Primitives::IButtonBase::{add_Click, remove_Click}
-Microsoft::UI::Xaml::Controls::Primitives::IFlyoutBase::{add_Closed, add_Opening, get_IsOpen, Hide, put_Placement, put_ShouldConstrainToRootBounds, put_XamlRoot, remove_Closed, remove_Opening, ShowAt}
+Microsoft::UI::Xaml::Controls::Primitives::IFlyoutBase::{add_Closed, add_Opening, get_IsOpen, Hide, put_OverlayInputPassThroughElement, put_Placement, put_ShouldConstrainToRootBounds, put_XamlRoot, remove_Closed, remove_Opening, ShowAt}
 Microsoft::UI::Xaml::Controls::Primitives::IListViewItemPresenter::get_PointerOverBackground
 Microsoft::UI::Xaml::Controls::Primitives::IRangeBase::{add_ValueChanged, get_Maximum, get_Minimum, get_Value, put_Maximum, put_Minimum, put_Value, remove_ValueChanged}
 Microsoft::UI::Xaml::Controls::Primitives::IRangeBaseStatics::{get_MaximumProperty, get_MinimumProperty, get_ValueProperty}

@@ -796,6 +796,24 @@ impl Adapter for WinUiAdapter {
                     flyout.cast::<native::IFlyoutBase>()?.Hide()?;
                 }
             }
+            ImperativeRequest::ShowFlyout { object, on_closed } => {
+                if let Some((flyout, _, _)) = self.flyouts.get(&object)
+                    && let Some(Handle::Generated(GeneratedHandle::Border(control))) =
+                        self.handles.get(&object)
+                {
+                    let flyout = flyout.cast::<native::IFlyoutBase>()?;
+                    // The newest request's `on_closed` replaces the old subscription even when
+                    // the flyout is already open (re-click of an open tile): the old one would
+                    // report a close the caller no longer waits for, the new one never fires.
+                    if let Some(on_closed) = on_closed {
+                        let revoker = flyout.Closed(move |_, _| on_closed.call(()))?;
+                        self.flyout_closed.insert(object, revoker);
+                    }
+                    if !flyout.IsOpen()? {
+                        flyout.ShowAt(&control.value)?;
+                    }
+                }
+            }
         }
         Ok(())
     }

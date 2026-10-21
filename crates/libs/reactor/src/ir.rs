@@ -176,7 +176,7 @@ fn validate_object(
         if let Some(flyout) = &attachments.flyout {
             if !matches!(
                 declaration.kind,
-                ObjectType::Button | ObjectType::SplitButton
+                ObjectType::Button | ObjectType::SplitButton | ObjectType::Border
             ) {
                 return Err(GraphError::InvalidAttachment(declaration.kind));
             }
