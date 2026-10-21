@@ -852,6 +852,69 @@ impl WinUiAdapter {
         if kept.len() == selected_before {
             return Ok(());
         }
+        self.report_list_selection(parent, list, &selector, &list_base)
+    }
+
+    /// Sets ListView `parent`'s selection to `items` (`ElementRef<ListView>::request_selected_keys`):
+    /// the selected items not among them are deselected, and the ones missing are appended in
+    /// their order, so the items that stay keep their place (and the first, `SelectedIndex`).
+    /// WinUI's `SelectionChanged` events meanwhile are held back, and one change is reported
+    /// afterwards, as a user's selection would be, if the selection changed.
+    pub(super) fn set_list_selection(
+        &self,
+        parent: ObjectId,
+        items: &[ObjectId],
+    ) -> Result<(), WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&parent) else {
+            return Ok(());
+        };
+        let wanted = items
+            .iter()
+            .filter_map(|item| self.inspectable(*item).ok())
+            .map(|item| Ok((com_identity(&item)?, item)))
+            .collect::<Result<Vec<_>, WinUiError>>()?;
+        let selector = list.value.cast::<native::ISelector>()?;
+        let list_base = list.value.cast::<native::IListViewBase>()?;
+        let selected = list_base.SelectedItems()?;
+        let before = (0..selected.Size()?)
+            .map(|index| com_identity(&selected.GetAt(index)?))
+            .collect::<Result<Vec<_>, WinUiError>>()?;
+        let identities = wanted
+            .iter()
+            .map(|(identity, _)| *identity)
+            .collect::<Vec<_>>();
+        let (removals, appends) = selection_edits(&before, &identities);
+        if removals.is_empty() && appends.is_empty() {
+            return Ok(());
+        }
+        list.selection_held.set(true);
+        let result = (|| {
+            for index in removals {
+                selected.RemoveAt(index as u32)?;
+            }
+            for (_, item) in wanted
+                .iter()
+                .filter(|(identity, _)| appends.contains(identity))
+            {
+                selected.Append(item)?;
+            }
+            Ok::<(), WinUiError>(())
+        })();
+        list.selection_held.set(false);
+        result?;
+        self.report_list_selection(parent, list, &selector, &list_base)
+    }
+
+    /// Reports ListView `parent`'s selection after a change made while its `SelectionChanged`
+    /// events were held back: its `SelectedIndex` (observed, then the app's callback) and its
+    /// selected keys.
+    fn report_list_selection(
+        &self,
+        parent: ObjectId,
+        list: &NativeListView,
+        selector: &native::ISelector,
+        list_base: &native::IListViewBase,
+    ) -> Result<(), WinUiError> {
         let value = selection_index(selector.SelectedIndex()?)?;
         let observation = Observation::SetProperty {
             object: parent,
@@ -877,7 +940,7 @@ impl WinUiAdapter {
             &list.selected_keys_changed,
             &self.event_queue,
             parent,
-            &list_base,
+            list_base,
             &self.data_items,
         )
     }

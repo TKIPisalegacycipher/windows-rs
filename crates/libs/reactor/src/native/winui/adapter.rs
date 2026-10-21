@@ -791,6 +791,9 @@ impl Adapter for WinUiAdapter {
                     )?;
                 }
             }
+            ImperativeRequest::SelectItems { object, items, .. } => {
+                self.set_list_selection(object, &items)?;
+            }
             ImperativeRequest::HideFlyout { object } => {
                 if let Some((flyout, _, _)) = self.flyouts.get(&object) {
                     flyout.cast::<native::IFlyoutBase>()?.Hide()?;

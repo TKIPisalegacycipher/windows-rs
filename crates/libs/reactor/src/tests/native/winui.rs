@@ -282,6 +282,14 @@ fn active_slot_reorder_rejects_missing_or_duplicate_active_identity() {
 }
 
 #[test]
+fn a_list_selection_request_removes_the_unwanted_last_first_and_appends_the_missing_in_order() {
+    assert_eq!(selection_edits(&[5, 7, 9], &[9, 3, 5]), (vec![1], vec![3]));
+    assert_eq!(selection_edits(&[5], &[5]), (vec![], vec![]));
+    assert_eq!(selection_edits(&[5, 7], &[]), (vec![1, 0], vec![]));
+    assert_eq!(selection_edits(&[], &[4, 4, 2]), (vec![], vec![4, 2]));
+}
+
+#[test]
 fn list_items_replacement_keeps_the_selected_items_that_stay_in_selection_order() {
     let selected = vec![(30, "m30"), (5, "m5"), (7, "m7"), (12, "m12")];
 

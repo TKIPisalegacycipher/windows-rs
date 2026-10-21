@@ -362,6 +362,24 @@ impl ElementRef<ListView> {
     ) -> ElementObservation {
         self.observe(ReferenceObservation::VisibleRange(Callback::new(callback)))
     }
+
+    /// Enqueues setting the currently published list's selection to its items keyed `keys`: the
+    /// selected items not among them are deselected and the others selected, after the ones that
+    /// stay, in the order of `keys`. Keys with no item in the list when the request runs are
+    /// skipped. The change is reported once, as a user's would be (`on_selection_changed`,
+    /// `on_selected_keys_changed`), and not at all when the list's selection is already that.
+    ///
+    /// For a selection the app makes itself, such as a checkbox on a row that toggles the row in
+    /// a multiple selection: `selected_index` sets only the first selected item.
+    #[must_use]
+    pub fn request_selected_keys<K: Into<Key>>(&self, keys: impl IntoIterator<Item = K>) -> bool {
+        let keys = keys.into_iter().map(Into::into).collect::<Vec<Key>>();
+        self.enqueue(move |object, _, _| ImperativeRequest::SelectItems {
+            object,
+            keys,
+            items: Vec::new(),
+        })
+    }
 }
 
 impl ElementRef<Button> {
@@ -816,6 +834,13 @@ pub enum ImperativeRequest {
     ChangeMenuView {
         object: ObjectId,
         vertical_offset: f64,
+    },
+    /// `items` are the list's `Items` children keyed `keys`, which the runtime resolves as it
+    /// dispatches the request (`RetainedGraph::resolve_list_keys`).
+    SelectItems {
+        object: ObjectId,
+        keys: Vec<Key>,
+        items: Vec<ObjectId>,
     },
     HideFlyout {
         object: ObjectId,

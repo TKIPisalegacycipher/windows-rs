@@ -3137,6 +3137,23 @@ fn set_list_container_min_height(
 
 /// The selected items, in selection order and by COM identity, that a ListView items replacement
 /// (`replace_items`) keeps and selects again: those not in `removed`.
+/// The edits that turn a list's selection, the items with COM identities `selected` in selection
+/// order, into `wanted`: the indices to remove, highest first (so each stays valid), and the
+/// wanted identities to append, in their order and once each.
+fn selection_edits(selected: &[usize], wanted: &[usize]) -> (Vec<usize>, Vec<usize>) {
+    let removals = (0..selected.len())
+        .rev()
+        .filter(|index| !wanted.contains(&selected[*index]))
+        .collect();
+    let mut appends: Vec<usize> = Vec::new();
+    for identity in wanted {
+        if !selected.contains(identity) && !appends.contains(identity) {
+            appends.push(*identity);
+        }
+    }
+    (removals, appends)
+}
+
 fn kept_selection<T>(selected: Vec<(usize, T)>, removed: &HashSet<usize>) -> Vec<T> {
     selected
         .into_iter()

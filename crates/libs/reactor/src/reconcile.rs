@@ -1072,6 +1072,29 @@ impl RetainedGraph {
             .is_some_and(|event| event.value == dispatch.callback))
     }
 
+    /// A `SelectItems` request with its keys resolved to the list's `Items` children (keys with
+    /// none are dropped); any other request as it is.
+    fn resolve_list_keys(&self, request: ImperativeRequest) -> ImperativeRequest {
+        let ImperativeRequest::SelectItems { object, keys, .. } = request else {
+            return request;
+        };
+        let children = self.children(object, RelationId::Items).unwrap_or_default();
+        let items = keys
+            .iter()
+            .filter_map(|key| {
+                children.iter().copied().find(|child| {
+                    self.get(*child)
+                        .is_some_and(|item| item.key.as_ref() == Some(key))
+                })
+            })
+            .collect();
+        ImperativeRequest::SelectItems {
+            object,
+            keys,
+            items,
+        }
+    }
+
     fn get(&self, object: ObjectId) -> Option<&RetainedObject> {
         let slot = self.objects.get(object.index as usize)?;
         (slot.generation == object.generation && !slot.retiring)
@@ -1958,7 +1981,8 @@ impl<A: Adapter> Runtime<A> {
             queued.request.complete_unavailable();
             return Ok(true);
         }
-        if let Err(error) = self.adapter.imperative(queued.request) {
+        let request = self.graph.resolve_list_keys(queued.request);
+        if let Err(error) = self.adapter.imperative(request) {
             self.poison_and_discard_all();
             return Err(UpdateError::Adapter(error));
         }

@@ -151,6 +151,46 @@ fn list_view_reference_queues_visible_range_observation() {
 }
 
 #[test]
+fn list_view_reference_resolves_selected_keys_to_its_items() {
+    let reference = ElementRef::<ListView>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    assert!(!reference.request_selected_keys(["b"]));
+    let list = || {
+        ListView::new().element_ref(&reference).items([
+            DataItem::new("a", "A"),
+            DataItem::new("b", "B"),
+            DataItem::new("c", "C"),
+        ])
+    };
+    runtime.update(list()).unwrap();
+    let object = reference.get().unwrap();
+    let items = runtime
+        .graph()
+        .children(object, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    assert!(reference.request_selected_keys(["c", "gone", "a"]));
+    assert!(reference.request_selected_keys(Vec::<Key>::new()));
+    runtime.dispatch_native_events().unwrap();
+    let keys = |k: &[&str]| k.iter().map(|k| Key::from(*k)).collect::<Vec<_>>();
+    assert_eq!(
+        runtime.adapter().imperatives(),
+        [
+            ImperativeRequest::SelectItems {
+                object,
+                keys: keys(&["c", "gone", "a"]),
+                items: vec![items[2], items[0]],
+            },
+            ImperativeRequest::SelectItems {
+                object,
+                keys: Vec::new(),
+                items: Vec::new(),
+            },
+        ]
+    );
+}
+
+#[test]
 fn navigation_view_menu_vertical_offset_must_be_finite() {
     assert!(
         std::panic::catch_unwind(|| {
