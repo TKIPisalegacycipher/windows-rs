@@ -1518,6 +1518,7 @@ pub fn windows_reactor::ElementRef<windows_reactor::Image>::observe_rasterizatio
 pub fn windows_reactor::ElementRef<windows_reactor::Image>::request_set_native_source(&self, core::option::Option<windows_core::unknown::IUnknown>, impl core::ops::function::Fn(core::result::Result<(), windows_reactor::IntegrationError>) + 'static) -> bool
 impl windows_reactor::ElementRef<windows_reactor::ListView>
 pub fn windows_reactor::ElementRef<windows_reactor::ListView>::observe_visible_range(&self, impl core::ops::function::Fn((usize, usize)) + 'static) -> windows_reactor::ElementObservation
+pub fn windows_reactor::ElementRef<windows_reactor::ListView>::request_focused_key(&self, impl core::ops::function::Fn(core::result::Result<core::option::Option<windows_reactor::Key>, windows_reactor::IntegrationError>) + 'static) -> bool
 pub fn windows_reactor::ElementRef<windows_reactor::ListView>::request_selected_keys<K: core::convert::Into<windows_reactor::Key>>(&self, impl core::iter::traits::collect::IntoIterator<Item = K>) -> bool
 impl windows_reactor::ElementRef<windows_reactor::NavigationView>
 pub fn windows_reactor::ElementRef<windows_reactor::NavigationView>::observe_menu_scroll(&self, impl core::ops::function::Fn(f64) + 'static) -> windows_reactor::ElementObservation

@@ -905,6 +905,42 @@ impl WinUiAdapter {
         self.report_list_selection(parent, list, &selector, &list_base)
     }
 
+    /// The key of ListView `parent`'s item whose container has the focus
+    /// (`ElementRef<ListView>::request_focused_key`), among `items` (its `Items` children and
+    /// their keys); `None` when none has. Unrealized containers have no focus, and are cheap to
+    /// pass over.
+    pub(super) fn focused_list_item(
+        &self,
+        parent: ObjectId,
+        items: &[(ObjectId, Key)],
+    ) -> Result<Option<Key>, WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&parent) else {
+            return Ok(None);
+        };
+        let mapping = list.value.cast::<native::IItemContainerMapping>()?;
+        let values = list.value.cast::<native::IItemsControl>()?.Items()?;
+        for index in 0..values.Size()? {
+            let container = match mapping.ContainerFromIndex(index as i32) {
+                Ok(container) => container,
+                Err(error) if error.code().is_ok() => continue,
+                Err(error) => return Err(error.into()),
+            };
+            let focus = container.cast::<native::IUIElement>()?.FocusState()?;
+            if focus == native::FocusState::Unfocused {
+                continue;
+            }
+            let identity = com_identity(&values.GetAt(index)?)?;
+            let object = self.data_items.borrow().get(&identity).copied();
+            return Ok(object.and_then(|object| {
+                items
+                    .iter()
+                    .find(|(item, _)| *item == object)
+                    .map(|(_, key)| key.clone())
+            }));
+        }
+        Ok(None)
+    }
+
     /// Reports ListView `parent`'s selection after a change made while its `SelectionChanged`
     /// events were held back: its `SelectedIndex` (observed, then the app's callback) and its
     /// selected keys.

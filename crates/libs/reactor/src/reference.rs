@@ -380,6 +380,27 @@ impl ElementRef<ListView> {
             items: Vec::new(),
         })
     }
+
+    /// Enqueues asking the currently published list which of its items has the focus, and
+    /// reports that item's key (`None` when no item's container has it, such as when the focus
+    /// is on an element inside an item, or outside the list) asynchronously.
+    ///
+    /// For keyboard commands the app handles itself on the item the focus is on, which can be
+    /// another than the selected one: in an extended selection Ctrl+arrow keys move the focus
+    /// and leave the selection as it is.
+    #[must_use]
+    pub fn request_focused_key(
+        &self,
+        completion: impl Fn(Result<Option<Key>, IntegrationError>) + 'static,
+    ) -> bool {
+        self.enqueue(
+            move |object, binding, target| ImperativeRequest::FocusedItem {
+                object,
+                items: Vec::new(),
+                completion: current_completion(target, binding, completion),
+            },
+        )
+    }
 }
 
 impl ElementRef<Button> {
@@ -842,6 +863,13 @@ pub enum ImperativeRequest {
         keys: Vec<Key>,
         items: Vec<ObjectId>,
     },
+    /// `items` are the list's `Items` children with their keys, which the runtime fills in as it
+    /// dispatches the request (`RetainedGraph::resolve_list_keys`).
+    FocusedItem {
+        object: ObjectId,
+        items: Vec<(ObjectId, Key)>,
+        completion: Callback<Result<Option<Key>, IntegrationError>>,
+    },
     HideFlyout {
         object: ObjectId,
     },
@@ -893,6 +921,9 @@ impl ImperativeRequest {
                 completion.call(Err(IntegrationError::Unavailable));
             }
             Self::InitializeWebView2 { completion, .. } => {
+                completion.call(Err(IntegrationError::Unavailable));
+            }
+            Self::FocusedItem { completion, .. } => {
                 completion.call(Err(IntegrationError::Unavailable));
             }
 

@@ -1073,8 +1073,24 @@ impl RetainedGraph {
     }
 
     /// A `SelectItems` request with its keys resolved to the list's `Items` children (keys with
-    /// none are dropped); any other request as it is.
+    /// none are dropped), a `FocusedItem` request with the children and their keys; any other
+    /// request as it is.
     fn resolve_list_keys(&self, request: ImperativeRequest) -> ImperativeRequest {
+        if let ImperativeRequest::FocusedItem {
+            object, completion, ..
+        } = request
+        {
+            let children = self.children(object, RelationId::Items).unwrap_or_default();
+            let items = children
+                .iter()
+                .filter_map(|child| Some((*child, self.get(*child)?.key.clone()?)))
+                .collect();
+            return ImperativeRequest::FocusedItem {
+                object,
+                items,
+                completion,
+            };
+        }
         let ImperativeRequest::SelectItems { object, keys, .. } = request else {
             return request;
         };

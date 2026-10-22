@@ -191,6 +191,52 @@ fn list_view_reference_resolves_selected_keys_to_its_items() {
 }
 
 #[test]
+fn list_view_reference_asks_for_its_focused_item_among_its_keyed_items() {
+    let commands = Rc::new(RefCell::new(Vec::new()));
+    let reference = ElementRef::<ListView>::new();
+    let results = Rc::new(RefCell::new(Vec::new()));
+    let mut runtime = Runtime::new(HoldingImperativeAdapter {
+        inner: RecordingAdapter::default(),
+        commands: Rc::clone(&commands),
+    });
+    assert!(!reference.request_focused_key(|_| {}));
+    runtime
+        .update(
+            ListView::new()
+                .element_ref(&reference)
+                .items([DataItem::new("a", "A"), DataItem::new("b", "B")]),
+        )
+        .unwrap();
+    let object = reference.get().unwrap();
+    let items = runtime
+        .graph()
+        .children(object, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    let callback_results = Rc::clone(&results);
+    assert!(reference.request_focused_key(move |result| {
+        callback_results.borrow_mut().push(result);
+    }));
+    runtime.dispatch_native_events().unwrap();
+
+    let ImperativeRequest::FocusedItem {
+        object: asked,
+        items: keyed,
+        completion,
+    } = commands.borrow_mut().remove(0)
+    else {
+        panic!("expected a focused-item request");
+    };
+    assert_eq!(asked, object);
+    assert_eq!(
+        keyed,
+        [(items[0], Key::from("a")), (items[1], Key::from("b"))]
+    );
+    completion.call(Ok(Some(Key::from("b"))));
+    assert_eq!(results.borrow().as_slice(), [Ok(Some(Key::from("b")))]);
+}
+
+#[test]
 fn navigation_view_menu_vertical_offset_must_be_finite() {
     assert!(
         std::panic::catch_unwind(|| {
