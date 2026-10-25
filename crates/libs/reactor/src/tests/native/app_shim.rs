@@ -38,3 +38,16 @@ fn resource_doubles_are_plain_entries() {
     assert!(xaml.contains("<x:Double x:Key='Half'>0.5</x:Double>"));
     assert!(!xaml.contains("ThemeDictionaries"));
 }
+
+#[test]
+fn text_block_font_is_an_implicit_text_block_style() {
+    let xaml = text_block_style_xaml("{Segoe UI Variable");
+    assert_eq!(
+        xaml,
+        format!(
+            "{DICTIONARY_START}<Style TargetType='TextBlock'><Setter Property='FontFamily'>\
+             <Setter.Value><FontFamily>{{Segoe UI Variable</FontFamily></Setter.Value>\
+             </Setter></Style></ResourceDictionary>"
+        )
+    );
+}

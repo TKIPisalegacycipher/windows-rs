@@ -1588,6 +1588,23 @@ fn resource_font_registration_replaces_by_key() {
 }
 
 #[test]
+fn text_block_font_registration_keeps_the_last_family() {
+    register_text_block_font("Segoe UI");
+    register_text_block_font("Segoe UI Variable Static Display");
+    assert_eq!(
+        registered_text_block_font(),
+        Some("Segoe UI Variable Static Display")
+    );
+    assert!(std::panic::catch_unwind(|| register_text_block_font("")).is_err());
+    assert!(std::panic::catch_unwind(|| register_text_block_font("A<B")).is_err());
+    assert!(std::panic::catch_unwind(|| register_text_block_font("A'B")).is_err());
+    assert_eq!(
+        registered_text_block_font(),
+        Some("Segoe UI Variable Static Display")
+    );
+}
+
+#[test]
 fn menu_item_swatch_applies_only_to_items() {
     let brush = ThemeBrush::Resource("K");
     assert!(matches!(

@@ -78,6 +78,10 @@ pub(super) fn install_xaml_controls_resources(application: &Application) -> Resu
     if !fonts.is_empty() {
         merged.Append(&load_dictionary(&font_dictionary_xaml(&fonts))?)?;
     }
+    // An implicit style goes last, after the Fluent dictionaries it must override.
+    if let Some(family) = registered_text_block_font() {
+        merged.Append(&load_dictionary(&text_block_style_xaml(family))?)?;
+    }
     Ok(())
 }
 
@@ -126,6 +130,16 @@ fn font_dictionary_xaml(values: &[(&str, &str)]) -> String {
     }
     xaml.push_str("</ResourceDictionary>");
     xaml
+}
+
+fn text_block_style_xaml(family: &str) -> String {
+    // Element syntax, as in `font_dictionary_xaml`: a family starting with `{` is not read as a
+    // markup extension.
+    format!(
+        "{DICTIONARY_START}<Style TargetType='TextBlock'><Setter Property='FontFamily'>\
+         <Setter.Value><FontFamily>{family}</FontFamily></Setter.Value>\
+         </Setter></Style></ResourceDictionary>"
+    )
 }
 
 fn hex_color(color: crate::Color) -> String {

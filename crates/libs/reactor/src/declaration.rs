@@ -337,6 +337,7 @@ pub struct ThemeColorResource {
 static THEME_COLORS: Mutex<Vec<ThemeColorResource>> = Mutex::new(Vec::new());
 static RESOURCE_DOUBLES: Mutex<Vec<(&'static str, f64)>> = Mutex::new(Vec::new());
 static RESOURCE_FONTS: Mutex<Vec<(&'static str, &'static str)>> = Mutex::new(Vec::new());
+static TEXT_BLOCK_FONT: Mutex<Option<&'static str>> = Mutex::new(None);
 
 /// Registers app-wide theme color resources, replacing any earlier color with the same key.
 ///
@@ -414,6 +415,36 @@ pub fn register_resource_fonts(values: &[(&'static str, &'static str)]) {
 
 pub(crate) fn registered_resource_fonts() -> Vec<(&'static str, &'static str)> {
     RESOURCE_FONTS.lock().unwrap().clone()
+}
+
+/// Registers the font family of plain `TextBlock`s, replacing any earlier family.
+///
+/// A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so
+/// [`register_resource_fonts`] does not reach plain text. This installs an implicit `TextBlock`
+/// style whose only setter is `FontFamily`, so plain text uses `family`. It reaches plain
+/// `TextBlock`s only, not `RichTextBlock`s (the reactor's [`RichText`]).
+///
+/// An implicit style ranks below a local value and below a value set by a control template, so a
+/// `TextBlock` with its own `FontFamily`, set either way, keeps it. It ranks above an inherited
+/// value, though: a `TextBlock` that only inherited a font from a parent element now gets
+/// `family` instead. That is why this is opt-in; an app that does not call it sees no change.
+///
+/// Call before `App::run*`; the style is installed once, when the app launches, after the Fluent
+/// resources and the [`register_resource_fonts`] resources.
+///
+/// # Panics
+///
+/// Panics if `family` is empty or contains `<`, `>`, `&` or `'`.
+pub fn register_text_block_font(family: &'static str) {
+    assert!(
+        !family.is_empty() && !family.contains(['<', '>', '&', '\'']),
+        "text block font family must be non-empty and free of XML markup"
+    );
+    *TEXT_BLOCK_FONT.lock().unwrap() = Some(family);
+}
+
+pub(crate) fn registered_text_block_font() -> Option<&'static str> {
+    *TEXT_BLOCK_FONT.lock().unwrap()
 }
 
 pub(crate) fn registered_theme_colors() -> Vec<ThemeColorResource> {

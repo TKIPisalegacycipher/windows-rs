@@ -25,7 +25,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 28 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 29 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 6 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -99,6 +99,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 22 | `c0f2af652` | `Icon::foreground` for icon values | 19 | New | Extends #5106. A title-bar icon is an icon source: its theme brush is resolved once and may not follow theme changes, as `Icon::foreground` documents |
 | 27 | `c4ee30434` | `MenuItem::icon` for any non-image `Icon` | 27 | New | Upstream #4923: the maintainer said menu icons need API design. An image icon is refused with `GraphError::InvalidMenuIcon`, because menus own no image source |
 | 18 | `88d8519dd` | `MenuItem::swatch`, a coloured dot in the icon slot | 12 | New | A narrower version of 27. Propose together |
+| 61 | this commit | `register_text_block_font`, an opt-in implicit `TextBlock` style that sets `FontFamily`, so plain text uses the app's interface font | none | New | A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so `register_resource_fonts` misses plain text. The style is merged after the Fluent dictionaries. A local or template `FontFamily` still wins, but an inherited one loses, so it is opt-in. Evidence: unit |
 | 13 | `b7e6f5e8a` | Button and `DropDownButton` menus open below the button | 2 | New | Bug. Upstream still leaves the flyout placement at its default |
 
 ## 5. Input fixes
