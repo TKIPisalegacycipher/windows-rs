@@ -74,6 +74,10 @@ pub(super) fn install_xaml_controls_resources(application: &Application) -> Resu
     if !doubles.is_empty() {
         merged.Append(&load_dictionary(&double_dictionary_xaml(&doubles))?)?;
     }
+    let fonts = registered_resource_fonts();
+    if !fonts.is_empty() {
+        merged.Append(&load_dictionary(&font_dictionary_xaml(&fonts))?)?;
+    }
     Ok(())
 }
 
@@ -110,6 +114,15 @@ fn double_dictionary_xaml(values: &[(&str, f64)]) -> String {
     let mut xaml = DICTIONARY_START.to_string();
     for (key, value) in values {
         xaml.push_str(&format!("<x:Double x:Key='{key}'>{value}</x:Double>"));
+    }
+    xaml.push_str("</ResourceDictionary>");
+    xaml
+}
+
+fn font_dictionary_xaml(values: &[(&str, &str)]) -> String {
+    let mut xaml = DICTIONARY_START.to_string();
+    for (key, family) in values {
+        xaml.push_str(&format!("<FontFamily x:Key='{key}'>{family}</FontFamily>"));
     }
     xaml.push_str("</ResourceDictionary>");
     xaml

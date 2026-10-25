@@ -1571,6 +1571,23 @@ fn resource_double_registration_replaces_by_key() {
 }
 
 #[test]
+fn resource_font_registration_replaces_by_key() {
+    register_resource_fonts(&[("RegistrationTestFont", "Segoe UI")]);
+    register_resource_fonts(&[("RegistrationTestFont", "Segoe UI Variable Static Display")]);
+    let registered: Vec<_> = registered_resource_fonts()
+        .into_iter()
+        .filter(|(key, _)| *key == "RegistrationTestFont")
+        .collect();
+    assert_eq!(
+        registered,
+        [("RegistrationTestFont", "Segoe UI Variable Static Display")]
+    );
+    assert!(std::panic::catch_unwind(|| register_resource_fonts(&[("", "Segoe UI")])).is_err());
+    assert!(std::panic::catch_unwind(|| register_resource_fonts(&[("Bad", "")])).is_err());
+    assert!(std::panic::catch_unwind(|| register_resource_fonts(&[("Bad", "A<B")])).is_err());
+}
+
+#[test]
 fn menu_item_swatch_applies_only_to_items() {
     let brush = ThemeBrush::Resource("K");
     assert!(matches!(

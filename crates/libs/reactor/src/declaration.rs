@@ -336,6 +336,7 @@ pub struct ThemeColorResource {
 
 static THEME_COLORS: Mutex<Vec<ThemeColorResource>> = Mutex::new(Vec::new());
 static RESOURCE_DOUBLES: Mutex<Vec<(&'static str, f64)>> = Mutex::new(Vec::new());
+static RESOURCE_FONTS: Mutex<Vec<(&'static str, &'static str)>> = Mutex::new(Vec::new());
 
 /// Registers app-wide theme color resources, replacing any earlier color with the same key.
 ///
@@ -381,6 +382,38 @@ pub fn register_resource_doubles(values: &[(&'static str, f64)]) {
         registered.retain(|existing| existing.0 != key);
         registered.push((key, value));
     }
+}
+
+/// Registers app-wide `FontFamily` resources, such as `ContentControlThemeFontFamily` (the face
+/// most controls inherit), replacing any earlier value with the same key.
+///
+/// Call before `App::run*`; the resources are installed once, when the app launches, after the
+/// Fluent resources they override.
+///
+/// # Panics
+///
+/// Panics if a key is empty or contains anything but ASCII letters, digits, `_` and `.`, or if a
+/// family is empty or contains `<`, `>`, `&` or `'`.
+pub fn register_resource_fonts(values: &[(&'static str, &'static str)]) {
+    for (key, family) in values {
+        assert!(
+            is_resource_key(key),
+            "resource font key may contain only ASCII letters, digits, `_` and `.`"
+        );
+        assert!(
+            !family.is_empty() && !family.contains(['<', '>', '&', '\'']),
+            "resource font family must be non-empty and free of XML markup"
+        );
+    }
+    let mut registered = RESOURCE_FONTS.lock().unwrap();
+    for &(key, family) in values {
+        registered.retain(|existing| existing.0 != key);
+        registered.push((key, family));
+    }
+}
+
+pub(crate) fn registered_resource_fonts() -> Vec<(&'static str, &'static str)> {
+    RESOURCE_FONTS.lock().unwrap().clone()
 }
 
 pub(crate) fn registered_theme_colors() -> Vec<ThemeColorResource> {
