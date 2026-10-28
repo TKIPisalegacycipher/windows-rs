@@ -248,6 +248,7 @@ Microsoft::UI::Xaml::Controls::IVariableSizedWrapGridStatics::{get_ItemHeightPro
 Microsoft::UI::Xaml::Controls::IViewbox::{put_Child, put_Stretch}
 Microsoft::UI::Xaml::Controls::IViewboxStatics::get_StretchProperty
 Microsoft::UI::Xaml::Controls::IWebView2::{add_CoreWebView2Initialized, EnsureCoreWebView2Async, get_CoreWebView2, remove_CoreWebView2Initialized}
+Microsoft::UI::Xaml::Controls::IWebView22::EnsureCoreWebView2WithEnvironmentAsync
 Microsoft::UI::Xaml::Controls::NonVirtualizingLayout::CreateInstance
 Microsoft::UI::Xaml::Controls::ListBox::CreateInstance
 Microsoft::UI::Xaml::Controls::ListBoxItem::CreateInstance

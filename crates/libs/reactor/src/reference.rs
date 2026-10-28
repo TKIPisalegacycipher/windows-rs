@@ -219,9 +219,36 @@ impl ElementRef<WebView2> {
         &self,
         completion: impl Fn(Result<windows_core::IUnknown, IntegrationError>) + 'static,
     ) -> bool {
+        self.request_core_web_view2_in(None, completion)
+    }
+
+    /// Enqueues initializing the WebView2's core in `environment`, a
+    /// `Microsoft.Web.WebView2.Core.CoreWebView2Environment` the app created with its own options
+    /// (a display and spelling `Language`, browser arguments, a user data folder), rather than
+    /// the default one the control creates (`EnsureCoreWebView2Async(CoreWebView2Environment)`).
+    /// `completion` gets the core as `request_core_web_view2`'s does.
+    ///
+    /// The environment only applies to a WebView2 whose core isn't created or being created yet:
+    /// a view keeps the environment it started in, so a later request with another one (or with
+    /// none) completes with the existing core.
+    #[must_use]
+    pub fn request_core_web_view2_with_environment(
+        &self,
+        environment: windows_core::IUnknown,
+        completion: impl Fn(Result<windows_core::IUnknown, IntegrationError>) + 'static,
+    ) -> bool {
+        self.request_core_web_view2_in(Some(environment), completion)
+    }
+
+    fn request_core_web_view2_in(
+        &self,
+        environment: Option<windows_core::IUnknown>,
+        completion: impl Fn(Result<windows_core::IUnknown, IntegrationError>) + 'static,
+    ) -> bool {
         self.enqueue(
             move |object, binding, target| ImperativeRequest::InitializeWebView2 {
                 object,
+                environment,
                 completion: current_completion(target, binding, completion),
             },
         )
@@ -795,8 +822,11 @@ pub enum ImperativeRequest {
         object: ObjectId,
         completion: Callback<Result<bool, FocusError>>,
     },
+    /// `environment`: the `CoreWebView2Environment` to create the core in, `None` for the
+    /// control's default one.
     InitializeWebView2 {
         object: ObjectId,
+        environment: Option<windows_core::IUnknown>,
         completion: Callback<Result<windows_core::IUnknown, IntegrationError>>,
     },
     ObserveSwapChainPanel {

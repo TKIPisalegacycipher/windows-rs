@@ -71,6 +71,51 @@ fn typed_references_cover_all_imperative_controls() {
 }
 
 #[test]
+fn webview_reference_queues_core_requests_with_their_environment() {
+    let reference = ElementRef::<WebView2>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    // Any COM object stands in for a `CoreWebView2Environment` here.
+    let environment: windows_core::IInspectable = windows_reference::IReference::from(7).into();
+    let environment =
+        windows_core::Interface::cast::<windows_core::IUnknown>(&environment).unwrap();
+    assert!(!reference.request_core_web_view2_with_environment(environment.clone(), |_| {}));
+
+    runtime
+        .update(WebView2::new().element_ref(&reference))
+        .unwrap();
+    let object = reference.get().unwrap();
+    let results = Rc::new(RefCell::new(Vec::new()));
+    let record = || {
+        let results = Rc::clone(&results);
+        move |result: Result<windows_core::IUnknown, IntegrationError>| {
+            results.borrow_mut().push(result.is_ok());
+        }
+    };
+    assert!(reference.request_core_web_view2_with_environment(environment.clone(), record()));
+    assert!(reference.request_core_web_view2(record()));
+    runtime.dispatch_native_events().unwrap();
+    let environments: Vec<_> = runtime
+        .adapter()
+        .imperatives()
+        .iter()
+        .map(|request| match request {
+            ImperativeRequest::InitializeWebView2 {
+                object: o,
+                environment,
+                ..
+            } => {
+                assert_eq!(*o, object);
+                environment.clone()
+            }
+            other => panic!("unexpected request {other:?}"),
+        })
+        .collect();
+    assert_eq!(environments, [Some(environment), None]);
+    // The recording adapter has no WebView2 to give.
+    assert_eq!(*results.borrow(), [false, false]);
+}
+
+#[test]
 fn scroll_viewer_reference_queues_vertical_offset() {
     let reference = ElementRef::<ScrollViewer>::new();
     let mut runtime = Runtime::new(RecordingAdapter::default());

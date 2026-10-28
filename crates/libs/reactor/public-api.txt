@@ -1532,6 +1532,7 @@ pub fn windows_reactor::ElementRef<windows_reactor::SwapChainPanel>::request_set
 pub fn windows_reactor::ElementRef<windows_reactor::SwapChainPanel>::request_surface_frame(&self, impl core::ops::function::Fn(core::result::Result<(), windows_reactor::IntegrationError>) + 'static) -> bool
 impl windows_reactor::ElementRef<windows_reactor::WebView2>
 pub fn windows_reactor::ElementRef<windows_reactor::WebView2>::request_core_web_view2(&self, impl core::ops::function::Fn(core::result::Result<windows_core::unknown::IUnknown, windows_reactor::IntegrationError>) + 'static) -> bool
+pub fn windows_reactor::ElementRef<windows_reactor::WebView2>::request_core_web_view2_with_environment(&self, windows_core::unknown::IUnknown, impl core::ops::function::Fn(core::result::Result<windows_core::unknown::IUnknown, windows_reactor::IntegrationError>) + 'static) -> bool
 impl<T> windows_reactor::ElementRef<T>
 pub fn windows_reactor::ElementRef<T>::new() -> Self
 pub fn windows_reactor::ElementRef<T>::request_focus(&self) -> bool

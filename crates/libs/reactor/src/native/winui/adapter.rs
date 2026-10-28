@@ -308,7 +308,11 @@ impl Adapter for WinUiAdapter {
                         .map_err(|error| integration_error(error.into())),
                 );
             }
-            ImperativeRequest::InitializeWebView2 { object, completion } => {
+            ImperativeRequest::InitializeWebView2 {
+                object,
+                environment,
+                completion,
+            } => {
                 let Some(Handle::Generated(GeneratedHandle::WebView2(control))) =
                     self.handles.get(&object)
                 else {
@@ -352,8 +356,9 @@ impl Adapter for WinUiAdapter {
                 } else {
                     let control = control.clone();
                     let initializations = Rc::clone(&self.webview_initializations);
+                    let environment = environment.clone();
                     let loaded = framework.Loaded(move |_, _| {
-                        let result = control.EnsureCoreWebView2Async();
+                        let result = ensure_core_web_view2(&control, environment.as_ref());
                         match result {
                             Ok(action) => {
                                 if let Some(initialization) =
@@ -387,7 +392,7 @@ impl Adapter for WinUiAdapter {
                     },
                 );
                 if is_loaded {
-                    match control.EnsureCoreWebView2Async() {
+                    match ensure_core_web_view2(control, environment.as_ref()) {
                         Ok(action) => {
                             if let Some(initialization) =
                                 self.webview_initializations.borrow_mut().get_mut(&object)

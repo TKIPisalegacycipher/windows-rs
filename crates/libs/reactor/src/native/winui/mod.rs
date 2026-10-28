@@ -1919,6 +1919,22 @@ fn integration_error(error: windows_core::Error) -> IntegrationError {
     IntegrationError::Native(error.code().0)
 }
 
+/// `EnsureCoreWebView2Async`, in `environment` (a `CoreWebView2Environment`) when the request
+/// named one.
+fn ensure_core_web_view2(
+    control: &native::WebView2,
+    environment: Option<&windows_core::IUnknown>,
+) -> windows_core::Result<windows_future::IAsyncAction> {
+    match environment {
+        None => control.EnsureCoreWebView2Async(),
+        Some(environment) => control
+            .cast::<native::IWebView22>()?
+            .EnsureCoreWebView2WithEnvironmentAsync(
+                &environment.cast::<native::CoreWebView2Environment>()?,
+            ),
+    }
+}
+
 fn complete_webview_initialization(
     initializations: &Rc<RefCell<HashMap<ObjectId, WebViewInitialization>>>,
     object: ObjectId,

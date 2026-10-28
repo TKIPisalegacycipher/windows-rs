@@ -2944,6 +2944,33 @@ unsafe impl Send for CoreWebView2 {}
 unsafe impl Sync for CoreWebView2 {}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2Environment(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2Environment,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl windows_core::RuntimeType for CoreWebView2Environment {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2Environment>();
+}
+unsafe impl windows_core::Interface for CoreWebView2Environment {
+    type Vtable = <ICoreWebView2Environment as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <ICoreWebView2Environment as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2Environment {
+    type Target = ICoreWebView2Environment;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2Environment {
+    const NAME: &'static str = "Microsoft.Web.WebView2.Core.CoreWebView2Environment";
+}
+unsafe impl Send for CoreWebView2Environment {}
+unsafe impl Sync for CoreWebView2Environment {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoreWebView2InitializedEventArgs(windows_core::IUnknown);
 windows_core::imp::interface_hierarchy!(
     CoreWebView2InitializedEventArgs,
@@ -9373,6 +9400,19 @@ impl windows_core::RuntimeType for ICoreWebView2 {
 }
 #[repr(C)]
 pub struct ICoreWebView2_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2Environment,
+    ICoreWebView2Environment_Vtbl,
+    0xd8cc7831_b783_556b_b9ce_899c1e95d585
+);
+impl windows_core::RuntimeType for ICoreWebView2Environment {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ICoreWebView2Environment_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
 }
 windows_core::imp::define_interface!(
@@ -25205,6 +25245,44 @@ pub struct IWebView2_Vtbl {
     ) -> windows_core::HRESULT,
     pub RemoveCoreWebView2Initialized:
         unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    IWebView22,
+    IWebView22_Vtbl,
+    0x560c5eed_3e7a_51e4_b14f_107ba02b89be
+);
+impl windows_core::RuntimeType for IWebView22 {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl IWebView22 {
+    pub(crate) fn EnsureCoreWebView2WithEnvironmentAsync<P0>(
+        &self,
+        environment: P0,
+    ) -> windows_core::Result<windows_future::IAsyncAction>
+    where
+        P0: windows_core::Param<CoreWebView2Environment>,
+    {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).EnsureCoreWebView2WithEnvironmentAsync)(
+                windows_core::Interface::as_raw(self),
+                environment.param().abi(),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+}
+#[repr(C)]
+pub struct IWebView22_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub EnsureCoreWebView2WithEnvironmentAsync: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    )
+        -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     IWebView2Factory,
