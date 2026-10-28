@@ -134,11 +134,15 @@ fn font_dictionary_xaml(values: &[(&str, &str)]) -> String {
 
 fn text_block_style_xaml(family: &str) -> String {
     // Element syntax, as in `font_dictionary_xaml`: a family starting with `{` is not read as a
-    // markup extension.
+    // markup extension. Keyed, with the implicit style based on it, so a TextBlock's local style
+    // (a theme brush) can build on it too (`default_style_resource`).
     format!(
-        "{DICTIONARY_START}<Style TargetType='TextBlock'><Setter Property='FontFamily'>\
+        "{DICTIONARY_START}<Style x:Key='DefaultTextBlockStyle' TargetType='TextBlock'>\
+         <Setter Property='FontFamily'>\
          <Setter.Value><FontFamily>{family}</FontFamily></Setter.Value>\
-         </Setter></Style></ResourceDictionary>"
+         </Setter></Style>\
+         <Style TargetType='TextBlock' BasedOn='{{StaticResource DefaultTextBlockStyle}}'/>\
+         </ResourceDictionary>"
     )
 }
 

@@ -12,6 +12,8 @@ mod calendar;
 #[path = "ownership.rs"]
 mod ownership;
 
+#[path = "button_style.rs"]
+mod button_style;
 mod font_icon;
 mod text_block;
 #[path = "text_box.rs"]
@@ -1120,6 +1122,25 @@ fn themed_icons_load_with_a_theme_resource_foreground() {
         themed_icon_xaml("SymbolIcon", ThemeBrush::Accent)
             .contains("{ThemeResource AccentFillColorDefaultBrush}")
     );
+}
+
+#[test]
+fn theme_styles_build_on_the_style_they_replace() {
+    assert_eq!(default_style_resource("Button"), "DefaultButtonStyle");
+    let xaml = theme_style_xaml(
+        "Button",
+        Some("DefaultButtonStyle"),
+        [("Background", "LayerFillColorDefaultBrush")],
+    );
+    assert!(xaml.starts_with("<Style "));
+    assert!(xaml.contains("TargetType='Button' BasedOn='{StaticResource DefaultButtonStyle}'>"));
+    assert!(xaml.ends_with(
+        "<Setter Property='Background' Value='{ThemeResource LayerFillColorDefaultBrush}'/></Style>"
+    ));
+    let plain = theme_style_xaml("Border", None, [("Background", "A"), ("BorderBrush", "B")]);
+    assert!(plain.contains("TargetType='Border'>"));
+    assert!(!plain.contains("BasedOn"));
+    assert!(plain.contains("<Setter Property='BorderBrush' Value='{ThemeResource B}'/>"));
 }
 
 #[test]

@@ -231,7 +231,12 @@ impl WinUiAdapter {
             .cast::<native::IFrameworkElement>()?;
         if state.base.is_none() && state.brushes.is_empty() {
             self.style_states.remove(&object);
-            element.SetStyle(None::<&native::Style>)?;
+            // Cleared, not set to null: a local null Style hides the app's implicit style (the
+            // Fluent one from XamlControlsResources), and a Button falls back to the
+            // framework's square template.
+            element
+                .cast::<native::IDependencyObject>()?
+                .ClearValue(&native::FrameworkElement::StyleProperty()?)?;
             return Ok(());
         }
         if state.brushes.is_empty() {
@@ -253,24 +258,22 @@ impl WinUiAdapter {
         } else {
             let (target, properties) =
                 theme_style_info(kind).ok_or(WinUiError::InvalidObject(object))?;
-            let based_on = state
-                .base
-                .map(button_style_resource)
-                .map(|resource| format!(" BasedOn='{{StaticResource {resource}}}'"))
-                .unwrap_or_default();
-            let mut xaml = format!(
-                "<Style xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' \
-                 TargetType='{target}'{based_on}>"
-            );
-            for (property, native_name) in properties {
-                if let Some(brush) = state.brushes.get(property) {
-                    xaml.push_str(&format!(
-                        "<Setter Property='{native_name}' Value='{{ThemeResource {}}}'/>",
-                        brush.resource_key()
-                    ));
-                }
-            }
-            xaml.push_str("</Style>");
+            // A local Style replaces the implicit one, so it builds on the type's default style
+            // (`DefaultButtonStyle`, ...) when the app has one, or a Button loses its Fluent
+            // template.
+            let default = default_style_resource(target);
+            let based_on = match state.base {
+                Some(base) => Some(button_style_resource(base)),
+                None => self
+                    .lookup_style(&default)
+                    .is_some()
+                    .then_some(default.as_str()),
+            };
+            let setters = properties.iter().filter_map(|(property, native_name)| {
+                let brush = state.brushes.get(property)?;
+                Some((*native_name, brush.resource_key()))
+            });
+            let xaml = theme_style_xaml(target, based_on, setters);
             let style = native::XamlReader::Load(&xaml)?.cast::<native::Style>()?;
             self.style_cache.insert(key, style.clone());
             style
@@ -285,6 +288,14 @@ impl WinUiAdapter {
             resources.cast::<IMap<IInspectable, IInspectable>>()?;
         let key = windows_reference::IReference::from(button_style_resource(style));
         Ok(resources.Lookup(&key)?.cast()?)
+    }
+
+    /// The app's Style resource `key` (merged dictionaries included), if it has one.
+    fn lookup_style(&self, key: &str) -> Option<native::Style> {
+        let resources = native::Application::Current().ok()?.Resources().ok()?;
+        let resources = resources.cast::<IMap<IInspectable, IInspectable>>().ok()?;
+        let key = windows_reference::IReference::from(key);
+        resources.Lookup(&key).ok()?.cast().ok()
     }
     pub fn set_event_waker(&mut self, waker: impl Fn() + 'static) {
         *self.event_queue.waker.borrow_mut() = Some(Rc::new(waker));

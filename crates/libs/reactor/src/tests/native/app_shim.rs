@@ -45,9 +45,12 @@ fn text_block_font_is_an_implicit_text_block_style() {
     assert_eq!(
         xaml,
         format!(
-            "{DICTIONARY_START}<Style TargetType='TextBlock'><Setter Property='FontFamily'>\
+            "{DICTIONARY_START}<Style x:Key='DefaultTextBlockStyle' TargetType='TextBlock'>\
+             <Setter Property='FontFamily'>\
              <Setter.Value><FontFamily>{{Segoe UI Variable</FontFamily></Setter.Value>\
-             </Setter></Style></ResourceDictionary>"
+             </Setter></Style>\
+             <Style TargetType='TextBlock' BasedOn='{{StaticResource DefaultTextBlockStyle}}'/>\
+             </ResourceDictionary>"
         )
     );
 }

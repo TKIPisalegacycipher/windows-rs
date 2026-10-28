@@ -1915,6 +1915,36 @@ fn button_style_resource(style: ButtonStyle) -> &'static str {
     }
 }
 
+/// The key of the style a type's implicit style is based on, by WinUI's naming
+/// (`DefaultButtonStyle`, `DefaultTextBoxStyle`; `DefaultTextBlockStyle` is the reactor's own, see
+/// `register_text_block_font`).
+fn default_style_resource(target: &str) -> String {
+    format!("Default{target}Style")
+}
+
+/// A Style for `target`, based on resource `based_on`, whose setters (property, brush resource
+/// key) follow the theme.
+fn theme_style_xaml<'a>(
+    target: &str,
+    based_on: Option<&str>,
+    setters: impl IntoIterator<Item = (&'a str, &'a str)>,
+) -> String {
+    let based_on = based_on
+        .map(|resource| format!(" BasedOn='{{StaticResource {resource}}}'"))
+        .unwrap_or_default();
+    let mut xaml = format!(
+        "<Style xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' \
+         TargetType='{target}'{based_on}>"
+    );
+    for (property, resource) in setters {
+        xaml.push_str(&format!(
+            "<Setter Property='{property}' Value='{{ThemeResource {resource}}}'/>"
+        ));
+    }
+    xaml.push_str("</Style>");
+    xaml
+}
+
 fn integration_error(error: windows_core::Error) -> IntegrationError {
     IntegrationError::Native(error.code().0)
 }

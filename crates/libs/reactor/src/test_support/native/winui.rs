@@ -1733,6 +1733,14 @@ impl WinUiAdapter {
         Ok((value.FontSize()?, from_native_color(color)))
     }
 
+    pub fn control_corner_radius(&self, object: ObjectId) -> Result<f64, WinUiError> {
+        Ok(self
+            .ui_element(object)?
+            .cast::<native::IControl>()?
+            .CornerRadius()?
+            .top_left)
+    }
+
     pub fn set_control_foreground(&self, object: ObjectId, color: Color) -> Result<(), WinUiError> {
         self.ui_element(object)?
             .cast::<native::IControl>()?

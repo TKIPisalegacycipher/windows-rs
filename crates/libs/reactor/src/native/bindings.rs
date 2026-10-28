@@ -4837,6 +4837,16 @@ impl FrameworkElement {
             .and_then(|| windows_core::imp::Type::from_abi(result__))
         })
     }
+    pub(crate) fn StyleProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IFrameworkElementStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).StyleProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
     fn IFrameworkElementStatics<
         R,
         F: FnOnce(&IFrameworkElementStatics) -> windows_core::Result<R>,
@@ -9253,6 +9263,16 @@ impl IControl {
             .ok()
         }
     }
+    pub(crate) fn CornerRadius(&self) -> windows_core::Result<CornerRadius> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).CornerRadius)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
 }
 #[repr(C)]
 pub struct IControl_Vtbl {
@@ -9319,6 +9339,14 @@ pub struct IControl_Vtbl {
     pub SetBorderBrush: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    DefaultStyleResourceUri: usize,
+    SetDefaultStyleResourceUri: usize,
+    ElementSoundMode: usize,
+    SetElementSoundMode: usize,
+    pub CornerRadius: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut CornerRadius,
     ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
@@ -11825,6 +11853,16 @@ pub struct IFrameworkElementStatics_Vtbl {
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
     pub AllowFocusOnInteractionProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    FocusVisualMarginProperty: usize,
+    FocusVisualSecondaryThicknessProperty: usize,
+    FocusVisualPrimaryThicknessProperty: usize,
+    FocusVisualSecondaryBrushProperty: usize,
+    FocusVisualPrimaryBrushProperty: usize,
+    AllowFocusWhenDisabledProperty: usize,
+    pub StyleProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
