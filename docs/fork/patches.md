@@ -1,20 +1,25 @@
 # Fork patch catalogue
 
-Every commit on `okojo-rebased` (`47c5b855d`) on top of upstream `ffe56ded6`, grouped by what it is
-for, followed by a map from the original 58-commit stack. Read [readme.md](readme.md) first for the
+Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
+followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
+(`okojo-rebased`, `47c5b855d`); 46-63 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
 
 `#` is the commit's position in the stack, oldest first (`git log --reverse
-upstream/master..okojo-rebased`). `Was` is the number in the original stack
-(`okojo-fast-list`) and is explained in [the map below](#what-happened-to-the-original-58).
+upstream/master..okojo-flow-layout`), counting only code commits: the fork's documentation
+commits, such as the one that added these pages, are not numbered. The numbers match Okojo's
+`vendor/README.md` patch table. `Was` is the number in the original stack
+(`okojo-fast-list`, `none` for a commit made after it) and is explained in [the map below](#what-happened-to-the-original-58).
 `Okojo needs it for` is taken from Okojo's `vendor/README.md` patch table.
 
 `Evidence` says how the change was checked, from what each commit touches: **unit** is a headless
 test in the commit, **live** is a case added to the live self-test or an integration binary, and
 **app** is a check in the running Okojo application (79 items, 2026-10-10, against the original
-fork commit `660a63bec`, so it does not cover later work). Every commit passed the headless gates
+fork commit `660a63bec`, so it does not cover later work); later commits name their own check.
+**desktop** is an `#[ignore]`d test that starts a real WinUI `Application`, which Okojo runs on its
+desktop runners. Every commit passed the headless gates
 described in [readme.md](readme.md#build-and-test) when it was rebuilt. No live test and no
 application run was repeated on the rebuilt stack; see
 [issues.md](issues.md#d-verification-debt).
@@ -25,8 +30,8 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 29 |
-| Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 6 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 43 |
+| Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
 Reactor gaps. A commit that matches one of its items has the strongest case available, because the
@@ -91,6 +96,12 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 37 | `ba0749bf0` | Automation ids on menu items, `DataItem` rows and `ContentDialog` | 43 | UI tests that find controls by id | unit; live |
 | 47 | `6348288cf` | `ListView::item_container_transitions`, which sets `ItemsControl.ItemContainerTransitions` (an empty list turns the entrance transitions off) | none | A message list whose rows show at once instead of fading and sliding in | unit; live |
 | 62 | `53ae68930` | `ElementRef<WebView2>::request_core_web_view2_with_environment`, which starts the control's core in a given `CoreWebView2Environment` (`IWebView22::EnsureCoreWebView2WithEnvironmentAsync`); a view keeps the environment it started in | none | Compose editors whose environment `Language` picks WebView2's spelling dictionary | unit |
+| 48 | `db87b0e02` | `ItemsRepeater::layout(FlowLayout)`: a layout that wraps items onto lines (first on WinUI `LinedFlowLayout`, replaced by 51) | none | Reading-pane recipient chips that wrap | unit |
+| 51 | `666cc88c6` | `FlowLayout` backed by an exact `NonVirtualizingLayout` | none | Chips at their measured width; `LinedFlowLayout` estimated unmeasured items and cropped later chips | unit |
+| 49 | `2ea8be5bb` | `ListView::resource_overrides` | none | Clearing the item fills once, on the list, instead of per row | unit |
+| 52 | `398477921` | `ElementRef<ListView>::observe_visible_range`, from the list's `ScrollViewer` `ViewChanged` and its `ItemsStackPanel`'s `FirstVisibleIndex` / `LastVisibleIndex` | none | Pre-rendering the messages on screen in the reading pane | unit |
+| 54 | `c37a40b7e` | `reference = true` on `ListView` in the generator's `schema.toml`, so 52's `ElementRef<ListView>` code is generated and survives regeneration | none | Nothing new; goes upstream folded into 52 | regeneration leaves no diff |
+| 56 | `8ad306f3a` | A `Border`'s flyout (`flyout_with`), `ElementRef<Border>::request_show_flyout_then` and its closed callback, `OverlayInputPassThroughElement` | none | A contact card opened from a photo tile, closed when the tile's flyout is dismissed | unit |
 
 ## 4. Theming, icons and menus
 
@@ -100,8 +111,11 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 22 | `c0f2af652` | `Icon::foreground` for icon values | 19 | New | Extends #5106. A title-bar icon is an icon source: its theme brush is resolved once and may not follow theme changes, as `Icon::foreground` documents |
 | 27 | `c4ee30434` | `MenuItem::icon` for any non-image `Icon` | 27 | New | Upstream #4923: the maintainer said menu icons need API design. An image icon is refused with `GraphError::InvalidMenuIcon`, because menus own no image source |
 | 18 | `88d8519dd` | `MenuItem::swatch`, a coloured dot in the icon slot | 12 | New | A narrower version of 27. Propose together |
+| 53 | `1e2dbc6e3` | Context menus build their items as they open (`FlyoutBase::Opening`, `LazyMenu`) | none | New | A menu on every message-list row costs little until one opens. Evidence: unit |
+| 55 | `452247a9a` | `Menu::on_opening` | none | New | Bug-adjacent: selecting a row on the right-button release raced WinUI's context request, and a selection that ran first cancelled the menu. Selecting as the menu opens avoids that. Evidence: unit |
+| 60 | `93338694e` | `register_resource_fonts`: app-wide `FontFamily` resources by family name (it loads no font files) | none | New | Lets an app set its interface font through `ContentControlThemeFontFamily`. Evidence: unit |
 | 61 | `cd6484d6b` | `register_text_block_font`, an opt-in implicit `TextBlock` style that sets `FontFamily`, so plain text uses the app's interface font | none | New | A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so `register_resource_fonts` misses plain text. The style is merged after the Fluent dictionaries. A local or template `FontFamily` still wins, but an inherited one loses, so it is opt-in. Evidence: unit |
-| 63 | `9e55c72a6` | `ButtonStyle::Default` and theme brushes keep the app's implicit (Fluent) style | none | New | Bug. Setting a local null `Style` hides the implicit style, and a brush `Style` without `BasedOn` replaces it, so a `Default` or themed `Button` fell back to the framework's square template. Now the Style is cleared, and a brush style is based on `Default<Type>Style` when the app has it; 61's `TextBlock` style is keyed `DefaultTextBlockStyle` for the same reason. Evidence: unit, live (desktop test) |
+| 63 | `9e55c72a6` | `ButtonStyle::Default` and theme brushes keep the app's implicit (Fluent) style | none | New | Bug. Setting a local null `Style` hides the implicit style, and a brush `Style` without `BasedOn` replaces it, so a `Default` or themed `Button` fell back to the framework's square template. Now the Style is cleared, and a brush style is based on `Default<Type>Style` when the app has it; 61's `TextBlock` style is keyed `DefaultTextBlockStyle` for the same reason. Evidence: unit; desktop |
 | 13 | `b7e6f5e8a` | Button and `DropDownButton` menus open below the button | 2 | New | Bug. Upstream still leaves the flyout placement at its default |
 
 ## 5. Input fixes
@@ -109,6 +123,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | # | Commit | Change | Was | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 14 | `93ff359f5` | Queue `PointerReleased` before releasing pointer capture | 4 | New | Bug, still present upstream: `pointer_event_info` calls `ReleasePointerCapture` while building the event, and WinUI raises `PointerCaptureLost` inside that call. A finished drag looks like a cancelled one |
+| 57 | `6e6f33ef2` | `Border::handles_plain_presses`: a plain left press and its release are taken by the `Border`; Ctrl, Shift and right presses still reach the list row | none | New | A photo tile that opens its flyout without selecting the row it sits in |
 
 ## 6. Drag and drop
 
@@ -134,10 +149,12 @@ own modal `DoDragDrop` loop, which a headless test cannot reproduce.
 | --- | --- | --- | --- | --- | --- |
 | 35 | `d0d2e1195` | Apply `SelectedIndex` after the item changes of the same update, on mount and on update; suppress the selection events WinUI raises meanwhile, only for lists that declare an index | 31, 39, 40 | New | Bug: the index named an item of the old list, so removing a row and selecting the next one across a header selected the header |
 | 36 | `963bb1485` | Swallow `NavigationView`'s late "nothing selected" event after the reactor deselects | 58 | New | Bug: WinUI queues that event at low priority after the reactor's own-write suppression has ended. It cost a full render per folder pick in Okojo |
+| 58 | `477d35f4d` | `ElementRef<ListView>::request_selected_keys`: the runtime resolves keys to items; the adapter edits `SelectedItems` with `SelectionChanged` held and reports one change | none | New | A row checkbox that ticks the row into the list's own selection |
+| 59 | `aa8e6d812` | `ElementRef<ListView>::request_focused_key`: the realized container whose `FocusState` isn't `Unfocused` | none | New | Ctrl+Space ticks the focused row, which Ctrl+arrow keys can move off the selected one |
 
 ## 8. `ListView` row content and large lists
 
-These commits are one piece of work: make a keyed `ListView` of hundreds of messages show the
+These commits are one piece of work (46 and 50 are later fixes to it): make a keyed `ListView` of hundreds of messages show the
 right row content, switch quickly, and not build every row. They share state in the adapter
 (`ListHosts`, `WaitingContent`) and in the reconciler, and each fixes a failure introduced or
 exposed by the one before. They cannot be proposed one at a time.
@@ -150,6 +167,8 @@ exposed by the one before. They cannot be proposed one at a time.
 | 43 | `373b522a0` | Mount a `DataItem`'s content only when the list prepares its container | 55 | Dependent |
 | 44 | `e1595905a` | Release an item's old container while its content is still waiting | 56 | Dependent |
 | 45 | `47c5b855d` | Mount the first 40 items' content with the items, so the first frame has correct heights | 57 | Dependent |
+| 46 | `be56fbd7d` | Connect a container again when it keeps another item's content | none | Dependent |
+| 50 | `e042b86d5` | Prune `ListHosts` when a list item is released, so a new item reusing its address starts clean | none | Dependent |
 
 A related change stands apart, because it is not specific to `ListView`:
 
@@ -249,12 +268,17 @@ drag commit likewise rest on live behaviour.
 
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
-they remain on `okojo-fast-list`.
+they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
+Commits 46-63 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. These are source-breaking for code that names them:
+and changes a few. Commits 46-63 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+`ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
+requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
+`register_text_block_font`); none changes an existing item. `register_resource_fonts` is missing
+from `public-api.txt`, which commit 60 did not update. These are source-breaking for code that names them:
 
 | Item | Change | Commit |
 | --- | --- | --- |
