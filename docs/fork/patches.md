@@ -90,6 +90,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 24 | `3c5ed057c` | `ListView` item containers take the `DataItem` text as their automation name | 21 | Screen readers announce rows instead of an unnamed item | unit; live; app |
 | 37 | `ba0749bf0` | Automation ids on menu items, `DataItem` rows and `ContentDialog` | 43 | UI tests that find controls by id | unit; live |
 | 47 | `6348288cf` | `ListView::item_container_transitions`, which sets `ItemsControl.ItemContainerTransitions` (an empty list turns the entrance transitions off) | none | A message list whose rows show at once instead of fading and sliding in | unit; live |
+| 62 | `53ae68930` | `ElementRef<WebView2>::request_core_web_view2_with_environment`, which starts the control's core in a given `CoreWebView2Environment` (`IWebView22::EnsureCoreWebView2WithEnvironmentAsync`); a view keeps the environment it started in | none | Compose editors whose environment `Language` picks WebView2's spelling dictionary | unit |
 
 ## 4. Theming, icons and menus
 
@@ -100,7 +101,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 27 | `c4ee30434` | `MenuItem::icon` for any non-image `Icon` | 27 | New | Upstream #4923: the maintainer said menu icons need API design. An image icon is refused with `GraphError::InvalidMenuIcon`, because menus own no image source |
 | 18 | `88d8519dd` | `MenuItem::swatch`, a coloured dot in the icon slot | 12 | New | A narrower version of 27. Propose together |
 | 61 | `cd6484d6b` | `register_text_block_font`, an opt-in implicit `TextBlock` style that sets `FontFamily`, so plain text uses the app's interface font | none | New | A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so `register_resource_fonts` misses plain text. The style is merged after the Fluent dictionaries. A local or template `FontFamily` still wins, but an inherited one loses, so it is opt-in. Evidence: unit |
-| 63 | this commit | `ButtonStyle::Default` and theme brushes keep the app's implicit (Fluent) style | none | New | Bug. Setting a local null `Style` hides the implicit style, and a brush `Style` without `BasedOn` replaces it, so a `Default` or themed `Button` fell back to the framework's square template. Now the Style is cleared, and a brush style is based on `Default<Type>Style` when the app has it; 61's `TextBlock` style is keyed `DefaultTextBlockStyle` for the same reason. Evidence: unit, live (desktop test) |
+| 63 | `9e55c72a6` | `ButtonStyle::Default` and theme brushes keep the app's implicit (Fluent) style | none | New | Bug. Setting a local null `Style` hides the implicit style, and a brush `Style` without `BasedOn` replaces it, so a `Default` or themed `Button` fell back to the framework's square template. Now the Style is cleared, and a brush style is based on `Default<Type>Style` when the app has it; 61's `TextBlock` style is keyed `DefaultTextBlockStyle` for the same reason. Evidence: unit, live (desktop test) |
 | 13 | `b7e6f5e8a` | Button and `DropDownButton` menus open below the button | 2 | New | Bug. Upstream still leaves the flyout placement at its default |
 
 ## 5. Input fixes
