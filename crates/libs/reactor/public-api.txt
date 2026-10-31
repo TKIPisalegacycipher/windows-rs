@@ -74,6 +74,10 @@ pub windows_reactor::AcceleratorModifiers::Control
 pub windows_reactor::AcceleratorModifiers::None
 impl core::convert::From<windows_reactor::AcceleratorModifiers> for windows_reactor::InputModifiers
 pub fn windows_reactor::InputModifiers::from(windows_reactor::AcceleratorModifiers) -> Self
+#[non_exhaustive] pub enum windows_reactor::AccessibilityView
+pub windows_reactor::AccessibilityView::Content
+pub windows_reactor::AccessibilityView::Control
+pub windows_reactor::AccessibilityView::Raw
 pub enum windows_reactor::AnyElement
 #[non_exhaustive] pub enum windows_reactor::AutomationHeadingLevel
 pub windows_reactor::AutomationHeadingLevel::Level1
@@ -576,6 +580,7 @@ impl windows_reactor::App
 pub fn windows_reactor::App::run_application<A: windows_reactor::Application>(<A as windows_reactor::Application>::Input) -> windows_result::Result<()>
 pub struct windows_reactor::AppBarButton(_)
 impl windows_reactor::AppBarButton
+pub fn windows_reactor::AppBarButton::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::AppBarButton::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::AppBarButton::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::AppBarButton::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -619,6 +624,7 @@ impl core::default::Default for windows_reactor::AppBarButton
 pub fn windows_reactor::AppBarButton::default() -> Self
 pub struct windows_reactor::AppBarSeparator(_)
 impl windows_reactor::AppBarSeparator
+pub fn windows_reactor::AppBarSeparator::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::AppBarSeparator::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::AppBarSeparator::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::AppBarSeparator::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -691,6 +697,7 @@ pub fn windows_reactor::ApplicationViewContext<A>::forward(&self) -> windows_rea
 pub fn windows_reactor::ApplicationViewContext<A>::message(&self, <A as windows_reactor::Application>::Message) -> windows_reactor::Callback<()> where <A as windows_reactor::Application>::Message: core::clone::Clone
 pub struct windows_reactor::AutoSuggestBox(_)
 impl windows_reactor::AutoSuggestBox
+pub fn windows_reactor::AutoSuggestBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::AutoSuggestBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::AutoSuggestBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::AutoSuggestBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -743,6 +750,7 @@ pub fn windows_reactor::AutoSuggestBox::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::AutoSuggestBox
 pub struct windows_reactor::BitmapIcon(_)
 impl windows_reactor::BitmapIcon
+pub fn windows_reactor::BitmapIcon::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::BitmapIcon::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::BitmapIcon::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::BitmapIcon::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -786,6 +794,7 @@ pub fn windows_reactor::BitmapIcon::default() -> Self
 pub struct windows_reactor::Border(_)
 impl windows_reactor::Border
 pub fn windows_reactor::Border::allow_focus_on_interaction(self, bool) -> Self
+pub fn windows_reactor::Border::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Border::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Border::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Border::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -804,6 +813,7 @@ pub fn windows_reactor::Border::element_ref<R>(self, &R) -> Self where R: window
 pub fn windows_reactor::Border::exit_fade(self, core::time::Duration) -> Self
 pub fn windows_reactor::Border::exit_transition(self, core::option::Option<windows_reactor::ExitTransition>) -> Self
 pub fn windows_reactor::Border::focus_on_pointer_release(self, bool) -> Self
+pub fn windows_reactor::Border::focus_visual_margin(self, impl core::convert::Into<windows_reactor::Thickness>) -> Self
 pub fn windows_reactor::Border::grid_column(self, i32) -> Self
 pub fn windows_reactor::Border::grid_column_span(self, i32) -> Self
 pub fn windows_reactor::Border::grid_row(self, i32) -> Self
@@ -850,6 +860,7 @@ pub fn windows_reactor::Border::transitions<T>(self, T) -> Self where T: core::i
 pub fn windows_reactor::Border::transitions_optional<T>(self, core::option::Option<T>) -> Self where T: core::iter::traits::collect::IntoIterator<Item = windows_reactor::ThemeTransition>
 pub fn windows_reactor::Border::translation(self, f64, f64) -> Self
 pub fn windows_reactor::Border::translation_transition(self, core::time::Duration) -> Self
+pub fn windows_reactor::Border::use_system_focus_visuals(self, bool) -> Self
 pub fn windows_reactor::Border::vertical_alignment(self, windows_reactor::VerticalAlignment) -> Self
 pub fn windows_reactor::Border::width(self, f64) -> Self
 impl core::convert::From<windows_reactor::Border> for windows_reactor::View
@@ -859,6 +870,7 @@ pub fn windows_reactor::Border::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::Border
 pub struct windows_reactor::BreadcrumbBar(_)
 impl windows_reactor::BreadcrumbBar
+pub fn windows_reactor::BreadcrumbBar::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::BreadcrumbBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::BreadcrumbBar::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::BreadcrumbBar::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -900,6 +912,7 @@ impl core::default::Default for windows_reactor::BreadcrumbBar
 pub fn windows_reactor::BreadcrumbBar::default() -> Self
 pub struct windows_reactor::Button(_)
 impl windows_reactor::Button
+pub fn windows_reactor::Button::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Button::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Button::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Button::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -950,6 +963,7 @@ pub fn windows_reactor::Button::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::Button
 pub struct windows_reactor::CalendarDatePicker(_)
 impl windows_reactor::CalendarDatePicker
+pub fn windows_reactor::CalendarDatePicker::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::CalendarDatePicker::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::CalendarDatePicker::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::CalendarDatePicker::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -998,6 +1012,7 @@ impl core::default::Default for windows_reactor::CalendarDatePicker
 pub fn windows_reactor::CalendarDatePicker::default() -> Self
 pub struct windows_reactor::CalendarView(_)
 impl windows_reactor::CalendarView
+pub fn windows_reactor::CalendarView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::CalendarView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::CalendarView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::CalendarView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1058,6 +1073,7 @@ impl windows_reactor::CancellationToken
 pub fn windows_reactor::CancellationToken::is_cancelled(&self) -> bool
 pub struct windows_reactor::Canvas(_)
 impl windows_reactor::Canvas
+pub fn windows_reactor::Canvas::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Canvas::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Canvas::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Canvas::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1102,6 +1118,7 @@ pub windows_reactor::CharacterEventInfo::modifiers: windows_reactor::InputModifi
 pub windows_reactor::CharacterEventInfo::status: windows_reactor::PhysicalKeyStatus
 pub struct windows_reactor::CheckBox(_)
 impl windows_reactor::CheckBox
+pub fn windows_reactor::CheckBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::CheckBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::CheckBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::CheckBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1161,6 +1178,7 @@ impl core::convert::From<windows_reactor::Color> for windows_reactor::ResourceVa
 pub fn windows_reactor::ResourceValue::from(windows_reactor::Color) -> Self
 pub struct windows_reactor::ColorPicker(_)
 impl windows_reactor::ColorPicker
+pub fn windows_reactor::ColorPicker::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ColorPicker::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ColorPicker::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ColorPicker::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1207,6 +1225,7 @@ impl core::default::Default for windows_reactor::ColorPicker
 pub fn windows_reactor::ColorPicker::default() -> Self
 pub struct windows_reactor::ComboBox(_)
 impl windows_reactor::ComboBox
+pub fn windows_reactor::ComboBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ComboBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ComboBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ComboBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1255,6 +1274,7 @@ pub fn windows_reactor::ComboBox::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::ComboBox
 pub struct windows_reactor::CommandBar(_)
 impl windows_reactor::CommandBar
+pub fn windows_reactor::CommandBar::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::CommandBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::CommandBar::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::CommandBar::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1392,6 +1412,7 @@ pub fn windows_reactor::DataItem::content(self, impl core::convert::Into<windows
 pub fn windows_reactor::DataItem::new(impl core::convert::Into<windows_reactor::Key>, impl core::convert::AsRef<str>) -> Self
 pub struct windows_reactor::DatePicker(_)
 impl windows_reactor::DatePicker
+pub fn windows_reactor::DatePicker::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::DatePicker::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::DatePicker::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::DatePicker::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1454,6 +1475,7 @@ pub fn windows_reactor::DragDropPolicy::storage_items(self, impl core::convert::
 pub fn windows_reactor::DragDropPolicy::text(self, impl core::convert::Into<core::option::Option<windows_reactor::DragDropAction>>) -> Self
 pub struct windows_reactor::DropDownButton(_)
 impl windows_reactor::DropDownButton
+pub fn windows_reactor::DropDownButton::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::DropDownButton::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::DropDownButton::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::DropDownButton::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1552,6 +1574,7 @@ impl<T> core::fmt::Debug for windows_reactor::ElementRef<T>
 pub fn windows_reactor::ElementRef<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub struct windows_reactor::Ellipse(_)
 impl windows_reactor::Ellipse
+pub fn windows_reactor::Ellipse::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Ellipse::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Ellipse::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Ellipse::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1607,6 +1630,7 @@ pub const fn windows_reactor::ExitTransition::duration(self) -> core::time::Dura
 pub fn windows_reactor::ExitTransition::fade(core::time::Duration) -> core::option::Option<Self>
 pub struct windows_reactor::Expander(_)
 impl windows_reactor::Expander
+pub fn windows_reactor::Expander::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Expander::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Expander::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Expander::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1652,6 +1676,7 @@ impl core::default::Default for windows_reactor::Expander
 pub fn windows_reactor::Expander::default() -> Self
 pub struct windows_reactor::FlipView(_)
 impl windows_reactor::FlipView
+pub fn windows_reactor::FlipView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::FlipView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::FlipView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::FlipView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1708,6 +1733,7 @@ pub windows_reactor::FocusEventInfo::is_direct: bool
 pub windows_reactor::FocusEventInfo::state: windows_reactor::ElementFocusState
 pub struct windows_reactor::FontIcon(_)
 impl windows_reactor::FontIcon
+pub fn windows_reactor::FontIcon::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::FontIcon::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::FontIcon::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::FontIcon::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1765,6 +1791,7 @@ pub const fn windows_reactor::FontWeight::get(self) -> u16
 pub const fn windows_reactor::FontWeight::new(u16) -> core::option::Option<Self>
 pub struct windows_reactor::Grid(_)
 impl windows_reactor::Grid
+pub fn windows_reactor::Grid::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Grid::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Grid::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Grid::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1823,6 +1850,7 @@ pub fn windows_reactor::GridLength::min(self, f64) -> Self
 pub struct windows_reactor::GridView(_)
 impl windows_reactor::GridView
 pub fn windows_reactor::GridView::allow_drop(self, bool) -> Self
+pub fn windows_reactor::GridView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::GridView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::GridView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::GridView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1870,6 +1898,7 @@ impl core::default::Default for windows_reactor::GridView
 pub fn windows_reactor::GridView::default() -> Self
 pub struct windows_reactor::GridViewItem(_)
 impl windows_reactor::GridViewItem
+pub fn windows_reactor::GridViewItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::GridViewItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::GridViewItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::GridViewItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1912,6 +1941,7 @@ impl core::default::Default for windows_reactor::GridViewItem
 pub fn windows_reactor::GridViewItem::default() -> Self
 pub struct windows_reactor::HyperlinkButton(_)
 impl windows_reactor::HyperlinkButton
+pub fn windows_reactor::HyperlinkButton::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::HyperlinkButton::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::HyperlinkButton::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::HyperlinkButton::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -1972,6 +2002,7 @@ impl core::convert::From<windows_reactor::Symbol> for windows_reactor::Icon
 pub fn windows_reactor::Icon::from(windows_reactor::Symbol) -> Self
 pub struct windows_reactor::Image(_)
 impl windows_reactor::Image
+pub fn windows_reactor::Image::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Image::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Image::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Image::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2021,6 +2052,7 @@ pub fn windows_reactor::Image::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::Image
 pub struct windows_reactor::ImageIcon(_)
 impl windows_reactor::ImageIcon
+pub fn windows_reactor::ImageIcon::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ImageIcon::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ImageIcon::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ImageIcon::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2071,6 +2103,7 @@ pub fn windows_reactor::ImageSource::svg(windows_reactor::EncodedImage) -> Self
 pub fn windows_reactor::ImageSource::uri(impl core::convert::Into<alloc::rcs::rc::Rc<str>>) -> windows_result::Result<Self>
 pub struct windows_reactor::InfoBadge(_)
 impl windows_reactor::InfoBadge
+pub fn windows_reactor::InfoBadge::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::InfoBadge::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::InfoBadge::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::InfoBadge::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2112,6 +2145,7 @@ pub fn windows_reactor::InfoBadge::default() -> Self
 pub struct windows_reactor::InfoBar(_)
 impl windows_reactor::InfoBar
 pub fn windows_reactor::InfoBar::action_button(self, impl core::convert::Into<windows_reactor::View>) -> Self
+pub fn windows_reactor::InfoBar::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::InfoBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::InfoBar::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::InfoBar::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2173,6 +2207,7 @@ impl core::ops::bit::BitOrAssign for windows_reactor::InputModifiers
 pub fn windows_reactor::InputModifiers::bitor_assign(&mut self, Self)
 pub struct windows_reactor::ItemsRepeater(_)
 impl windows_reactor::ItemsRepeater
+pub fn windows_reactor::ItemsRepeater::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ItemsRepeater::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ItemsRepeater::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ItemsRepeater::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2244,6 +2279,7 @@ impl windows_reactor::KeyedView
 pub fn windows_reactor::KeyedView::new(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<windows_reactor::View>) -> Self
 pub struct windows_reactor::Line(_)
 impl windows_reactor::Line
+pub fn windows_reactor::Line::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Line::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Line::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Line::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2289,6 +2325,7 @@ impl core::default::Default for windows_reactor::Line
 pub fn windows_reactor::Line::default() -> Self
 pub struct windows_reactor::ListBox(_)
 impl windows_reactor::ListBox
+pub fn windows_reactor::ListBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ListBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ListBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ListBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2332,6 +2369,7 @@ impl core::default::Default for windows_reactor::ListBox
 pub fn windows_reactor::ListBox::default() -> Self
 pub struct windows_reactor::ListBoxItem(_)
 impl windows_reactor::ListBoxItem
+pub fn windows_reactor::ListBoxItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ListBoxItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ListBoxItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ListBoxItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2375,6 +2413,7 @@ pub fn windows_reactor::ListBoxItem::default() -> Self
 pub struct windows_reactor::ListView(_)
 impl windows_reactor::ListView
 pub fn windows_reactor::ListView::allow_drop(self, bool) -> Self
+pub fn windows_reactor::ListView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ListView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ListView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ListView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2429,6 +2468,7 @@ pub fn windows_reactor::ListView::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::ListView
 pub struct windows_reactor::ListViewItem(_)
 impl windows_reactor::ListViewItem
+pub fn windows_reactor::ListViewItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ListViewItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ListViewItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ListViewItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2483,6 +2523,7 @@ pub fn windows_reactor::Menu::new(impl core::iter::traits::collect::IntoIterator
 pub fn windows_reactor::Menu::on_opening(self, impl windows_reactor::IntoUnitCallback) -> Self
 pub struct windows_reactor::MenuBar(_)
 impl windows_reactor::MenuBar
+pub fn windows_reactor::MenuBar::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::MenuBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::MenuBar::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::MenuBar::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2523,6 +2564,7 @@ impl core::default::Default for windows_reactor::MenuBar
 pub fn windows_reactor::MenuBar::default() -> Self
 pub struct windows_reactor::MenuBarItem(_)
 impl windows_reactor::MenuBarItem
+pub fn windows_reactor::MenuBarItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::MenuBarItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::MenuBarItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::MenuBarItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2564,6 +2606,7 @@ pub fn windows_reactor::MenuBarItem::default() -> Self
 pub struct windows_reactor::NavigationView(_)
 impl windows_reactor::NavigationView
 pub fn windows_reactor::NavigationView::always_show_header(self, bool) -> Self
+pub fn windows_reactor::NavigationView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::NavigationView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::NavigationView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::NavigationView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2630,6 +2673,7 @@ pub fn windows_reactor::NavigationView::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::NavigationView
 pub struct windows_reactor::NavigationViewItem(_)
 impl windows_reactor::NavigationViewItem
+pub fn windows_reactor::NavigationViewItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::NavigationViewItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::NavigationViewItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::NavigationViewItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2684,6 +2728,7 @@ pub fn windows_reactor::NotifyIcon::on_activate(self, impl windows_reactor::Into
 pub fn windows_reactor::NotifyIcon::tooltip(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub struct windows_reactor::NumberBox(_)
 impl windows_reactor::NumberBox
+pub fn windows_reactor::NumberBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::NumberBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::NumberBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::NumberBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2733,6 +2778,7 @@ pub fn windows_reactor::NumberBox::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::NumberBox
 pub struct windows_reactor::PasswordBox(_)
 impl windows_reactor::PasswordBox
+pub fn windows_reactor::PasswordBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::PasswordBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::PasswordBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::PasswordBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2780,6 +2826,7 @@ pub fn windows_reactor::PasswordBox::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::PasswordBox
 pub struct windows_reactor::PathIcon(_)
 impl windows_reactor::PathIcon
+pub fn windows_reactor::PathIcon::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::PathIcon::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::PathIcon::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::PathIcon::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2820,6 +2867,7 @@ impl core::default::Default for windows_reactor::PathIcon
 pub fn windows_reactor::PathIcon::default() -> Self
 pub struct windows_reactor::PersonPicture(_)
 impl windows_reactor::PersonPicture
+pub fn windows_reactor::PersonPicture::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::PersonPicture::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::PersonPicture::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::PersonPicture::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2868,6 +2916,7 @@ pub windows_reactor::PhysicalKeyStatus::scan_code: u32
 pub windows_reactor::PhysicalKeyStatus::was_down: bool
 pub struct windows_reactor::Pivot(_)
 impl windows_reactor::Pivot
+pub fn windows_reactor::Pivot::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Pivot::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Pivot::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Pivot::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2911,6 +2960,7 @@ impl core::default::Default for windows_reactor::Pivot
 pub fn windows_reactor::Pivot::default() -> Self
 pub struct windows_reactor::PivotItem(_)
 impl windows_reactor::PivotItem
+pub fn windows_reactor::PivotItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::PivotItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::PivotItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::PivotItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -2966,6 +3016,7 @@ pub windows_reactor::PointerEventInfo::x: f64
 pub windows_reactor::PointerEventInfo::y: f64
 pub struct windows_reactor::ProgressBar(_)
 impl windows_reactor::ProgressBar
+pub fn windows_reactor::ProgressBar::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ProgressBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ProgressBar::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ProgressBar::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3012,6 +3063,7 @@ impl core::default::Default for windows_reactor::ProgressBar
 pub fn windows_reactor::ProgressBar::default() -> Self
 pub struct windows_reactor::ProgressRing(_)
 impl windows_reactor::ProgressRing
+pub fn windows_reactor::ProgressRing::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ProgressRing::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ProgressRing::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ProgressRing::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3057,6 +3109,7 @@ impl core::default::Default for windows_reactor::ProgressRing
 pub fn windows_reactor::ProgressRing::default() -> Self
 pub struct windows_reactor::RadioButton(_)
 impl windows_reactor::RadioButton
+pub fn windows_reactor::RadioButton::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::RadioButton::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::RadioButton::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::RadioButton::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3103,6 +3156,7 @@ pub fn windows_reactor::RadioButton::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::RadioButton
 pub struct windows_reactor::RadioButtons(_)
 impl windows_reactor::RadioButtons
+pub fn windows_reactor::RadioButtons::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::RadioButtons::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::RadioButtons::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::RadioButtons::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3147,6 +3201,7 @@ impl core::default::Default for windows_reactor::RadioButtons
 pub fn windows_reactor::RadioButtons::default() -> Self
 pub struct windows_reactor::RatingControl(_)
 impl windows_reactor::RatingControl
+pub fn windows_reactor::RatingControl::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::RatingControl::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::RatingControl::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::RatingControl::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3193,6 +3248,7 @@ pub fn windows_reactor::RatingControl::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::RatingControl
 pub struct windows_reactor::Rectangle(_)
 impl windows_reactor::Rectangle
+pub fn windows_reactor::Rectangle::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Rectangle::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Rectangle::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Rectangle::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3237,6 +3293,7 @@ impl core::default::Default for windows_reactor::Rectangle
 pub fn windows_reactor::Rectangle::default() -> Self
 pub struct windows_reactor::RelativePanel(_)
 impl windows_reactor::RelativePanel
+pub fn windows_reactor::RelativePanel::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::RelativePanel::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::RelativePanel::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::RelativePanel::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3277,6 +3334,7 @@ impl core::default::Default for windows_reactor::RelativePanel
 pub fn windows_reactor::RelativePanel::default() -> Self
 pub struct windows_reactor::RepeatButton(_)
 impl windows_reactor::RepeatButton
+pub fn windows_reactor::RepeatButton::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::RepeatButton::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::RepeatButton::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::RepeatButton::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3325,6 +3383,7 @@ pub fn windows_reactor::ResourceOverrides::new() -> Self
 pub fn windows_reactor::ResourceOverrides::set(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<windows_reactor::ResourceValue>) -> Self
 pub struct windows_reactor::RichEditBox(_)
 impl windows_reactor::RichEditBox
+pub fn windows_reactor::RichEditBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::RichEditBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::RichEditBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::RichEditBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3376,6 +3435,7 @@ pub fn windows_reactor::RichText::new(impl core::iter::traits::collect::IntoIter
 pub fn windows_reactor::RichText::single_paragraph(impl core::iter::traits::collect::IntoIterator<Item = windows_reactor::RichTextInline>) -> Self
 pub struct windows_reactor::RichTextBlock(_)
 impl windows_reactor::RichTextBlock
+pub fn windows_reactor::RichTextBlock::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::RichTextBlock::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::RichTextBlock::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::RichTextBlock::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3446,6 +3506,7 @@ impl windows_reactor::ScreenPoint
 pub const fn windows_reactor::ScreenPoint::new(i32, i32) -> Self
 pub struct windows_reactor::ScrollView(_)
 impl windows_reactor::ScrollView
+pub fn windows_reactor::ScrollView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ScrollView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ScrollView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ScrollView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3488,6 +3549,7 @@ impl core::default::Default for windows_reactor::ScrollView
 pub fn windows_reactor::ScrollView::default() -> Self
 pub struct windows_reactor::ScrollViewer(_)
 impl windows_reactor::ScrollViewer
+pub fn windows_reactor::ScrollViewer::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ScrollViewer::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ScrollViewer::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ScrollViewer::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3532,6 +3594,7 @@ pub fn windows_reactor::ScrollViewer::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::ScrollViewer
 pub struct windows_reactor::SelectorBar(_)
 impl windows_reactor::SelectorBar
+pub fn windows_reactor::SelectorBar::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::SelectorBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::SelectorBar::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::SelectorBar::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3574,6 +3637,7 @@ impl core::default::Default for windows_reactor::SelectorBar
 pub fn windows_reactor::SelectorBar::default() -> Self
 pub struct windows_reactor::SelectorBarItem(_)
 impl windows_reactor::SelectorBarItem
+pub fn windows_reactor::SelectorBarItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::SelectorBarItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::SelectorBarItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::SelectorBarItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3616,6 +3680,7 @@ impl core::default::Default for windows_reactor::SelectorBarItem
 pub fn windows_reactor::SelectorBarItem::default() -> Self
 pub struct windows_reactor::Slider(_)
 impl windows_reactor::Slider
+pub fn windows_reactor::Slider::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Slider::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Slider::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Slider::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3665,6 +3730,7 @@ pub fn windows_reactor::Slider::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::Slider
 pub struct windows_reactor::SplitButton(_)
 impl windows_reactor::SplitButton
+pub fn windows_reactor::SplitButton::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::SplitButton::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::SplitButton::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::SplitButton::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3707,6 +3773,7 @@ impl core::default::Default for windows_reactor::SplitButton
 pub fn windows_reactor::SplitButton::default() -> Self
 pub struct windows_reactor::SplitView(_)
 impl windows_reactor::SplitView
+pub fn windows_reactor::SplitView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::SplitView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::SplitView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::SplitView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3753,6 +3820,7 @@ impl core::default::Default for windows_reactor::SplitView
 pub fn windows_reactor::SplitView::default() -> Self
 pub struct windows_reactor::StackPanel(_)
 impl windows_reactor::StackPanel
+pub fn windows_reactor::StackPanel::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::StackPanel::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::StackPanel::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::StackPanel::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3796,6 +3864,7 @@ impl core::default::Default for windows_reactor::StackPanel
 pub fn windows_reactor::StackPanel::default() -> Self
 pub struct windows_reactor::SwapChainPanel(_)
 impl windows_reactor::SwapChainPanel
+pub fn windows_reactor::SwapChainPanel::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::SwapChainPanel::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::SwapChainPanel::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::SwapChainPanel::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3838,6 +3907,7 @@ impl windows_reactor::ReferenceElement for windows_reactor::SwapChainPanel
 pub struct windows_reactor::SwapChainPanelBinding(_)
 pub struct windows_reactor::SymbolIcon(_)
 impl windows_reactor::SymbolIcon
+pub fn windows_reactor::SymbolIcon::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::SymbolIcon::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::SymbolIcon::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::SymbolIcon::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3879,6 +3949,7 @@ impl core::default::Default for windows_reactor::SymbolIcon
 pub fn windows_reactor::SymbolIcon::default() -> Self
 pub struct windows_reactor::TabView(_)
 impl windows_reactor::TabView
+pub fn windows_reactor::TabView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TabView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TabView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TabView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3927,6 +3998,7 @@ impl core::default::Default for windows_reactor::TabView
 pub fn windows_reactor::TabView::default() -> Self
 pub struct windows_reactor::TabViewItem(_)
 impl windows_reactor::TabViewItem
+pub fn windows_reactor::TabViewItem::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TabViewItem::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TabViewItem::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TabViewItem::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -3971,6 +4043,7 @@ pub fn windows_reactor::TabViewItem::default() -> Self
 pub struct windows_reactor::TeachingTip(_)
 impl windows_reactor::TeachingTip
 pub fn windows_reactor::TeachingTip::action_button_content(self, impl core::convert::AsRef<str>) -> Self
+pub fn windows_reactor::TeachingTip::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TeachingTip::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TeachingTip::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TeachingTip::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4018,6 +4091,7 @@ impl core::default::Default for windows_reactor::TeachingTip
 pub fn windows_reactor::TeachingTip::default() -> Self
 pub struct windows_reactor::TextBlock(_)
 impl windows_reactor::TextBlock
+pub fn windows_reactor::TextBlock::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TextBlock::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TextBlock::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TextBlock::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4068,6 +4142,7 @@ pub fn windows_reactor::TextBlock::default() -> Self
 pub struct windows_reactor::TextBox(_)
 impl windows_reactor::TextBox
 pub fn windows_reactor::TextBox::accepts_return(self, bool) -> Self
+pub fn windows_reactor::TextBox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TextBox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TextBox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TextBox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4139,6 +4214,7 @@ impl core::convert::From<windows_reactor::Thickness> for windows_reactor::Resour
 pub fn windows_reactor::ResourceValue::from(windows_reactor::Thickness) -> Self
 pub struct windows_reactor::TimePicker(_)
 impl windows_reactor::TimePicker
+pub fn windows_reactor::TimePicker::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TimePicker::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TimePicker::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TimePicker::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4183,6 +4259,7 @@ impl core::default::Default for windows_reactor::TimePicker
 pub fn windows_reactor::TimePicker::default() -> Self
 pub struct windows_reactor::TitleBar(_)
 impl windows_reactor::TitleBar
+pub fn windows_reactor::TitleBar::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TitleBar::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TitleBar::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TitleBar::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4234,6 +4311,7 @@ impl core::default::Default for windows_reactor::TitleBar
 pub fn windows_reactor::TitleBar::default() -> Self
 pub struct windows_reactor::ToggleButton(_)
 impl windows_reactor::ToggleButton
+pub fn windows_reactor::ToggleButton::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ToggleButton::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ToggleButton::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ToggleButton::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4279,6 +4357,7 @@ pub fn windows_reactor::ToggleButton::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::ToggleButton
 pub struct windows_reactor::ToggleSwitch(_)
 impl windows_reactor::ToggleSwitch
+pub fn windows_reactor::ToggleSwitch::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::ToggleSwitch::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::ToggleSwitch::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ToggleSwitch::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4337,6 +4416,7 @@ pub fn windows_reactor::TreeNode::expanded(self, bool) -> Self
 pub fn windows_reactor::TreeNode::new(impl core::convert::Into<windows_reactor::Key>, impl core::convert::AsRef<str>) -> Self
 pub struct windows_reactor::TreeView(_)
 impl windows_reactor::TreeView
+pub fn windows_reactor::TreeView::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TreeView::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TreeView::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TreeView::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4380,6 +4460,7 @@ impl core::default::Default for windows_reactor::TreeView
 pub fn windows_reactor::TreeView::default() -> Self
 pub struct windows_reactor::VariableSizedWrapGrid(_)
 impl windows_reactor::VariableSizedWrapGrid
+pub fn windows_reactor::VariableSizedWrapGrid::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::VariableSizedWrapGrid::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::VariableSizedWrapGrid::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::VariableSizedWrapGrid::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4607,6 +4688,7 @@ impl<C> windows_reactor::ViewContext<'_, C> where C: windows_reactor::Component,
 pub fn windows_reactor::ViewContext<'_, C>::completion(&self) -> windows_reactor::ComponentCompletion<<C as windows_reactor::Component>::Message>
 pub struct windows_reactor::Viewbox(_)
 impl windows_reactor::Viewbox
+pub fn windows_reactor::Viewbox::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::Viewbox::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::Viewbox::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::Viewbox::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self
@@ -4704,6 +4786,7 @@ impl core::fmt::Debug for windows_reactor::VirtualSource
 pub fn windows_reactor::VirtualSource::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub struct windows_reactor::WebView2(_)
 impl windows_reactor::WebView2
+pub fn windows_reactor::WebView2::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::WebView2::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::WebView2::automation_id(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::WebView2::automation_live_setting(self, windows_reactor::AutomationLiveSetting) -> Self

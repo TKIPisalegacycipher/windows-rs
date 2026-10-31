@@ -90,6 +90,11 @@ name = "AutomationLiveSetting"
 owner = "Microsoft.UI.Xaml.Automation.AutomationProperties"
 native = "LiveSetting"
 
+[[attached_properties]]
+name = "AutomationAccessibilityView"
+owner = "Microsoft.UI.Xaml.Automation.AutomationProperties"
+native = "AccessibilityView"
+
 [[visual_properties]]
 name = "Width"
 owner = "Microsoft.UI.Xaml.FrameworkElement"
@@ -323,6 +328,13 @@ validation = "finite_non_negative"
 
 [[objects.properties]]
 name = "IsTabStop"
+
+[[objects.properties]]
+name = "UseSystemFocusVisuals"
+
+[[objects.properties]]
+name = "FocusVisualMargin"
+default = "default"
 
 [[objects.properties]]
 name = "AllowFocusOnInteraction"

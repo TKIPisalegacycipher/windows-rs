@@ -3072,6 +3072,40 @@ impl GeneratedHandle {
                             .and_then(|property| element.ClearValue(&property).map_err(Into::into))
                     }),
             ),
+            (
+                PropertyId::AutomationAccessibilityView,
+                Some(PropertyValue::Enum {
+                    kind: "AccessibilityView",
+                    variant,
+                }),
+            ) => Some(
+                element
+                    .cast::<native::FrameworkElement>()
+                    .map_err(Into::into)
+                    .and_then(|element| {
+                        let _ = native::AccessibilityView::Raw;
+                        native::AutomationProperties::SetAccessibilityView(
+                            &element,
+                            match *variant {
+                                "Raw" => native::AccessibilityView::Raw,
+                                "Control" => native::AccessibilityView::Control,
+                                "Content" => native::AccessibilityView::Content,
+                                _ => unreachable!("validated enum variant"),
+                            },
+                        )
+                        .map_err(Into::into)
+                    }),
+            ),
+            (PropertyId::AutomationAccessibilityView, None) => Some(
+                element
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|element| {
+                        native::AutomationProperties::AccessibilityViewProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| element.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
             _ => None,
         }
     }
@@ -4462,6 +4496,59 @@ impl GeneratedHandle {
                         .and_then(|object| object.SetIsTabStop(*value).map_err(Into::into)),
                 )
             }
+            (Self::Border(object), PropertyId::UseSystemFocusVisuals, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::UIElement::UseSystemFocusVisualsProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::Border(object),
+                PropertyId::UseSystemFocusVisuals,
+                Some(PropertyValue::Bool(value)),
+            ) => Some(
+                object
+                    .value
+                    .cast::<native::IUIElement>()
+                    .map_err(Into::into)
+                    .and_then(|object| object.SetUseSystemFocusVisuals(*value).map_err(Into::into)),
+            ),
+            (Self::Border(object), PropertyId::FocusVisualMargin, None) => Some(
+                object
+                    .value
+                    .cast::<native::IFrameworkElement>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        object
+                            .SetFocusVisualMargin(native::Thickness::default())
+                            .map_err(Into::into)
+                    }),
+            ),
+            (
+                Self::Border(object),
+                PropertyId::FocusVisualMargin,
+                Some(PropertyValue::Thickness(value)),
+            ) => Some(
+                object
+                    .value
+                    .cast::<native::IFrameworkElement>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        object
+                            .SetFocusVisualMargin(native::Thickness {
+                                left: value.left,
+                                top: value.top,
+                                right: value.right,
+                                bottom: value.bottom,
+                            })
+                            .map_err(Into::into)
+                    }),
+            ),
             (Self::Border(object), PropertyId::AllowFocusOnInteraction, None) => Some(
                 object
                     .value

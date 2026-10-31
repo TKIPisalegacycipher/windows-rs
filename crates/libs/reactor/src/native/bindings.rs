@@ -25,6 +25,22 @@ windows_core::link!("shell32.dll" "system" fn ShellExecuteW(hwnd : HWND, lpopera
 windows_core::link!("user32.dll" "system" fn ShowWindow(hwnd : HWND, ncmdshow : i32) -> windows_core::BOOL);
 windows_core::link!("api-ms-win-appmodel-runtime-l1-1-5.dll" "system" fn TryCreatePackageDependency(user : PSID, packagefamilyname : windows_core::PCWSTR, minversion : PACKAGE_VERSION, packagedependencyprocessorarchitectures : PackageDependencyProcessorArchitectures, lifetimekind : PackageDependencyLifetimeKind, lifetimeartifact : windows_core::PCWSTR, options : CreatePackageDependencyOptions, packagedependencyid : *mut windows_core::PWSTR) -> windows_core::HRESULT);
 pub const APPMODEL_ERROR_NO_PACKAGE: i32 = 15700;
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct AccessibilityView(pub i32);
+impl AccessibilityView {
+    pub const Raw: Self = Self(0);
+    pub const Control: Self = Self(1);
+    pub const Content: Self = Self(2);
+}
+impl windows_core::imp::TypeKind for AccessibilityView {
+    type TypeKind = windows_core::imp::CopyType;
+}
+impl windows_core::RuntimeType for AccessibilityView {
+    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
+        b"enum(Microsoft.UI.Xaml.Automation.Peers.AccessibilityView;i4)",
+    );
+}
 pub type AddPackageDependencyOptions = u32;
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -796,6 +812,32 @@ impl AutomationProperties {
     {
         Self::IAutomationPropertiesStatics(|this| unsafe {
             (windows_core::Interface::vtable(this).SetLiveSetting)(
+                windows_core::Interface::as_raw(this),
+                element.param().abi(),
+                value,
+            )
+            .ok()
+        })
+    }
+    pub(crate) fn AccessibilityViewProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IAutomationPropertiesStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).AccessibilityViewProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn SetAccessibilityView<P0>(
+        element: P0,
+        value: AccessibilityView,
+    ) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<DependencyObject>,
+    {
+        Self::IAutomationPropertiesStatics(|this| unsafe {
+            (windows_core::Interface::vtable(this).SetAccessibilityView)(
                 windows_core::Interface::as_raw(this),
                 element.param().abi(),
                 value,
@@ -6538,9 +6580,16 @@ pub struct IAutomationPropertiesStatics_Vtbl {
         *mut core::ffi::c_void,
         AutomationLiveSetting,
     ) -> windows_core::HRESULT,
-    AccessibilityViewProperty: usize,
+    pub AccessibilityViewProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     GetAccessibilityView: usize,
-    SetAccessibilityView: usize,
+    pub SetAccessibilityView: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        AccessibilityView,
+    ) -> windows_core::HRESULT,
     ControlledPeersProperty: usize,
     GetControlledPeers: usize,
     PositionInSetProperty: usize,
@@ -11498,6 +11547,15 @@ impl IFrameworkElement {
             .ok()
         }
     }
+    pub(crate) fn SetFocusVisualMargin(&self, value: Thickness) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetFocusVisualMargin)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetStyle<P0>(&self, value: P0) -> windows_core::Result<()>
     where
         P0: windows_core::Param<Style>,
@@ -11702,7 +11760,8 @@ pub struct IFrameworkElement_Vtbl {
     pub SetAllowFocusOnInteraction:
         unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     FocusVisualMargin: usize,
-    SetFocusVisualMargin: usize,
+    pub SetFocusVisualMargin:
+        unsafe extern "system" fn(*mut core::ffi::c_void, Thickness) -> windows_core::HRESULT,
     FocusVisualSecondaryThickness: usize,
     SetFocusVisualSecondaryThickness: usize,
     FocusVisualPrimaryThickness: usize,
@@ -23794,6 +23853,15 @@ impl IUIElement {
             .map(|| result__)
         }
     }
+    pub(crate) fn SetUseSystemFocusVisuals(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetUseSystemFocusVisuals)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetIsTabStop(&self, value: bool) -> windows_core::Result<()> {
         unsafe {
             (windows_core::Interface::vtable(self).SetIsTabStop)(
@@ -24524,7 +24592,8 @@ pub struct IUIElement_Vtbl {
     pub FocusState:
         unsafe extern "system" fn(*mut core::ffi::c_void, *mut FocusState) -> windows_core::HRESULT,
     UseSystemFocusVisuals: usize,
-    SetUseSystemFocusVisuals: usize,
+    pub SetUseSystemFocusVisuals:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     XYFocusLeft: usize,
     SetXYFocusLeft: usize,
     XYFocusRight: usize,
@@ -24859,7 +24928,10 @@ pub struct IUIElementStatics_Vtbl {
     TabFocusNavigationProperty: usize,
     ShadowProperty: usize,
     FocusStateProperty: usize,
-    UseSystemFocusVisualsProperty: usize,
+    pub UseSystemFocusVisualsProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     XYFocusLeftProperty: usize,
     XYFocusRightProperty: usize,
     XYFocusUpProperty: usize,
@@ -34784,6 +34856,16 @@ impl UIElement {
         Self::IUIElementStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
             (windows_core::Interface::vtable(this).TransitionsProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn UseSystemFocusVisualsProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IUIElementStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).UseSystemFocusVisualsProperty)(
                 windows_core::Interface::as_raw(this),
                 &mut result__,
             )
