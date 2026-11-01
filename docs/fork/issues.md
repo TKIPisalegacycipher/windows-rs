@@ -162,9 +162,10 @@ was in the first (0xc0000005 in `Microsoft.UI.Xaml.Controls.dll`). Upstream's
 `initialize_ui_thread` is the same at `ffe56ded6` and on current `master`, so its own desktop
 tests would log the same fault.
 
-- Confidence: confirmed in two full dumps from Okojo's desktop runner (Okojo#1079): the stack runs
+- Confidence: observed in Okojo (two full dumps from its desktop runner, Okojo#1079: the stack runs
   from thread exit through `CoUninitialize`, `ProcessUninitialize` and `CleanUpDllsForProcess` to
-  the fault, with `Microsoft.UI.Xaml.dll` in the unloaded-modules list.
+  the fault, with `Microsoft.UI.Xaml.dll` in the unloaded-modules list) and confirmed in source:
+  upstream's `initialize_ui_thread` is unchanged at `ffe56ded6` and on `master`.
 - Fork fix: commits 67 and 68 hold one MTA usage cookie for the life of the process. WinUI's
   `Microsoft.UI.Xaml.Controls.dll` assuming `Microsoft.UI.Xaml.dll` outlives it is the underlying
   fragility; the reactor's COM lifetime is what exposed it.
