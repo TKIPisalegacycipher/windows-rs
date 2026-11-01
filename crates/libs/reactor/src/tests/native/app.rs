@@ -550,6 +550,8 @@ fn com_stays_up_after_the_ui_thread_exits() {
                 "--nocapture",
             ])
             .env("REACTOR_COM_HOLD_TEST_CHILD", "1")
+            // The child's panic message, if any, goes to the log as it would without capture.
+            .stderr(std::process::Stdio::inherit())
             .output()
             .unwrap();
         let stdout = String::from_utf8_lossy(&output.stdout);
