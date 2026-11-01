@@ -536,3 +536,10 @@ fn durable_window_work_survives_routine_queue_saturation() {
     ));
     assert!(services.pop().is_none());
 }
+
+#[test]
+fn com_is_held_for_the_process_once() {
+    // The first call takes the cookie; later ones (every UI thread start) answer the same.
+    hold_com_for_process().unwrap();
+    hold_com_for_process().unwrap();
+}

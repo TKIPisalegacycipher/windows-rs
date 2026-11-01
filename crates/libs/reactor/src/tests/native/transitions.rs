@@ -19,8 +19,8 @@ fn assert_progress(value: f32, from: f32, to: f32, animations: bool) {
 }
 
 /// How long an in-flight check waits for the element to leave its start, measured from the stage's
-/// update. A retargeted eased animation starts at zero velocity, so 200 ms into a 3 s one it can
-/// have moved less than the 0.01 px margin; 1.5 s is still well short of the end.
+/// update. 200 ms after a retarget, desktop runners with animations on had seen the element move
+/// less than the 0.01 px margin; 1.5 s is still well short of the 3 s animation's end.
 const PROGRESS_DEADLINE: Duration = Duration::from_millis(1500);
 
 /// Whether an in-flight check can run now: with animations off at once (the value is the target),
