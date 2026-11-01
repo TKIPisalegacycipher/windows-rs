@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-63 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-65 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 43 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 45 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -102,6 +102,8 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 52 | `398477921` | `ElementRef<ListView>::observe_visible_range`, from the list's `ScrollViewer` `ViewChanged` and its `ItemsStackPanel`'s `FirstVisibleIndex` / `LastVisibleIndex` | none | Pre-rendering the messages on screen in the reading pane | unit |
 | 54 | `c37a40b7e` | `reference = true` on `ListView` in the generator's `schema.toml`, so 52's `ElementRef<ListView>` code is generated and survives regeneration | none | Nothing new; goes upstream folded into 52 | regeneration leaves no diff |
 | 56 | `8ad306f3a` | A `Border`'s flyout (`flyout_with`), `ElementRef<Border>::request_show_flyout_then` and its closed callback, `OverlayInputPassThroughElement` | none | A contact card opened from a photo tile, closed when the tile's flyout is dismissed | unit |
+| 64 | `43ba76c08` | `Border::use_system_focus_visuals`, `Border::focus_visual_margin` and the attached `automation_accessibility_view` (`AutomationProperties.AccessibilityView`) | none | A focusable search caption that draws the system focus rectangle and is not read twice | unit |
+| 65 | `db0deeedc` | `ScrollViewer::vertical_anchor_ratio` (`VerticalAnchorRatio`, checked to 0..=1) and `can_be_scroll_anchor` on every element (`UIElement.CanBeScrollAnchor`); the generator gains a `unit_interval` validation | none | A Messages thread pinned to its newest message while older rows prepend (ratio 1.0, rows as anchor candidates) | unit |
 
 ## 4. Theming, icons and menus
 
@@ -269,15 +271,16 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-63 came after the rebuild and have no original.
+Commits 46-65 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-63 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-65 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
-`register_text_block_font`); none changes an existing item. `register_resource_fonts` is missing
+`register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
+`automation_accessibility_view`, `ScrollViewer::vertical_anchor_ratio`, `can_be_scroll_anchor`); none changes an existing item. `register_resource_fonts` is missing
 from `public-api.txt`, which commit 60 did not update. These are source-breaking for code that names them:
 
 | Item | Change | Commit |
