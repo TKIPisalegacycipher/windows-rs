@@ -209,7 +209,7 @@ drag commit likewise rest on live behaviour.
 
 | # | Commit | Change | Was | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 66 | `c0acca834` | The desktop test `transitions_use_current_batch_policy_and_retarget_in_flight` (from upstream #5098) polls each in-flight check until the element has left its start by the 0.01 px margin, up to 1.5 s into the 3 s animation, instead of asserting at a fixed 200 ms | none | New | A retargeted eased animation starts at zero velocity; with Windows animations on it had moved 0.0096 px at 200 ms (Okojo#1078). Test-only. Evidence: unit (`progress_ready`) and desktop |
+| 66 | `c0acca834` | The desktop test `transitions_use_current_batch_policy_and_retarget_in_flight` (from upstream #5098) polls each in-flight check until the element has left its start by the 0.01 px margin, up to 1.5 s into the 3 s animation, instead of asserting at a fixed 200 ms | none | New | With Windows animations on, a retargeted animation had moved under 0.01 px (0.0086-0.0096 px) at 200 ms (Okojo#1078). Test-only. Evidence: unit (`progress_ready`) and desktop |
 
 ## What happened to the original 58
 
