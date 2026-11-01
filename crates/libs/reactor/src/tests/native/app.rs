@@ -543,16 +543,19 @@ fn com_stays_up_after_the_ui_thread_exits() {
     // may already have an MTA (windows-core takes one for an activation from a thread without
     // COM), which would hide a regression. No WinUI, so it runs without a desktop.
     if std::env::var_os("REACTOR_COM_HOLD_TEST_CHILD").is_none() {
-        let status = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
                 "--exact",
                 "native::app::tests::com_stays_up_after_the_ui_thread_exits",
                 "--nocapture",
             ])
             .env("REACTOR_COM_HOLD_TEST_CHILD", "1")
-            .status()
+            .output()
             .unwrap();
-        assert!(status.success(), "{status}");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(output.status.success(), "{}\n{stdout}", output.status);
+        // A renamed test would match nothing and exit 0: the child must have run this one.
+        assert!(stdout.contains("1 passed"), "{stdout}");
         return;
     }
     // A UI thread: an STA that takes the hold and exits without uninitializing, so its exit is
