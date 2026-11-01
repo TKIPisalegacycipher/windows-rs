@@ -538,8 +538,44 @@ fn durable_window_work_survives_routine_queue_saturation() {
 }
 
 #[test]
-fn com_is_held_for_the_process_once() {
-    // The first call takes the cookie; later ones (every UI thread start) answer the same.
-    hold_com_for_process().unwrap();
-    hold_com_for_process().unwrap();
+fn com_stays_up_after_the_ui_thread_exits() {
+    // In a process of its own: the hold is taken once per process, and another test in this one
+    // may already have an MTA (windows-core takes one for an activation from a thread without
+    // COM), which would hide a regression. No WinUI, so it runs without a desktop.
+    if std::env::var_os("REACTOR_COM_HOLD_TEST_CHILD").is_none() {
+        let status = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "native::app::tests::com_stays_up_after_the_ui_thread_exits",
+                "--nocapture",
+            ])
+            .env("REACTOR_COM_HOLD_TEST_CHILD", "1")
+            .status()
+            .unwrap();
+        assert!(status.success(), "{status}");
+        return;
+    }
+    // A UI thread: an STA that takes the hold and exits without uninitializing, so its exit is
+    // what would end COM for the process.
+    std::thread::spawn(|| {
+        unsafe { CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32) }
+            .ok()
+            .unwrap();
+        hold_com_for_process();
+    })
+    .join()
+    .unwrap();
+    // A thread that never initialized COM is in the implicit MTA only while COM is up; without
+    // the hold this answers CO_E_NOTINITIALIZED.
+    let (kind, qualifier) = std::thread::spawn(|| {
+        let (mut kind, mut qualifier) = (Default::default(), Default::default());
+        unsafe { CoGetApartmentType(&mut kind, &mut qualifier) }
+            .ok()
+            .unwrap();
+        (kind, qualifier)
+    })
+    .join()
+    .unwrap();
+    assert_eq!(kind, APTTYPE_MTA);
+    assert_eq!(qualifier, APTTYPEQUALIFIER_IMPLICIT_MTA);
 }

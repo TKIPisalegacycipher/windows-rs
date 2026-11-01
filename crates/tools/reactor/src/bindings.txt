@@ -454,7 +454,10 @@ Windows::UI::Xaml::Interop::TypeKind::Metadata
 Windows::UI::Xaml::Interop::TypeName
 Windows::Win32::AddPackageDependency
 Windows::Win32::APPMODEL_ERROR_NO_PACKAGE
+Windows::Win32::APTTYPEQUALIFIER_IMPLICIT_MTA
+Windows::Win32::APTTYPE_MTA
 Windows::Win32::COINIT_APARTMENTTHREADED
+Windows::Win32::CoGetApartmentType
 Windows::Win32::CoIncrementMTAUsage
 Windows::Win32::CoInitializeEx
 Windows::Win32::DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2

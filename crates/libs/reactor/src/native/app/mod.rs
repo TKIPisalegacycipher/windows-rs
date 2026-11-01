@@ -1238,7 +1238,8 @@ fn initialize_ui_thread() -> windows_core::Result<()> {
         ));
     }
     result.ok()?;
-    hold_com_for_process()
+    hold_com_for_process();
+    Ok(())
 }
 
 /// Keeps COM initialized until the process ends, the first time it is called.
@@ -1249,14 +1250,16 @@ fn initialize_ui_thread() -> windows_core::Result<()> {
 /// release objects whose code was in the first, an access violation. A process that lives on
 /// after its UI thread (a test harness, a host) hit it every time. An MTA usage cookie that is
 /// never given back keeps COM, and so those DLLs, loaded until the process exits.
-fn hold_com_for_process() -> windows_core::Result<()> {
-    static HELD: std::sync::OnceLock<windows_core::HRESULT> = std::sync::OnceLock::new();
-    HELD.get_or_init(|| {
+///
+/// Best effort: a process whose UI thread lives until it exits doesn't need the cookie, so
+/// failing to take it must not stop the UI from starting. Tried once per process.
+fn hold_com_for_process() {
+    static HELD: std::sync::Once = std::sync::Once::new();
+    HELD.call_once(|| {
         let mut cookie = std::ptr::null_mut();
         // Never passed to CoDecrementMTAUsage.
-        unsafe { CoIncrementMTAUsage(&mut cookie) }
-    })
-    .ok()
+        _ = unsafe { CoIncrementMTAUsage(&mut cookie) };
+    });
 }
 
 fn is_packaged_process() -> windows_core::Result<bool> {
