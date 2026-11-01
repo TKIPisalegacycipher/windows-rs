@@ -18,6 +18,38 @@ fn assert_progress(value: f32, from: f32, to: f32, animations: bool) {
     }
 }
 
+/// How long an in-flight check waits for the element to leave its start, measured from the stage's
+/// update. A retargeted eased animation starts at zero velocity, so 200 ms into a 3 s one it can
+/// have moved less than the 0.01 px margin; 1.5 s is still well short of the end.
+const PROGRESS_DEADLINE: Duration = Duration::from_millis(1500);
+
+/// Whether an in-flight check can run now: with animations off at once (the value is the target),
+/// otherwise once the value has left `from` by the margin or the deadline has passed (then
+/// `assert_progress` reports the miss).
+fn progress_ready(value: f32, from: f32, animations: bool, elapsed: Duration) -> bool {
+    !animations || (value - from).abs() > 0.01 || elapsed >= PROGRESS_DEADLINE
+}
+
+#[test]
+fn progress_waits_for_the_element_to_leave_its_start() {
+    let early = Duration::from_millis(200);
+    // Animations off: the instant path is checked at once.
+    assert!(progress_ready(-40.0, -40.0, false, early));
+    // The values a desktop runner saw 200 ms into stage 2: not yet moved by the margin.
+    assert!(!progress_ready(-39.547_523, -39.537_91, true, early));
+    assert!(progress_ready(-39.6, -39.537_91, true, early));
+    // Moved in the other direction still counts as moved; assert_progress then catches it.
+    assert!(progress_ready(-39.4, -39.537_91, true, early));
+    // At the deadline the check runs whether or not it moved, so a stuck animation fails.
+    assert!(!progress_ready(
+        -40.0,
+        -40.0,
+        true,
+        PROGRESS_DEADLINE - Duration::from_millis(1)
+    ));
+    assert!(progress_ready(-40.0, -40.0, true, PROGRESS_DEADLINE));
+}
+
 #[test]
 #[ignore = "requires an interactive WinUI desktop"]
 fn transitions_use_current_batch_policy_and_retarget_in_flight() {
@@ -81,6 +113,17 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
             if started.get().elapsed() < Duration::from_millis(wait) {
                 return;
             }
+            // An in-flight check: polls on later ticks until the element has left `from` (or the
+            // deadline passes), then asserts it is between `from` and `to`.
+            macro_rules! progress {
+                ($value:expr, $from:expr, $to:expr) => {{
+                    let (value, from, to) = ($value, $from, $to);
+                    if !progress_ready(value, from, animations, started.get().elapsed()) {
+                        return;
+                    }
+                    assert_progress(value, from, to, animations);
+                }};
+            }
             let mut holder = runtime.borrow_mut();
             let Some(runtime) = holder.as_mut() else {
                 sender.ok().unwrap().Stop().unwrap();
@@ -113,15 +156,15 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
                         .translation_transition(slow)
                 }
                 1 => {
-                    assert_progress(offset[0], -40.0, 160.0, animations);
-                    assert_progress(offset[1], -20.0, 80.0, animations);
+                    progress!(offset[0], -40.0, 160.0);
+                    progress!(offset[1], -20.0, 80.0);
                     mid.set(offset[0]);
                     Border::new()
                         .translation(-80.0, -40.0)
                         .translation_transition(slow)
                 }
                 2 => {
-                    assert_progress(offset[0], mid.get(), -80.0, animations);
+                    progress!(offset[0], mid.get(), -80.0);
                     Border::new()
                         .translation(40.0, 20.0)
                         .translation_transition(Duration::ZERO)
@@ -133,7 +176,7 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
                         .translation_transition(slow)
                 }
                 4 => {
-                    assert_progress(offset[0], 40.0, -160.0, animations);
+                    progress!(offset[0], 40.0, -160.0);
                     Border::new().translation(20.0, 10.0)
                 }
                 5 => {
@@ -142,12 +185,12 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
                     Border::new().translation_transition(slow)
                 }
                 6 => {
-                    assert_progress(offset[0], 20.0, 0.0, animations);
+                    progress!(offset[0], 20.0, 0.0);
                     mid.set(offset[0]);
                     Border::new()
                 }
                 7 => {
-                    assert_progress(offset[0], mid.get(), 0.0, animations);
+                    progress!(offset[0], mid.get(), 0.0);
                     Border::new()
                 }
                 8 => {
@@ -161,7 +204,7 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
                         .transformed_point(object, 100.0, 0.0)
                         .unwrap();
                     let width = right[0] - point[0];
-                    assert_progress(width, 100.0, 150.0, animations);
+                    progress!(width, 100.0, 150.0);
                     Border::new()
                         .scale(1.0)
                         .scale_transition(Duration::ZERO)
@@ -188,7 +231,7 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
                         .translation_transition(slow)
                 }
                 12 => {
-                    assert_progress(offset[0], 0.0, 100.0, animations);
+                    progress!(offset[0], 0.0, 100.0);
                     Border::new()
                 }
                 13 => {
