@@ -3342,6 +3342,19 @@ impl GeneratedHandle {
             (PropertyId::IsHitTestVisible, Some(PropertyValue::Bool(value))) => {
                 Some(element.SetIsHitTestVisible(*value).map_err(Into::into))
             }
+            (PropertyId::CanBeScrollAnchor, None) => Some(
+                element
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::UIElement::CanBeScrollAnchorProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (PropertyId::CanBeScrollAnchor, Some(PropertyValue::Bool(value))) => {
+                Some(element.SetCanBeScrollAnchor(*value).map_err(Into::into))
+            }
             (PropertyId::Cursor, None) => Some(
                 element
                     .cast::<native::IUIElementProtected>()
@@ -4879,6 +4892,21 @@ impl GeneratedHandle {
                     })
                     .map_err(Into::into),
             ),
+            (Self::ScrollViewer(object), PropertyId::VerticalAnchorRatio, None) => Some(
+                object
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::ScrollViewer::VerticalAnchorRatioProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::ScrollViewer(object),
+                PropertyId::VerticalAnchorRatio,
+                Some(PropertyValue::F64(value)),
+            ) => Some(object.SetVerticalAnchorRatio(*value).map_err(Into::into)),
             (Self::Viewbox(object), PropertyId::Stretch, None) => Some(
                 object
                     .cast::<native::IDependencyObject>()

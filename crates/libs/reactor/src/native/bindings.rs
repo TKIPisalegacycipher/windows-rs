@@ -19065,6 +19065,15 @@ impl IScrollViewer {
             .map(|| result__)
         }
     }
+    pub(crate) fn SetVerticalAnchorRatio(&self, value: f64) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetVerticalAnchorRatio)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn ViewChanged<F>(
         &self,
         handler: F,
@@ -19197,7 +19206,8 @@ pub struct IScrollViewer_Vtbl {
     HorizontalAnchorRatio: usize,
     SetHorizontalAnchorRatio: usize,
     VerticalAnchorRatio: usize,
-    SetVerticalAnchorRatio: usize,
+    pub SetVerticalAnchorRatio:
+        unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
     CanContentRenderOutsideBounds: usize,
     SetCanContentRenderOutsideBounds: usize,
     AnchorRequested: usize,
@@ -19264,7 +19274,10 @@ pub struct IScrollViewerStatics_Vtbl {
     TopHeaderProperty: usize,
     ReduceViewportForCoreInputViewOcclusionsProperty: usize,
     HorizontalAnchorRatioProperty: usize,
-    VerticalAnchorRatioProperty: usize,
+    pub VerticalAnchorRatioProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub HorizontalScrollBarVisibilityProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
@@ -23724,6 +23737,15 @@ impl IUIElement {
             .ok()
         }
     }
+    pub(crate) fn SetCanBeScrollAnchor(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetCanBeScrollAnchor)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn KeyboardAccelerators(
         &self,
     ) -> windows_core::Result<windows_collections::IVector<KeyboardAccelerator>> {
@@ -24499,7 +24521,8 @@ pub struct IUIElement_Vtbl {
     SetCompositeMode: usize,
     Lights: usize,
     CanBeScrollAnchor: usize,
-    SetCanBeScrollAnchor: usize,
+    pub SetCanBeScrollAnchor:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     ExitDisplayModeOnAccessKeyInvoked: usize,
     SetExitDisplayModeOnAccessKeyInvoked: usize,
     IsAccessKeyScope: usize,
@@ -24908,7 +24931,10 @@ pub struct IUIElementStatics_Vtbl {
     ContextFlyoutProperty: usize,
     CompositeModeProperty: usize,
     LightsProperty: usize,
-    CanBeScrollAnchorProperty: usize,
+    pub CanBeScrollAnchorProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     ExitDisplayModeOnAccessKeyInvokedProperty: usize,
     IsAccessKeyScopeProperty: usize,
     AccessKeyScopeOwnerProperty: usize,
@@ -31452,6 +31478,16 @@ impl ScrollViewer {
         > = windows_core::imp::FactoryCache::new();
         SHARED.call(callback)
     }
+    pub(crate) fn VerticalAnchorRatioProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IScrollViewerStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).VerticalAnchorRatioProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
     pub(crate) fn HorizontalScrollBarVisibilityProperty() -> windows_core::Result<DependencyProperty>
     {
         Self::IScrollViewerStatics(|this| unsafe {
@@ -34856,6 +34892,16 @@ impl UIElement {
         Self::IUIElementStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
             (windows_core::Interface::vtable(this).TransitionsProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn CanBeScrollAnchorProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IUIElementStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).CanBeScrollAnchorProperty)(
                 windows_core::Interface::as_raw(this),
                 &mut result__,
             )

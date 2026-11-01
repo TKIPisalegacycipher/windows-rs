@@ -149,6 +149,7 @@ enum Validation {
     FiniteNonNegative,
     NonNegative,
     Positive,
+    UnitInterval,
     ZeroToFiftyNine,
 }
 
@@ -160,6 +161,7 @@ impl std::fmt::Display for Validation {
             Self::FiniteNonNegative => "finite_non_negative",
             Self::NonNegative => "non_negative",
             Self::Positive => "positive",
+            Self::UnitInterval => "unit_interval",
             Self::ZeroToFiftyNine => "zero_to_fifty_nine",
         };
         formatter.write_str(value)
@@ -3972,6 +3974,7 @@ fn validation_expression(name: &str, value: &str, validation: Validation) -> Str
         Validation::FiniteNonNegative => format!("{name}.is_finite_non_negative()"),
         Validation::NonNegative => format!("{name} >= 0"),
         Validation::Positive => format!("{name} > 0"),
+        Validation::UnitInterval => format!("(0.0..=1.0).contains(&{name})"),
         Validation::ZeroToFiftyNine => format!("(0..=59).contains(&{name})"),
     }
 }

@@ -2036,6 +2036,13 @@ macro_rules! visual_methods {
             );
             self
         }
+        pub fn can_be_scroll_anchor(mut self, can_be_scroll_anchor: bool) -> Self {
+            self.0 = self.0.property(
+                PropertyId::CanBeScrollAnchor,
+                PropertyValue::Bool(can_be_scroll_anchor),
+            );
+            self
+        }
         pub fn cursor(mut self, cursor: InputSystemCursorShape) -> Self {
             self.0 = self.0.property(PropertyId::Cursor, cursor.property_value());
             self
@@ -2944,6 +2951,17 @@ impl ScrollViewer {
         self.0 = self.0.property(
             PropertyId::VerticalScrollBarVisibility,
             vertical_scroll_bar_visibility.property_value(),
+        );
+        self
+    }
+    pub fn vertical_anchor_ratio(mut self, vertical_anchor_ratio: f64) -> Self {
+        assert!(
+            (0.0..=1.0).contains(&vertical_anchor_ratio),
+            "ScrollViewer.VerticalAnchorRatio requires unit_interval"
+        );
+        self.0 = self.0.property(
+            PropertyId::VerticalAnchorRatio,
+            PropertyValue::F64(vertical_anchor_ratio),
         );
         self
     }
