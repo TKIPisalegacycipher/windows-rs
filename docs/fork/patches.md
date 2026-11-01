@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-65 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-66 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 45 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 46 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -205,6 +205,12 @@ drag commit likewise rest on live behaviour.
 | --- | --- | --- | --- | --- | --- |
 | 23 | `eb7477cfc` | `windows-bindgen`: ignore filtered-out methods when finding event-only delegates | 20 | New | Removes dead delegate code from regenerated Reactor bindings. Rebuilding the stack showed it is required: without it the first `ListView` naming commit fails `-D warnings`. Output-neutral for the other generated crates (`tool-bindings` leaves no diff) |
 
+## 10. Test fixes
+
+| # | Commit | Change | Was | Status | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 66 | `c0acca834` | The desktop test `transitions_use_current_batch_policy_and_retarget_in_flight` (from upstream #5098) polls each in-flight check until the element has left its start by the 0.01 px margin, up to 1.5 s into the 3 s animation, instead of asserting at a fixed 200 ms | none | New | A retargeted eased animation starts at zero velocity; with Windows animations on it had moved 0.0096 px at 200 ms (Okojo#1078). Test-only. Evidence: unit (`progress_ready`) and desktop |
+
 ## What happened to the original 58
 
 | Was | Original commit | Now |
@@ -271,12 +277,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-65 came after the rebuild and have no original.
+Commits 46-66 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-65 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-66 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
