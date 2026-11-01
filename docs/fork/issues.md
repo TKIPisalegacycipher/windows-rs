@@ -151,6 +151,24 @@ behaviour. The fork's `ListView` work
 ([patches.md](patches.md#8-listview-row-content-and-large-lists)) addresses the same family of
 problem for `ListView` and is the largest design question in the stack.
 
+### U13. A UI thread that exits before the process unloads WinUI under its own destructors
+
+`initialize_ui_thread` makes the UI thread an STA and never uninitializes it. When that apartment
+is the process's last and the thread exits while the process lives on (libtest runs each test on
+such a thread; any host that runs the UI off its main thread), COM is uninitialized for the
+process as the thread exits and unloads the DLLs it loaded: `Microsoft.UI.Xaml.dll` first, then
+`Microsoft.UI.Xaml.Controls.dll`, whose static destructors call `Release` on objects whose code
+was in the first (0xc0000005 in `Microsoft.UI.Xaml.Controls.dll`). Upstream's
+`initialize_ui_thread` is the same at `ffe56ded6` and on current `master`, so its own desktop
+tests would log the same fault.
+
+- Confidence: confirmed in two full dumps from Okojo's desktop runner (Okojo#1079): the stack runs
+  from thread exit through `CoUninitialize`, `ProcessUninitialize` and `CleanUpDllsForProcess` to
+  the fault, with `Microsoft.UI.Xaml.dll` in the unloaded-modules list.
+- Fork fix: commits 67 and 68 hold one MTA usage cookie for the life of the process. WinUI's
+  `Microsoft.UI.Xaml.Controls.dll` assuming `Microsoft.UI.Xaml.dll` outlives it is the underlying
+  fragility; the reactor's COM lifetime is what exposed it.
+
 ## B. Problems in the fork
 
 The fork had eleven problems. All are closed. Each entry says what was wrong and what closed it.

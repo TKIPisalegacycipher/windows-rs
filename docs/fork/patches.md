@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-67 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-68 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 47 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 48 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -215,7 +215,8 @@ drag commit likewise rest on live behaviour.
 
 | # | Commit | Change | Was | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 67 | `f4d096510` | `initialize_ui_thread` takes one `CoIncrementMTAUsage` cookie per process and never gives it back, so COM and the WinUI DLLs it loaded stay loaded until the process exits; the binding is added to `bindings.txt`. Also rewords commit 66's deadline comment | none | New | When the UI thread's apartment was the last one, its exit uninitialized COM for the process and unloaded `Microsoft.UI.Xaml.dll` before `Microsoft.UI.Xaml.Controls.dll`, whose static destructors then called into the unloaded code (0xc0000005). Every WinUI test process logged it; two dumps from Okojo's desktop runner show the stack (Okojo#1079). Evidence: unit (the cookie is taken once) and desktop (no Application Error event) |
+| 67 | `f4d096510` | `initialize_ui_thread` takes one `CoIncrementMTAUsage` cookie per process and never gives it back, so COM and the WinUI DLLs it loaded stay loaded until the process exits; the binding is added to `bindings.txt`. Also rewords commit 66's deadline comment, so its `transitions.rs` hunk applies only on top of 66 | none | New | When the UI thread's apartment was the last one, its exit uninitialized COM for the process and unloaded `Microsoft.UI.Xaml.dll` before `Microsoft.UI.Xaml.Controls.dll`, whose static destructors then called into the unloaded code (0xc0000005): [issues.md U13](issues.md#u13-a-ui-thread-that-exits-before-the-process-unloads-winui-under-its-own-destructors). Two dumps from Okojo's desktop runner show the stack (Okojo#1079). Evidence: unit (68) and Okojo's desktop job, which fails on any crash of a test process and saw none |
+| 68 | `f3b77e6ac` | 67's hold is best effort (`std::sync::Once`, result ignored), so a failed `CoIncrementMTAUsage` no longer fails every later `App` start; its test checks the effect in a child process: after an STA thread takes the hold and exits, a fresh thread's `CoGetApartmentType` answers the implicit MTA. Adds `CoGetApartmentType`, `APTTYPE_MTA` and `APTTYPEQUALIFIER_IMPLICIT_MTA` to `bindings.txt` | none | New | Goes upstream folded into 67. Evidence: unit (fails with `CO_E_NOTINITIALIZED` without the hold) |
 
 ## What happened to the original 58
 
@@ -283,12 +284,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-67 came after the rebuild and have no original.
+Commits 46-68 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-67 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-68 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
