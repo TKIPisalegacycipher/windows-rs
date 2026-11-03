@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-70 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-71 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 50 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 51 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -219,6 +219,7 @@ drag commit likewise rest on live behaviour.
 | 68 | `f3b77e6ac` | 67's hold is best effort (`std::sync::Once`, result ignored), so a failed `CoIncrementMTAUsage` no longer fails every later `App` start; its test checks the effect in a child process: after an STA thread takes the hold and exits, a fresh thread's `CoGetApartmentType` answers the implicit MTA. Adds `CoGetApartmentType`, `APTTYPE_MTA` and `APTTYPEQUALIFIER_IMPLICIT_MTA` to `bindings.txt` | none | New | Goes upstream folded into 67. Evidence: unit (fails with `CO_E_NOTINITIALIZED` without the hold) |
 | 69 | `f361072e4` | 68's test also asserts its child process reported one test passed, so a renamed test can't pass by matching nothing | none | New | Test-only; goes upstream folded into 67 |
 | 70 | `4254a8545` | 68's test inherits its child's stderr again (69's `output()` captured it), so a failure shows the child's panic message | none | New | Test-only; goes upstream folded into 67 |
+| 71 | `8d21fb52b` | The transitions test's in-flight checks count only movement toward the target, and stage 2 measures from where the element turned back: its start is read before the retarget, and the old animation runs on until the new one starts (`-39.61442 -> -39.552986 -> -80` on a desktop runner), so 66's either-way margin asserted early | none | New | Test-only; goes upstream folded into 66 (upstream #5098) |
 
 ## What happened to the original 58
 
@@ -286,12 +287,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-70 came after the rebuild and have no original.
+Commits 46-71 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-70 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-71 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
