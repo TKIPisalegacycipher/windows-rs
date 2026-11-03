@@ -18,36 +18,84 @@ fn assert_progress(value: f32, from: f32, to: f32, animations: bool) {
     }
 }
 
-/// How long an in-flight check waits for the element to leave its start, measured from the stage's
-/// update. 200 ms after a retarget, desktop runners with animations on had seen the element move
-/// less than the 0.01 px margin; 1.5 s is still well short of the 3 s animation's end.
+/// How long an in-flight check waits for the element to move toward its target, measured from the
+/// stage's update. 200 ms after a retarget, desktop runners with animations on had seen the element
+/// move less than the 0.01 px margin; 1.5 s is still well short of the 3 s animation's end.
 const PROGRESS_DEADLINE: Duration = Duration::from_millis(1500);
 
 /// Whether an in-flight check can run now: with animations off at once (the value is the target),
-/// otherwise once the value has left `from` by the margin or the deadline has passed (then
-/// `assert_progress` reports the miss).
-fn progress_ready(value: f32, from: f32, animations: bool, elapsed: Duration) -> bool {
-    !animations || (value - from).abs() > 0.01 || elapsed >= PROGRESS_DEADLINE
+/// otherwise once the value has moved from `from` toward `to` by the margin or the deadline has
+/// passed (then `assert_progress` reports the miss). Movement away from `to` doesn't count: where
+/// `from` is a reading taken before a retarget, the old animation runs on until the compositor
+/// starts the new one, so the element is first seen further along its old direction (a desktop
+/// runner read `-39.61442 -> -39.552986 -> -80`).
+fn progress_ready(value: f32, from: f32, to: f32, animations: bool, elapsed: Duration) -> bool {
+    !animations || (value - from) * (to - from).signum() > 0.01 || elapsed >= PROGRESS_DEADLINE
+}
+
+/// Where a retargeted element turned back: `value` if it lies beyond `seen` on the side away from
+/// `to` (the old animation still running on), else `seen`. A check after a retarget starts from
+/// there, so it needs only the margin of real progress toward the new target, however far the old
+/// animation ran on before the retarget took effect. A reading past `to` (an overshoot) is not a
+/// turn, so it can't widen the range `assert_progress` accepts.
+fn furthest_from(seen: f32, value: f32, to: f32) -> f32 {
+    if (value - seen) * (to - seen).signum() < 0.0 {
+        value
+    } else {
+        seen
+    }
 }
 
 #[test]
-fn progress_waits_for_the_element_to_leave_its_start() {
+fn furthest_from_tracks_where_the_element_turned_back() {
+    // Still running on toward 160 after the retarget to -80: the turn moves with it.
+    assert_eq!(furthest_from(-39.614_42, -39.552_986, -80.0), -39.552_986);
+    // On its way back to -80: the turn stays put.
+    assert_eq!(furthest_from(-39.552_986, -39.6, -80.0), -39.552_986);
+    assert_eq!(furthest_from(10.0, 5.0, 100.0), 5.0);
+    // Past the target is not a turn: the range stays from the turn to the target.
+    assert_eq!(furthest_from(-39.5, -130.0, -80.0), -39.5);
+}
+
+#[test]
+fn progress_waits_for_movement_toward_the_target() {
     let early = Duration::from_millis(200);
     // Animations off: the instant path is checked at once.
-    assert!(progress_ready(-40.0, -40.0, false, early));
+    assert!(progress_ready(-40.0, -40.0, -80.0, false, early));
     // The values a desktop runner saw 200 ms into stage 2: not yet moved by the margin.
-    assert!(!progress_ready(-39.547_523, -39.537_91, true, early));
-    assert!(progress_ready(-39.6, -39.537_91, true, early));
-    // Moved in the other direction still counts as moved; assert_progress then catches it.
-    assert!(progress_ready(-39.4, -39.537_91, true, early));
-    // At the deadline the check runs whether or not it moved, so a stuck animation fails.
+    assert!(!progress_ready(-39.547_523, -39.537_91, -80.0, true, early));
+    assert!(progress_ready(-39.6, -39.537_91, -80.0, true, early));
+    // Still moving the old way after a retarget (seen on a desktop runner): keep polling.
+    assert!(!progress_ready(-39.552_986, -39.614_42, -80.0, true, early));
+    assert!(!progress_ready(-39.4, -39.537_91, -80.0, true, early));
+    // Toward a target above the start counts the other way round.
+    assert!(progress_ready(-39.9, -40.0, 160.0, true, early));
+    assert!(!progress_ready(-40.1, -40.0, 160.0, true, early));
+    // At the deadline the check runs whether or not it moved, so an animation that is stuck or
+    // ignores a retarget fails in assert_progress.
     assert!(!progress_ready(
         -40.0,
         -40.0,
+        -80.0,
         true,
         PROGRESS_DEADLINE - Duration::from_millis(1)
     ));
-    assert!(progress_ready(-40.0, -40.0, true, PROGRESS_DEADLINE));
+    assert!(progress_ready(-40.0, -40.0, -80.0, true, PROGRESS_DEADLINE));
+    assert!(progress_ready(
+        -39.4,
+        -39.537_91,
+        -80.0,
+        true,
+        PROGRESS_DEADLINE
+    ));
+    assert!(std::panic::catch_unwind(|| assert_progress(-39.4, -39.537_91, -80.0, true)).is_err());
+    // Stage 2 with the retarget ignored: the turn follows the element, so at the deadline the value
+    // is its own start and fails.
+    let turn = furthest_from(-39.537_91, -39.4, -80.0);
+    assert!(std::panic::catch_unwind(|| assert_progress(-39.4, turn, -80.0, true)).is_err());
+    // A jump straight to the target fails at once.
+    assert!(progress_ready(-80.0, -39.5, -80.0, true, early));
+    assert!(std::panic::catch_unwind(|| assert_progress(-80.0, -39.5, -80.0, true)).is_err());
 }
 
 #[test]
@@ -113,12 +161,12 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
             if started.get().elapsed() < Duration::from_millis(wait) {
                 return;
             }
-            // An in-flight check: polls on later ticks until the element has left `from` (or the
-            // deadline passes), then asserts it is between `from` and `to`.
+            // An in-flight check: polls on later ticks until the element has moved from `from`
+            // toward `to` (or the deadline passes), then asserts it is between `from` and `to`.
             macro_rules! progress {
                 ($value:expr, $from:expr, $to:expr) => {{
                     let (value, from, to) = ($value, $from, $to);
-                    if !progress_ready(value, from, animations, started.get().elapsed()) {
+                    if !progress_ready(value, from, to, animations, started.get().elapsed()) {
                         return;
                     }
                     assert_progress(value, from, to, animations);
@@ -164,6 +212,9 @@ fn transitions_use_current_batch_policy_and_retarget_in_flight() {
                         .translation_transition(slow)
                 }
                 2 => {
+                    // `mid` was read before the retarget; the turn is where the element is seen
+                    // furthest along its old direction.
+                    mid.set(furthest_from(mid.get(), offset[0], -80.0));
                     progress!(offset[0], mid.get(), -80.0);
                     Border::new()
                         .translation(40.0, 20.0)
