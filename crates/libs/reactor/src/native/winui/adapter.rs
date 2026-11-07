@@ -249,6 +249,17 @@ impl Adapter for WinUiAdapter {
         }
     }
 
+    // The revision is not checked: a later event's revision is never older than an earlier
+    // one's for the same callback, so if a later event is stale, so is the one asking.
+    fn has_queued_event(&self, object: ObjectId, event: EventId) -> bool {
+        self.event_queue.events.borrow().iter().any(|queued| {
+            queued
+                .event
+                .as_ref()
+                .is_some_and(|queued| queued.object == object && queued.event == event)
+        })
+    }
+
     fn take_error(&mut self) -> Option<Self::Error> {
         self.event_queue.errors.borrow_mut().pop_front()
     }

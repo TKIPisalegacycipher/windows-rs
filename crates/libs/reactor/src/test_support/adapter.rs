@@ -1167,6 +1167,12 @@ impl Adapter for RecordingAdapter {
         self.native_events.pop_front()
     }
 
+    fn has_queued_event(&self, object: ObjectId, event: EventId) -> bool {
+        self.native_events
+            .iter()
+            .any(|queued| queued.dispatches(object, event))
+    }
+
     fn validate(&self, mutations: &[Mutation]) -> Result<(), Self::Error> {
         if !self.validate_batches {
             return Ok(());

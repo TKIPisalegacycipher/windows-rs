@@ -492,6 +492,14 @@ impl NativeEvent {
         }
     }
 
+    /// Whether this event carries a dispatch of `event` for `object`.
+    #[cfg(any(test, feature = "test"))]
+    pub(crate) fn dispatches(&self, object: ObjectId, event: EventId) -> bool {
+        self.event
+            .as_ref()
+            .is_some_and(|dispatch| dispatch.object == object && dispatch.event == event)
+    }
+
     pub fn new(observation: Option<Observation>, event: Option<EventDispatch>) -> Self {
         Self {
             observation,
@@ -1520,6 +1528,16 @@ pub trait Adapter {
         None
     }
 
+    /// Whether a native event still queued (not yet popped) carries an `event` dispatch for
+    /// `object`, anywhere in the queue rather than only in the previewed prefix.
+    ///
+    /// The runtime asks before it delivers a `SelectedKeysChanged`: the selection is state, so a
+    /// newer one for the same list supersedes it and the older one is dropped. The default
+    /// answers `false`, which delivers every event.
+    fn has_queued_event(&self, _object: ObjectId, _event: EventId) -> bool {
+        false
+    }
+
     /// Removes the next backend error, if any.
     fn take_error(&mut self) -> Option<Self::Error> {
         None
@@ -2039,6 +2057,19 @@ impl<A: Adapter> Runtime<A> {
         Ok(())
     }
 
+    /// Whether `dispatch`, just popped, is a list's selected keys that a newer queued keys event
+    /// for the same list replaces. Keys are state, so only the latest is delivered: the runtime
+    /// renders after each event, and a `SelectedIndex` that render writes echoes as keys at the
+    /// back of the queue. Delivering every stale keys event let an app that selects what its keys
+    /// name chase its own echoes for ever (Okojo#1613). The dropped event's observation, if any,
+    /// has been applied; only its callback is skipped, so nothing queued behind it moves.
+    fn superseded(&self, dispatch: &EventDispatch) -> bool {
+        dispatch.event == EventId::SelectedKeysChanged
+            && self
+                .adapter
+                .has_queued_event(dispatch.object, dispatch.event)
+    }
+
     fn pop_native_event(&mut self) -> Result<Option<EventDispatch>, UpdateError<A::Error>> {
         let Some(event) = self.adapter.pop_native_event() else {
             return Ok(None);
@@ -2061,6 +2092,9 @@ impl<A: Adapter> Runtime<A> {
         let Some(mut dispatch) = event.event else {
             return Ok(None);
         };
+        if self.superseded(&dispatch) {
+            return Ok(None);
+        }
         match self.graph.validate_event_dispatch(&mut dispatch) {
             Ok(true) => Ok(Some(dispatch)),
             Ok(false) => Ok(None),
@@ -2122,6 +2156,9 @@ impl<A: Adapter> Runtime<A> {
         let Some(mut dispatch) = event.event else {
             return Ok(Some(NativeWork::Maintenance));
         };
+        if self.superseded(&dispatch) {
+            return Ok(Some(NativeWork::Maintenance));
+        }
         match self.graph.validate_event_dispatch(&mut dispatch) {
             Ok(true) => {
                 self.native_event_active.set(true);

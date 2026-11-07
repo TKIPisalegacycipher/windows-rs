@@ -103,6 +103,46 @@ fn native_queue_preview_uses_current_callback_and_preserves_order() {
 }
 
 #[test]
+fn native_queue_reports_queued_events_by_object_and_event_beyond_the_preview() {
+    let first = ObjectId::test(1);
+    let second = ObjectId::test(2);
+    let adapter = WinUiAdapter::default();
+    let keys = |object| QueuedEvent {
+        object,
+        event: EventId::SelectedKeysChanged,
+        revision: 0,
+        payload: EventPayload::Items(Vec::new()),
+    };
+    adapter.event_queue.queue(None, Some(keys(first)));
+    adapter.event_queue.queue(
+        None,
+        Some(QueuedEvent {
+            object: first,
+            event: EventId::ItemClick,
+            revision: 0,
+            payload: EventPayload::Items(Vec::new()),
+        }),
+    );
+    adapter.event_queue.queue(None, Some(keys(second)));
+    adapter.event_queue.queue(None, Some(keys(first)));
+
+    assert!(adapter.has_queued_event(first, EventId::SelectedKeysChanged));
+    assert!(adapter.has_queued_event(first, EventId::ItemClick));
+    assert!(adapter.has_queued_event(second, EventId::SelectedKeysChanged));
+    assert!(!adapter.has_queued_event(second, EventId::ItemClick));
+    assert!(!adapter.has_queued_event(ObjectId::test(3), EventId::SelectedKeysChanged));
+
+    // Only events not yet popped count: once the first list's last keys event is popped, none
+    // of its keys is queued.
+    for _ in 0..3 {
+        adapter.event_queue.events.borrow_mut().pop_front();
+    }
+    assert!(adapter.has_queued_event(first, EventId::SelectedKeysChanged));
+    adapter.event_queue.events.borrow_mut().pop_front();
+    assert!(!adapter.has_queued_event(first, EventId::SelectedKeysChanged));
+}
+
+#[test]
 fn menu_opening_resolves_to_the_current_on_opening_whatever_the_revision() {
     let object = ObjectId::test(1);
     let opening = Callback::new(|()| panic!("resolution must not invoke callbacks"));

@@ -1169,3 +1169,245 @@ fn list_view_selected_index_is_set_again_when_its_items_change() {
         (Vec::new(), Vec::new())
     );
 }
+
+/// Two lists, each with a selected-keys and an item-click callback, logging `name:value`.
+fn two_logged_lists(log: &Rc<RefCell<Vec<String>>>) -> (StackPanel, [Callback<Vec<Key>>; 4]) {
+    let logger = |name: &'static str| {
+        let log = Rc::clone(log);
+        Callback::new(move |value: Vec<Key>| log.borrow_mut().push(format!("{name}:{value:?}")))
+    };
+    let callbacks = [
+        logger("keys1"),
+        logger("click1"),
+        logger("keys2"),
+        logger("click2"),
+    ];
+    let list = |keys: &Callback<Vec<Key>>, click: &Callback<Vec<Key>>| {
+        ListView::new()
+            .items([DataItem::new("a", "A"), DataItem::new("b", "B")])
+            .on_selected_keys_changed(keys.clone())
+            .on_item_click(click.clone())
+    };
+    let panel = StackPanel::new().children([
+        list(&callbacks[0], &callbacks[1]).into(),
+        list(&callbacks[2], &callbacks[3]).into(),
+    ]);
+    (panel, callbacks)
+}
+
+/// The two lists of `two_logged_lists` and their items.
+fn logged_lists_and_items<A: Adapter>(runtime: &Runtime<A>) -> ([ObjectId; 2], [Vec<ObjectId>; 2]) {
+    let root = runtime.graph().root().unwrap();
+    let lists = runtime
+        .graph()
+        .children(root, RelationId::Children)
+        .unwrap();
+    let lists = [lists[0], lists[1]];
+    let items = lists.map(|list| {
+        runtime
+            .graph()
+            .children(list, RelationId::Items)
+            .unwrap()
+            .to_vec()
+    });
+    (lists, items)
+}
+
+fn keys_event(
+    list: ObjectId,
+    callback: &Callback<Vec<Key>>,
+    items: Vec<ObjectId>,
+) -> EventDispatch {
+    EventDispatch::new(
+        list,
+        EventId::SelectedKeysChanged,
+        EventValue::Keys(callback.clone()),
+        EventPayload::Items(items),
+    )
+}
+
+#[test]
+fn list_view_selected_keys_are_latest_wins_per_list_and_keep_their_order() {
+    let log = Rc::new(RefCell::new(Vec::new()));
+    let (panel, [keys1, click1, keys2, _]) = two_logged_lists(&log);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(panel).unwrap();
+    let ([first_list, second_list], [first, second]) = logged_lists_and_items(&runtime);
+
+    // The first list's [a] is superseded by its later [b]. The click queued between them and the
+    // second list's keys are still delivered, and [b] does not move ahead of either.
+    let adapter = runtime.adapter_mut();
+    adapter.queue_event(keys_event(first_list, &keys1, vec![first[0]]));
+    adapter.queue_event(EventDispatch::new(
+        first_list,
+        EventId::ItemClick,
+        EventValue::Keys(click1),
+        EventPayload::Items(vec![first[0]]),
+    ));
+    adapter.queue_event(keys_event(second_list, &keys2, vec![second[0]]));
+    adapter.queue_event(keys_event(first_list, &keys1, vec![first[1]]));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 3);
+    assert_eq!(
+        *log.borrow(),
+        [
+            format!("click1:{:?}", [Key::from("a")]),
+            format!("keys2:{:?}", [Key::from("a")]),
+            format!("keys1:{:?}", [Key::from("b")]),
+        ]
+    );
+
+    // Keys for two different lists never coalesce.
+    log.borrow_mut().clear();
+    let adapter = runtime.adapter_mut();
+    adapter.queue_event(keys_event(first_list, &keys1, vec![first[0]]));
+    adapter.queue_event(keys_event(second_list, &keys2, vec![second[1]]));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 2);
+    assert_eq!(
+        *log.borrow(),
+        [
+            format!("keys1:{:?}", [Key::from("a")]),
+            format!("keys2:{:?}", [Key::from("b")]),
+        ]
+    );
+}
+
+#[test]
+fn list_view_selected_keys_echo_of_a_programmatic_write_still_arrives() {
+    let log = Rc::new(RefCell::new(Vec::new()));
+    let (panel, [keys1, click1, keys2, _]) = two_logged_lists(&log);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(panel).unwrap();
+    let ([first_list, second_list], [first, second]) = logged_lists_and_items(&runtime);
+
+    // The app selects "b" in the first list (`select_id`); the write echoes as [b]. Only events
+    // that are not this list's keys follow it, so the echo is delivered.
+    runtime
+        .adapter_mut()
+        .queue_event(keys_event(first_list, &keys1, vec![first[1]]));
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        first_list,
+        EventId::ItemClick,
+        EventValue::Keys(click1),
+        EventPayload::Items(vec![first[1]]),
+    ));
+    runtime
+        .adapter_mut()
+        .queue_event(keys_event(second_list, &keys2, vec![second[0]]));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 3);
+    assert_eq!(
+        *log.borrow(),
+        [
+            format!("keys1:{:?}", [Key::from("b")]),
+            format!("click1:{:?}", [Key::from("b")]),
+            format!("keys2:{:?}", [Key::from("a")]),
+        ]
+    );
+}
+
+/// A list whose selection follows its own selected-keys callback, as an app that opens the
+/// selected message does. Each callback that changes the selection is a pick.
+struct KeysDrivenSelection {
+    keys: Callback<Vec<Key>>,
+    picks: Rc<Cell<usize>>,
+    selected: Option<usize>,
+}
+
+const KEYS_DRIVEN_ITEMS: [&str; 2] = ["a", "b"];
+
+impl Component for KeysDrivenSelection {
+    type Input = Rc<Cell<usize>>;
+    type Message = Vec<Key>;
+
+    fn create(picks: &Self::Input, context: &ComponentContext<Self>) -> Self {
+        let sender = context.sender();
+        Self {
+            keys: Callback::new(move |keys: Vec<Key>| assert!(sender.send(keys))),
+            picks: Rc::clone(picks),
+            selected: Some(0),
+        }
+    }
+
+    fn update(&mut self, keys: Vec<Key>, _: &ComponentContext<Self>) {
+        let picked = keys.first().and_then(|key| {
+            KEYS_DRIVEN_ITEMS
+                .iter()
+                .position(|item| Key::from(*item) == *key)
+        });
+        if picked.is_some() && picked != self.selected {
+            self.selected = picked;
+            self.picks.set(self.picks.get() + 1);
+        }
+    }
+
+    fn view(&self, _: &Self::Input, _: &mut ViewContext<Self>) -> View {
+        ListView::new()
+            .items(KEYS_DRIVEN_ITEMS.map(|key| DataItem::new(key, key)))
+            .selected_index(self.selected)
+            .on_selected_keys_changed(self.keys.clone())
+            .into()
+    }
+}
+
+#[test]
+fn list_view_out_of_step_selected_keys_do_not_ring() {
+    let picks = Rc::new(Cell::new(0));
+    let mut host = ComponentHost::mount(
+        RecordingAdapter::default(),
+        [component::<KeysDrivenSelection>("list", Rc::clone(&picks))],
+    )
+    .unwrap();
+    host.record_batches(true);
+    let list = host.reference(&Key::from("list")).unwrap().get().unwrap();
+    let items = host
+        .runtime()
+        .graph()
+        .children(list, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    let event = host
+        .runtime()
+        .graph()
+        .events(list)
+        .unwrap()
+        .iter()
+        .find(|event| event.id == EventId::SelectedKeysChanged)
+        .unwrap()
+        .value
+        .clone();
+    let EventValue::Keys(keys) = event else {
+        panic!("selected keys carry keys");
+    };
+
+    // The app shows "a". Two keys events are in flight out of step with it: [b], then [a].
+    host.queue_event(keys_event(list, &keys, vec![items[1]]));
+    host.queue_event(keys_event(list, &keys, vec![items[0]]));
+    let mut seen = host.runtime().adapter().batches().len();
+    for _ in 0..40 {
+        // One native event per turn, rendered after it, as the WinUI host delivers them.
+        host.drain(1).unwrap();
+        // Each SelectedIndex the render writes echoes as keys at the back of the queue.
+        let batches = host.runtime().adapter().batches();
+        let mut echoes = Vec::new();
+        for mutation in batches[seen..].iter().flatten() {
+            if let Mutation::SetProperties { object, set, .. } = mutation
+                && *object == list
+            {
+                for property in set.iter() {
+                    if let PropertyValue::SelectionIndex(Some(index)) = property.value {
+                        echoes.push(items[index]);
+                    }
+                }
+            }
+        }
+        seen = batches.len();
+        for item in echoes {
+            host.queue_event(keys_event(list, &keys, vec![item]));
+        }
+    }
+    assert!(
+        picks.get() <= 1,
+        "the selection flipped {} times",
+        picks.get()
+    );
+    assert_eq!(host.drain(64).unwrap().dispatched, 0);
+}
