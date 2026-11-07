@@ -17,7 +17,7 @@ Microsoft::UI::Dispatching::DispatcherQueueHandler
 Microsoft::UI::Dispatching::DispatcherQueuePriority::{High, Low, Normal}
 Microsoft::UI::Dispatching::IDispatcherQueue::{CreateTimer, TryEnqueueWithPriority}
 Microsoft::UI::Dispatching::IDispatcherQueueTimer::{add_Tick, put_Interval, put_IsRepeating, remove_Tick, Start, Stop}
-Microsoft::UI::Input::IPointerPoint::{get_PointerId, get_Position, get_Properties}
+Microsoft::UI::Input::IPointerPoint::{get_PointerId, get_Position, get_Properties, get_Timestamp}
 Microsoft::UI::Input::IPointerPointProperties::{get_IsLeftButtonPressed, get_IsMiddleButtonPressed, get_IsRightButtonPressed}
 Microsoft::UI::Input::InputSystemCursor::Create
 Microsoft::UI::Input::InputSystemCursorShape

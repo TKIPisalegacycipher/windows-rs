@@ -1936,6 +1936,11 @@ pub struct PointerEventInfo {
     pub is_left_button_pressed: bool,
     pub is_right_button_pressed: bool,
     pub is_middle_button_pressed: bool,
+    /// When the input happened, in microseconds since the system started (`PointerPoint.Timestamp`),
+    /// or 0 if unavailable. Unlike the time the event is handled, it doesn't move when the UI thread
+    /// was busy before handling it: an app timing a double click by it pairs two presses handled a
+    /// second apart that the user made 200 ms apart.
+    pub timestamp_us: u64,
 }
 
 #[derive(Clone, Debug, PartialEq)]

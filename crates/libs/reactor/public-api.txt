@@ -3053,6 +3053,7 @@ pub windows_reactor::PointerEventInfo::is_middle_button_pressed: bool
 pub windows_reactor::PointerEventInfo::is_right_button_pressed: bool
 pub windows_reactor::PointerEventInfo::modifiers: windows_reactor::InputModifiers
 pub windows_reactor::PointerEventInfo::pointer_id: u32
+pub windows_reactor::PointerEventInfo::timestamp_us: u64
 pub windows_reactor::PointerEventInfo::width: f64
 pub windows_reactor::PointerEventInfo::window_x: f64
 pub windows_reactor::PointerEventInfo::window_y: f64

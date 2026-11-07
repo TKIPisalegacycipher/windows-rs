@@ -555,6 +555,7 @@ impl WinUiAdapter {
             is_left_button_pressed,
             is_right_button_pressed,
             is_middle_button_pressed,
+            timestamp_us: local.Timestamp().unwrap_or(0),
         };
         Ok((info, release_capture.then_some(pointer)))
     }
