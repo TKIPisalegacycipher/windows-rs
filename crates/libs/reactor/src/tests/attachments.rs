@@ -331,6 +331,29 @@ fn menu_opening_reaches_the_current_callback() {
 }
 
 #[test]
+fn menu_closed_reaches_the_current_callback() {
+    let closed = Rc::new(RefCell::new(Vec::new()));
+    let menu = |name: &'static str| {
+        let capture = Rc::clone(&closed);
+        Menu::new([MenuItem::item("new", "New")], |_: Key| {})
+            .on_closed(move || capture.borrow_mut().push(name))
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(Border::new().menu(menu("first"))).unwrap();
+    let target = runtime.graph().root().unwrap();
+
+    runtime.adapter_mut().queue_menu_closed(target);
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(&*closed.borrow(), &["first"]);
+
+    // A new callback with the same items answers the next closing.
+    runtime.update(Border::new().menu(menu("second"))).unwrap();
+    runtime.adapter_mut().queue_menu_closed(target);
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(&*closed.borrow(), &["first", "second"]);
+}
+
+#[test]
 fn menu_attachment_routes_nested_keys_and_suppresses_stale_clicks() {
     let clicked = Rc::new(RefCell::new(Vec::new()));
     let capture = Rc::clone(&clicked);

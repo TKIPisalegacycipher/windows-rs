@@ -287,11 +287,20 @@ fn fill_lazy_menu(
 /// Tells `target`'s menu that its flyout is opening (`Menu::on_opening`). The menu's current
 /// callback answers, whatever revision its items carry: it is the flyout itself that opens.
 fn queue_menu_opening(event_queue: &Rc<NativeEventQueue>, target: ObjectId) {
+    queue_menu_event(event_queue, target, EventId::MenuOpening);
+}
+
+/// Tells `target`'s menu that its flyout closed (`Menu::on_closed`), as `queue_menu_opening`.
+fn queue_menu_closed(event_queue: &Rc<NativeEventQueue>, target: ObjectId) {
+    queue_menu_event(event_queue, target, EventId::MenuClosed);
+}
+
+fn queue_menu_event(event_queue: &Rc<NativeEventQueue>, target: ObjectId, event: EventId) {
     event_queue.queue(
         None,
         Some(QueuedEvent {
             object: target,
-            event: EventId::MenuOpening,
+            event,
             revision: 0,
             payload: EventPayload::Unit,
         }),

@@ -1245,9 +1245,14 @@ impl WinUiAdapter {
                     )
                 });
             }
-            if queued.event == EventId::MenuOpening {
+            if matches!(queued.event, EventId::MenuOpening | EventId::MenuClosed) {
                 let menu = self.menus.get(&queued.object)?;
-                return menu.menu.on_opening.clone().map(|callback| {
+                let callback = if queued.event == EventId::MenuOpening {
+                    &menu.menu.on_opening
+                } else {
+                    &menu.menu.on_closed
+                };
+                return callback.clone().map(|callback| {
                     EventDispatch::new(
                         queued.object,
                         queued.event,

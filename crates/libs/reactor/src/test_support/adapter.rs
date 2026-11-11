@@ -164,6 +164,24 @@ impl RecordingAdapter {
         ));
     }
 
+    /// Closes `target`'s menu, as WinUI's `FlyoutBase::Closed` does.
+    pub fn queue_menu_closed(&mut self, target: ObjectId) {
+        let callback = self
+            .menus
+            .get(&target)
+            .unwrap()
+            .0
+            .on_closed
+            .clone()
+            .unwrap();
+        self.queue_event(EventDispatch::new(
+            target,
+            EventId::MenuClosed,
+            EventValue::Unit(callback),
+            EventPayload::Unit,
+        ));
+    }
+
     pub fn command_bar_flyout(&self, target: ObjectId) -> Option<&CommandBarFlyout> {
         self.command_bar_flyouts
             .get(&target)

@@ -1116,6 +1116,7 @@ pub struct Menu {
     pub(crate) items: Rc<Vec<MenuItem>>,
     pub(crate) on_click: Callback<Key>,
     pub(crate) on_opening: Option<Callback<()>>,
+    pub(crate) on_closed: Option<Callback<()>>,
 }
 
 impl Menu {
@@ -1131,6 +1132,7 @@ impl Menu {
             items: Rc::new(items.into_iter().collect()),
             on_click: on_click.into_payload_callback(),
             on_opening: None,
+            on_closed: None,
         }
     }
 
@@ -1140,6 +1142,14 @@ impl Menu {
     /// release, and a selection that lands first moves focus and cancels it.
     pub fn on_opening(mut self, on_opening: impl IntoUnitCallback) -> Self {
         self.on_opening = Some(on_opening.into_unit_callback());
+        self
+    }
+
+    /// Calls `on_closed` each time the menu closes, picked from or dismissed (`FlyoutBase::Closed`).
+    /// With `on_opening` the app knows while a menu is open, say to keep the element it opened
+    /// from in place: a menu whose element is replaced closes with it.
+    pub fn on_closed(mut self, on_closed: impl IntoUnitCallback) -> Self {
+        self.on_closed = Some(on_closed.into_unit_callback());
         self
     }
 }

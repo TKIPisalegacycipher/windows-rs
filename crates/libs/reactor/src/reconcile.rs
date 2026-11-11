@@ -934,7 +934,7 @@ impl RetainedGraph {
                     if callback == &menu.menu.on_click
             ));
         }
-        if dispatch.event == EventId::MenuOpening {
+        if matches!(dispatch.event, EventId::MenuOpening | EventId::MenuClosed) {
             let Some(menu) = object
                 .attachments
                 .as_ref()
@@ -942,10 +942,15 @@ impl RetainedGraph {
             else {
                 return Ok(false);
             };
+            let current = if dispatch.event == EventId::MenuOpening {
+                &menu.menu.on_opening
+            } else {
+                &menu.menu.on_closed
+            };
             return Ok(matches!(
                 (&dispatch.callback, &dispatch.payload),
                 (EventValue::Unit(callback), EventPayload::Unit)
-                    if menu.menu.on_opening.as_ref() == Some(callback)
+                    if current.as_ref() == Some(callback)
             ));
         }
         if dispatch.event == EventId::CommandInvoked {

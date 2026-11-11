@@ -738,6 +738,12 @@ impl WinUiAdapter {
                         .cast::<native::IFlyoutBase>()?
                         .Opening(move |_, _| queue_menu_opening(&queue, target))?,
                 );
+                let queue = Rc::clone(&self.event_queue);
+                revokers.push(
+                    flyout
+                        .cast::<native::IFlyoutBase>()?
+                        .Closed(move |_, _| queue_menu_closed(&queue, target))?,
+                );
                 self.ui_element(target)?
                     .cast::<native::IButton>()?
                     .SetFlyout(&flyout)?;
@@ -780,6 +786,12 @@ impl WinUiAdapter {
                         queue_menu_opening(&queue, target);
                     },
                 )?);
+                let queue = Rc::clone(&self.event_queue);
+                revokers.push(
+                    flyout
+                        .cast::<native::IFlyoutBase>()?
+                        .Closed(move |_, _| queue_menu_closed(&queue, target))?,
+                );
                 lazy = Some(state);
                 let element = self.ui_element(target)?;
                 context_flyout =
