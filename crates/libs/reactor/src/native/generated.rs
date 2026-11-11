@@ -204,6 +204,8 @@ struct GeneratedButton {
     value: native::Button,
     click: Rc<RefCell<NativeUnitEvent>>,
     _click: Option<GeneratedRevoker>,
+    double_tapped: Rc<RefCell<NativeUnitEvent>>,
+    _double_tapped: Option<GeneratedRevoker>,
 }
 struct GeneratedCheckBox {
     value: native::CheckBox,
@@ -672,10 +674,14 @@ impl GeneratedHandle {
                 let value = native::Button::new()?;
                 let click = Rc::new(RefCell::new(NativeUnitEvent::default()));
                 let _click = None;
+                let double_tapped = Rc::new(RefCell::new(NativeUnitEvent::default()));
+                let _double_tapped = None;
                 Self::Button(Box::new(GeneratedButton {
                     value,
                     click,
                     _click,
+                    double_tapped,
+                    _double_tapped,
                 }))
             }
             ObjectType::CheckBox => {
@@ -8962,6 +8968,11 @@ impl GeneratedHandle {
                     native_event.revision = native_event.revision.wrapping_add(1);
                     native_event.callback = None;
                 }
+                if clear.contains(&EventId::DoubleTapped) {
+                    let mut native_event = object.double_tapped.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
                 for event in set {
                     match (event.id, &event.value) {
                         (EventId::Click, EventValue::Unit(callback)) => {
@@ -8971,6 +8982,14 @@ impl GeneratedHandle {
                                 native_event.callback = Some(callback.clone());
                             }
                             object.subscribe_click(object_id, context)?;
+                        }
+                        (EventId::DoubleTapped, EventValue::Unit(callback)) => {
+                            {
+                                let mut native_event = object.double_tapped.borrow_mut();
+                                native_event.revision = native_event.revision.wrapping_add(1);
+                                native_event.callback = Some(callback.clone());
+                            }
+                            object.subscribe_double_tapped(object_id, context)?;
                         }
                         _ => return Err(WinUiError::InvalidObject(object_id)),
                     }
@@ -10582,6 +10601,13 @@ impl GeneratedHandle {
                     .flatten()
                     .map(EventValue::Unit)
             }
+            (Self::Button(object), EventId::DoubleTapped) => {
+                let event = object.double_tapped.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::Unit)
+            }
             (Self::CheckBox(object), EventId::Click) => {
                 let event = object.click.borrow();
                 (event.revision == revision)
@@ -11093,6 +11119,7 @@ impl GeneratedHandle {
     fn unit_event(&self, event: EventId) -> Option<&Rc<RefCell<NativeUnitEvent>>> {
         match (self, event) {
             (Self::Button(object), EventId::Click) => Some(&object.click),
+            (Self::Button(object), EventId::DoubleTapped) => Some(&object.double_tapped),
             (Self::CheckBox(object), EventId::Click) => Some(&object.click),
             (Self::Border(object), EventId::PointerCaptureLost) => {
                 Some(&object.pointer_capture_lost)
@@ -11152,6 +11179,36 @@ impl GeneratedButton {
             }
         })?;
         self._click = Some(GeneratedRevoker::Event(revoker));
+        Ok(())
+    }
+    fn subscribe_double_tapped(
+        &mut self,
+        object: ObjectId,
+        context: EventContext,
+    ) -> Result<(), WinUiError> {
+        if self._double_tapped.is_some() {
+            return Ok(());
+        }
+        let value = &self.value;
+        let event_for_callback = Rc::clone(&self.double_tapped);
+        let event_queue_double_tapped = Rc::clone(context.event_queue);
+        let revoker = value
+            .cast::<native::IUIElement>()?
+            .DoubleTapped(move |_, _| {
+                let dispatch = true;
+                let observation = None;
+                if dispatch {
+                    WinUiAdapter::dispatch(
+                        &event_for_callback,
+                        &event_queue_double_tapped,
+                        object,
+                        EventId::DoubleTapped,
+                        observation,
+                        (),
+                    );
+                }
+            })?;
+        self._double_tapped = Some(GeneratedRevoker::Event(revoker));
         Ok(())
     }
 }

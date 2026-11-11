@@ -235,6 +235,34 @@ fn auto_suggest_box_focus_payloads_round_trip_through_recording_protocol() {
 }
 
 #[test]
+fn button_double_tap_reaches_its_callback() {
+    let tapped = Rc::new(RefCell::new(0));
+    let callback = {
+        let tapped = Rc::clone(&tapped);
+        Callback::new(move |()| *tapped.borrow_mut() += 1)
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(Button::new().on_double_tapped(callback.clone()))
+        .unwrap();
+    let button = runtime.graph().root().unwrap();
+    assert!(
+        event_contracts(ObjectType::Button).contains(&EventContract {
+            id: EventId::DoubleTapped,
+            value: ValueType::Unit,
+        })
+    );
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        button,
+        EventId::DoubleTapped,
+        EventValue::Unit(callback),
+        EventPayload::Unit,
+    ));
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 1);
+    assert_eq!(*tapped.borrow(), 1);
+}
+
+#[test]
 fn navigation_view_item_reports_focus_and_takes_focus_through_its_reference() {
     let values = Rc::new(RefCell::new(Vec::new()));
     let callback = {

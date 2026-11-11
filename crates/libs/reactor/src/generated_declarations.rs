@@ -2352,6 +2352,13 @@ impl Button {
         );
         self
     }
+    pub fn on_double_tapped(mut self, callback: impl IntoUnitCallback) -> Self {
+        self.0 = self.0.event(
+            EventId::DoubleTapped,
+            EventValue::Unit(callback.into_unit_callback()),
+        );
+        self
+    }
 }
 impl Default for Button {
     fn default() -> Self {

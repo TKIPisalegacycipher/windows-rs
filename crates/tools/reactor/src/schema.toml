@@ -275,6 +275,9 @@ name = "Content"
 [[objects.events]]
 name = "Click"
 
+[[objects.events]]
+name = "DoubleTapped"
+
 [[objects]]
 name = "CheckBox"
 enabled = true

@@ -309,6 +309,7 @@ pub enum EventId {
     CommandInvoked,
     DateChanged,
     DisplayModeChanged,
+    DoubleTapped,
     DragEnter,
     DragItemsCompleted,
     DragLeave,
@@ -595,10 +596,16 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
             id: EventId::TextChanged,
             value: ValueType::String,
         }],
-        ObjectType::Button => &[EventContract {
-            id: EventId::Click,
-            value: ValueType::Unit,
-        }],
+        ObjectType::Button => &[
+            EventContract {
+                id: EventId::Click,
+                value: ValueType::Unit,
+            },
+            EventContract {
+                id: EventId::DoubleTapped,
+                value: ValueType::Unit,
+            },
+        ],
         ObjectType::CheckBox => &[
             EventContract {
                 id: EventId::Click,
