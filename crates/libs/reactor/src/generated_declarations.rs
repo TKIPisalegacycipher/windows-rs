@@ -4285,6 +4285,8 @@ impl From<NavigationView> for View {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct NavigationViewItem(Declaration);
+impl Sealed for NavigationViewItem {}
+impl ReferenceElement for NavigationViewItem {}
 impl NavigationViewItem {
     pub fn new() -> Self {
         let declaration = Declaration::new(ObjectType::NavigationViewItem);
@@ -4329,6 +4331,7 @@ impl NavigationViewItem {
         );
         self
     }
+    focus_methods!(NavigationViewItem);
     visual_methods!();
     /// Rejects values outside this relation's generated type contract.
     ///
@@ -4369,6 +4372,20 @@ impl NavigationViewItem {
             RelationValue::Many(Rc::new(
                 children.into_iter().map(|child| child.0.0).collect(),
             )),
+        );
+        self
+    }
+    pub fn on_got_focus(mut self, callback: impl IntoPayloadCallback<FocusEventInfo>) -> Self {
+        self.0 = self.0.event(
+            EventId::GotFocus,
+            EventValue::FocusEventInfo(callback.into_payload_callback()),
+        );
+        self
+    }
+    pub fn on_lost_focus(mut self, callback: impl IntoPayloadCallback<FocusEventInfo>) -> Self {
+        self.0 = self.0.event(
+            EventId::LostFocus,
+            EventValue::FocusEventInfo(callback.into_payload_callback()),
         );
         self
     }

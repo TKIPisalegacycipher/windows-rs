@@ -786,7 +786,16 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
                 value: ValueType::NavigationViewDisplayMode,
             },
         ],
-        ObjectType::NavigationViewItem => &[],
+        ObjectType::NavigationViewItem => &[
+            EventContract {
+                id: EventId::GotFocus,
+                value: ValueType::FocusEventInfo,
+            },
+            EventContract {
+                id: EventId::LostFocus,
+                value: ValueType::FocusEventInfo,
+            },
+        ],
         ObjectType::SplitView => &[EventContract {
             id: EventId::PaneClosed,
             value: ValueType::Bool,
@@ -3288,6 +3297,7 @@ pub(crate) fn focus_capable(kind: ObjectType) -> bool {
             | ObjectType::AutoSuggestBox
             | ObjectType::PasswordBox
             | ObjectType::NumberBox
+            | ObjectType::NavigationViewItem
             | ObjectType::ToggleSwitch
             | ObjectType::ToggleButton
             | ObjectType::RadioButton

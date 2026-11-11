@@ -316,6 +316,13 @@ struct GeneratedNavigationView {
     display_mode_changed: Rc<RefCell<NativeNavigationViewDisplayModeEvent>>,
     _display_mode_changed: Option<GeneratedRevoker>,
 }
+struct GeneratedNavigationViewItem {
+    value: native::NavigationViewItem,
+    got_focus: Rc<RefCell<NativeFocusEventInfoEvent>>,
+    _got_focus: Option<GeneratedRevoker>,
+    lost_focus: Rc<RefCell<NativeFocusEventInfoEvent>>,
+    _lost_focus: Option<GeneratedRevoker>,
+}
 struct GeneratedSplitView {
     value: native::SplitView,
     pane_closed: Rc<RefCell<NativeBoolEvent>>,
@@ -595,7 +602,7 @@ enum GeneratedHandle {
     PasswordBox(Box<GeneratedPasswordBox>),
     NumberBox(Box<GeneratedNumberBox>),
     NavigationView(Box<GeneratedNavigationView>),
-    NavigationViewItem(native::NavigationViewItem),
+    NavigationViewItem(Box<GeneratedNavigationViewItem>),
     SplitView(Box<GeneratedSplitView>),
     ProgressBar(native::ProgressBar),
     ToggleSwitch(Box<GeneratedToggleSwitch>),
@@ -1224,7 +1231,18 @@ impl GeneratedHandle {
                 }))
             }
             ObjectType::NavigationViewItem => {
-                Self::NavigationViewItem(native::NavigationViewItem::new()?)
+                let value = native::NavigationViewItem::new()?;
+                let got_focus = Rc::new(RefCell::new(NativeFocusEventInfoEvent::default()));
+                let _got_focus = None;
+                let lost_focus = Rc::new(RefCell::new(NativeFocusEventInfoEvent::default()));
+                let _lost_focus = None;
+                Self::NavigationViewItem(Box::new(GeneratedNavigationViewItem {
+                    value,
+                    got_focus,
+                    _got_focus,
+                    lost_focus,
+                    _lost_focus,
+                }))
             }
             ObjectType::SplitView => {
                 let value = native::SplitView::new()?;
@@ -2378,7 +2396,7 @@ impl GeneratedHandle {
             Self::PasswordBox(value) => Ok(value.value.cast()?),
             Self::NumberBox(value) => Ok(value.value.cast()?),
             Self::NavigationView(value) => Ok(value.value.cast()?),
-            Self::NavigationViewItem(value) => Ok(value.cast()?),
+            Self::NavigationViewItem(value) => Ok(value.value.cast()?),
             Self::SplitView(value) => Ok(value.value.cast()?),
             Self::ProgressBar(value) => Ok(value.cast()?),
             Self::ToggleSwitch(value) => Ok(value.value.cast()?),
@@ -2502,6 +2520,7 @@ impl GeneratedHandle {
             ),
             (Self::NavigationViewItem(value), RelationId::MenuItems) => Some(
                 value
+                    .value
                     .cast::<native::INavigationViewItem2>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -2689,6 +2708,7 @@ impl GeneratedHandle {
         match (self, property) {
             (Self::NavigationViewItem(object), PropertyId::IsSelected) => Some(
                 object
+                    .value
                     .cast::<native::INavigationViewItemBase2>()
                     .map_err(Into::into)
                     .and_then(|object| object.IsSelected().map_err(Into::into)),
@@ -5851,6 +5871,7 @@ impl GeneratedHandle {
             ) => Some(object.value.SetIsPaneOpen(*value).map_err(Into::into)),
             (Self::NavigationViewItem(object), PropertyId::IsSelected, None) => Some(
                 object
+                    .value
                     .cast::<native::IDependencyObject>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -5865,12 +5886,14 @@ impl GeneratedHandle {
                 Some(PropertyValue::Bool(value)),
             ) => Some(
                 object
+                    .value
                     .cast::<native::INavigationViewItemBase2>()
                     .map_err(Into::into)
                     .and_then(|object| object.SetIsSelected(*value).map_err(Into::into)),
             ),
             (Self::NavigationViewItem(object), PropertyId::SelectsOnInvoked, None) => Some(
                 object
+                    .value
                     .cast::<native::IDependencyObject>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -5885,12 +5908,14 @@ impl GeneratedHandle {
                 Some(PropertyValue::Bool(value)),
             ) => Some(
                 object
+                    .value
                     .cast::<native::INavigationViewItem2>()
                     .map_err(Into::into)
                     .and_then(|object| object.SetSelectsOnInvoked(*value).map_err(Into::into)),
             ),
             (Self::NavigationViewItem(object), PropertyId::IsExpanded, None) => Some(
                 object
+                    .value
                     .cast::<native::IDependencyObject>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -5905,12 +5930,14 @@ impl GeneratedHandle {
                 Some(PropertyValue::Bool(value)),
             ) => Some(
                 object
+                    .value
                     .cast::<native::INavigationViewItem2>()
                     .map_err(Into::into)
                     .and_then(|object| object.SetIsExpanded(*value).map_err(Into::into)),
             ),
             (Self::NavigationViewItem(object), PropertyId::Tag, None) => Some(
                 object
+                    .value
                     .cast::<native::IDependencyObject>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -5925,6 +5952,7 @@ impl GeneratedHandle {
                 Some(PropertyValue::String(value)),
             ) => Some(
                 object
+                    .value
                     .cast::<native::IFrameworkElement>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -5935,6 +5963,7 @@ impl GeneratedHandle {
             ),
             (Self::NavigationViewItem(object), PropertyId::Icon, None) => Some(
                 object
+                    .value
                     .SetIcon(None::<&native::IconElement>)
                     .map_err(Into::into),
             ),
@@ -5944,10 +5973,11 @@ impl GeneratedHandle {
                 Some(PropertyValue::Icon(value)),
             ) => Some(
                 icon_element(value, image_source)
-                    .and_then(|icon| object.SetIcon(&icon).map_err(Into::into)),
+                    .and_then(|icon| object.value.SetIcon(&icon).map_err(Into::into)),
             ),
             (Self::NavigationViewItem(object), PropertyId::Background, None) => Some(
                 object
+                    .value
                     .cast::<native::IDependencyObject>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -5962,6 +5992,7 @@ impl GeneratedHandle {
                 Some(PropertyValue::Brush(Brush::Solid(value))),
             ) => Some(
                 object
+                    .value
                     .cast::<native::IControl>()
                     .map_err(Into::into)
                     .and_then(|object| {
@@ -9494,6 +9525,40 @@ impl GeneratedHandle {
                 }
                 Ok(())
             })()),
+            Self::NavigationViewItem(object) => Some((|| {
+                if clear.contains(&EventId::GotFocus) {
+                    let mut native_event = object.got_focus.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
+                if clear.contains(&EventId::LostFocus) {
+                    let mut native_event = object.lost_focus.borrow_mut();
+                    native_event.revision = native_event.revision.wrapping_add(1);
+                    native_event.callback = None;
+                }
+                for event in set {
+                    match (event.id, &event.value) {
+                        (EventId::GotFocus, EventValue::FocusEventInfo(callback)) => {
+                            {
+                                let mut native_event = object.got_focus.borrow_mut();
+                                native_event.revision = native_event.revision.wrapping_add(1);
+                                native_event.callback = Some(callback.clone());
+                            }
+                            object.subscribe_got_focus(object_id, context)?;
+                        }
+                        (EventId::LostFocus, EventValue::FocusEventInfo(callback)) => {
+                            {
+                                let mut native_event = object.lost_focus.borrow_mut();
+                                native_event.revision = native_event.revision.wrapping_add(1);
+                                native_event.callback = Some(callback.clone());
+                            }
+                            object.subscribe_lost_focus(object_id, context)?;
+                        }
+                        _ => return Err(WinUiError::InvalidObject(object_id)),
+                    }
+                }
+                Ok(())
+            })()),
             Self::SplitView(object) => Some((|| {
                 if clear.contains(&EventId::PaneClosed) {
                     let mut native_event = object.pane_closed.borrow_mut();
@@ -10276,6 +10341,7 @@ impl GeneratedHandle {
             }),
             (Self::NavigationViewItem(object), RelationId::Content) => Some(
                 object
+                    .value
                     .cast::<native::IContentControl>()
                     .map_err(Into::into)
                     .and_then(|object| match child {
@@ -10774,6 +10840,20 @@ impl GeneratedHandle {
                     .then(|| event.callback.clone())
                     .flatten()
                     .map(EventValue::NavigationViewDisplayMode)
+            }
+            (Self::NavigationViewItem(object), EventId::GotFocus) => {
+                let event = object.got_focus.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::FocusEventInfo)
+            }
+            (Self::NavigationViewItem(object), EventId::LostFocus) => {
+                let event = object.lost_focus.borrow();
+                (event.revision == revision)
+                    .then(|| event.callback.clone())
+                    .flatten()
+                    .map(EventValue::FocusEventInfo)
             }
             (Self::SplitView(object), EventId::PaneClosed) => {
                 let event = object.pane_closed.borrow();
@@ -12235,6 +12315,98 @@ impl GeneratedNavigationView {
             }
         })?;
         self._display_mode_changed = Some(GeneratedRevoker::Event(revoker));
+        Ok(())
+    }
+}
+impl GeneratedNavigationViewItem {
+    fn subscribe_got_focus(
+        &mut self,
+        object: ObjectId,
+        context: EventContext,
+    ) -> Result<(), WinUiError> {
+        if self._got_focus.is_some() {
+            return Ok(());
+        }
+        let value = &self.value;
+        let event_for_callback = Rc::clone(&self.got_focus);
+        let event_queue_got_focus = Rc::clone(context.event_queue);
+        let source_got_focus = value.cast::<native::UIElement>()?;
+        let pending_focus_states_got_focus = Rc::clone(context.pending_focus_states);
+        let revoker = value
+            .cast::<native::IUIElement>()?
+            .GotFocus(move |_, args| {
+                let dispatch = true;
+                let observation = None;
+                let value = match WinUiAdapter::focus_event_info(
+                    object,
+                    &source_got_focus,
+                    args,
+                    true,
+                    &pending_focus_states_got_focus,
+                ) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        report_error(error.into());
+                        return;
+                    }
+                };
+                if dispatch {
+                    WinUiAdapter::dispatch(
+                        &event_for_callback,
+                        &event_queue_got_focus,
+                        object,
+                        EventId::GotFocus,
+                        observation,
+                        value,
+                    );
+                }
+            })?;
+        self._got_focus = Some(GeneratedRevoker::Event(revoker));
+        Ok(())
+    }
+    fn subscribe_lost_focus(
+        &mut self,
+        object: ObjectId,
+        context: EventContext,
+    ) -> Result<(), WinUiError> {
+        if self._lost_focus.is_some() {
+            return Ok(());
+        }
+        let value = &self.value;
+        let event_for_callback = Rc::clone(&self.lost_focus);
+        let event_queue_lost_focus = Rc::clone(context.event_queue);
+        let source_lost_focus = value.cast::<native::UIElement>()?;
+        let pending_focus_states_lost_focus = Rc::clone(context.pending_focus_states);
+        let revoker = value
+            .cast::<native::IUIElement>()?
+            .LostFocus(move |_, args| {
+                let dispatch = true;
+                let observation = None;
+                let value = match WinUiAdapter::focus_event_info(
+                    object,
+                    &source_lost_focus,
+                    args,
+                    false,
+                    &pending_focus_states_lost_focus,
+                ) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        report_error(error.into());
+                        return;
+                    }
+                };
+                if dispatch {
+                    WinUiAdapter::dispatch(
+                        &event_for_callback,
+                        &event_queue_lost_focus,
+                        object,
+                        EventId::LostFocus,
+                        observation,
+                        value,
+                    );
+                }
+            })?;
+        self._lost_focus = Some(GeneratedRevoker::Event(revoker));
         Ok(())
     }
 }

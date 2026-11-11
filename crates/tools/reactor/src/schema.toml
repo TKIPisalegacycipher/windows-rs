@@ -1038,6 +1038,7 @@ payload_property = "Tag"
 
 [[objects]]
 name = "NavigationViewItem"
+focus = true
 
 [[objects.properties]]
 name = "IsSelected"
@@ -1066,6 +1067,14 @@ adapter = "theme_brush"
 [[objects.relations]]
 name = "MenuItems"
 identity = "Keyed"
+
+[[objects.events]]
+name = "GotFocus"
+adapter = "focus"
+
+[[objects.events]]
+name = "LostFocus"
+adapter = "focus"
 
 [[objects]]
 name = "SplitView"

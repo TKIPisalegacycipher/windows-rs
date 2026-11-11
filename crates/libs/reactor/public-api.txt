@@ -2721,6 +2721,7 @@ pub fn windows_reactor::NavigationViewItem::canvas_left(self, f64) -> Self
 pub fn windows_reactor::NavigationViewItem::canvas_top(self, f64) -> Self
 pub fn windows_reactor::NavigationViewItem::content(self, impl core::convert::Into<windows_reactor::View>) -> Self
 pub fn windows_reactor::NavigationViewItem::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
+pub fn windows_reactor::NavigationViewItem::element_ref<R>(self, &R) -> Self where R: windows_reactor::CompatibleElementRef<windows_reactor::NavigationViewItem>
 pub fn windows_reactor::NavigationViewItem::exit_fade(self, core::time::Duration) -> Self
 pub fn windows_reactor::NavigationViewItem::exit_transition(self, core::option::Option<windows_reactor::ExitTransition>) -> Self
 pub fn windows_reactor::NavigationViewItem::grid_column(self, i32) -> Self
@@ -2741,6 +2742,8 @@ pub fn windows_reactor::NavigationViewItem::menu_items(self, impl windows_reacto
 pub fn windows_reactor::NavigationViewItem::min_height(self, f64) -> Self
 pub fn windows_reactor::NavigationViewItem::min_width(self, f64) -> Self
 pub fn windows_reactor::NavigationViewItem::new() -> Self
+pub fn windows_reactor::NavigationViewItem::on_got_focus(self, impl windows_reactor::IntoPayloadCallback<windows_reactor::FocusEventInfo>) -> Self
+pub fn windows_reactor::NavigationViewItem::on_lost_focus(self, impl windows_reactor::IntoPayloadCallback<windows_reactor::FocusEventInfo>) -> Self
 pub fn windows_reactor::NavigationViewItem::opacity(self, f64) -> Self
 pub fn windows_reactor::NavigationViewItem::relative_align_bottom(self) -> Self
 pub fn windows_reactor::NavigationViewItem::relative_align_horizontal_center(self) -> Self
@@ -2758,6 +2761,7 @@ impl core::convert::From<windows_reactor::NavigationViewItem> for windows_reacto
 pub fn windows_reactor::View::from(windows_reactor::NavigationViewItem) -> Self
 impl core::default::Default for windows_reactor::NavigationViewItem
 pub fn windows_reactor::NavigationViewItem::default() -> Self
+impl windows_reactor::ReferenceElement for windows_reactor::NavigationViewItem
 pub struct windows_reactor::NotifyIcon
 impl windows_reactor::NotifyIcon
 pub fn windows_reactor::NotifyIcon::menu(self, windows_reactor::Menu) -> Self
@@ -5042,6 +5046,7 @@ impl windows_reactor::ReferenceElement for windows_reactor::HyperlinkButton
 impl windows_reactor::ReferenceElement for windows_reactor::Image
 impl windows_reactor::ReferenceElement for windows_reactor::ListView
 impl windows_reactor::ReferenceElement for windows_reactor::NavigationView
+impl windows_reactor::ReferenceElement for windows_reactor::NavigationViewItem
 impl windows_reactor::ReferenceElement for windows_reactor::NumberBox
 impl windows_reactor::ReferenceElement for windows_reactor::PasswordBox
 impl windows_reactor::ReferenceElement for windows_reactor::RadioButton
