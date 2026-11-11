@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-73 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-76 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 53 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 56 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -104,6 +104,8 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 56 | `8ad306f3a` | A `Border`'s flyout (`flyout_with`), `ElementRef<Border>::request_show_flyout_then` and its closed callback, `OverlayInputPassThroughElement` | none | A contact card opened from a photo tile, closed when the tile's flyout is dismissed | unit |
 | 64 | `43ba76c08` | `Border::use_system_focus_visuals`, `Border::focus_visual_margin` and the attached `automation_accessibility_view` (`AutomationProperties.AccessibilityView`) | none | A focusable search caption that draws the system focus rectangle and is not read twice | unit |
 | 65 | `db0deeedc` | `ScrollViewer::vertical_anchor_ratio` (`VerticalAnchorRatio`, checked to 0..=1) and `can_be_scroll_anchor` on every element (`UIElement.CanBeScrollAnchor`); the generator gains a `unit_interval` validation | none | A Messages thread pinned to its newest message while older rows prepend (ratio 1.0, rows as anchor candidates) | unit |
+| 74 | `9d7ff6ee1` | `NavigationViewItem` reports focus (`on_got_focus` / `on_lost_focus`, the `focus` adapter as on `Border` and `AutoSuggestBox`) and takes an `ElementRef` (`focus = true`, so `request_focus`) | none | A folder's tree item is built anew when the folder gains its first subfolder or loses its last (WinUI shows no first child added to an item that had none); the new item gets the keyboard focus the old one held (Okojo#1469) | unit |
+| 76 | `481174e04` | `Button::on_double_tapped` (`UIElement.DoubleTapped`, a unit event; binds `IUIElement::{add_DoubleTapped, remove_DoubleTapped}`) | none | A month-view day cell (a button, whose click carries no input time) opens a new all-day event on a double click paired by WinUI's gesture recognizer from the input's own timing, not by when Okojo handled each click (Okojo#1650) | unit |
 
 ## 4. Theming, icons and menus
 
@@ -115,6 +117,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 18 | `88d8519dd` | `MenuItem::swatch`, a coloured dot in the icon slot | 12 | New | A narrower version of 27. Propose together |
 | 53 | `1e2dbc6e3` | Context menus build their items as they open (`FlyoutBase::Opening`, `LazyMenu`) | none | New | A menu on every message-list row costs little until one opens. Evidence: unit |
 | 55 | `452247a9a` | `Menu::on_opening` | none | New | Bug-adjacent: selecting a row on the right-button release raced WinUI's context request, and a selection that ran first cancelled the menu. Selecting as the menu opens avoids that. Evidence: unit |
+| 75 | `56e50fbea` | `Menu::on_closed` (`FlyoutBase::Closed`, context and button menus; `MenuClosed` joins tool-reactor's hand-listed events) | none | New | With 55's `on_opening` the app knows while a menu is open: Okojo keeps a folder's tree item in place while its menu is open, since rebuilding the item would close the menu (Okojo#1469). Evidence: unit |
 | 60 | `93338694e` | `register_resource_fonts`: app-wide `FontFamily` resources by family name (it loads no font files) | none | New | Lets an app set its interface font through `ContentControlThemeFontFamily`. Evidence: unit |
 | 61 | `cd6484d6b` | `register_text_block_font`, an opt-in implicit `TextBlock` style that sets `FontFamily`, so plain text uses the app's interface font | none | New | A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so `register_resource_fonts` misses plain text. The style is merged after the Fluent dictionaries. A local or template `FontFamily` still wins, but an inherited one loses, so it is opt-in. Evidence: unit |
 | 63 | `9e55c72a6` | `ButtonStyle::Default` and theme brushes keep the app's implicit (Fluent) style | none | New | Bug. Setting a local null `Style` hides the implicit style, and a brush `Style` without `BasedOn` replaces it, so a `Default` or themed `Button` fell back to the framework's square template. Now the Style is cleared, and a brush style is based on `Default<Type>Style` when the app has it; 61's `TextBlock` style is keyed `DefaultTextBlockStyle` for the same reason. Evidence: unit; desktop |
@@ -289,17 +292,18 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-73 came after the rebuild and have no original.
+Commits 46-76 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-73 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-76 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
 `automation_accessibility_view`, `ScrollViewer::vertical_anchor_ratio`, `can_be_scroll_anchor`,
-`PointerEventInfo::timestamp_us`); none changes an existing item. `register_resource_fonts` is missing
+`PointerEventInfo::timestamp_us`, `NavigationViewItem::on_got_focus`, `on_lost_focus` and
+`element_ref`, `Menu::on_closed`, `Button::on_double_tapped`); none changes an existing item. `register_resource_fonts` is missing
 from `public-api.txt`, which commit 60 did not update. These are source-breaking for code that names them:
 
 | Item | Change | Commit |
