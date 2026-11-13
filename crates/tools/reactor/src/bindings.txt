@@ -197,8 +197,8 @@ Microsoft::UI::Xaml::Controls::IRatingControl::{add_ValueChanged, get_Value, put
 Microsoft::UI::Xaml::Controls::IRatingControlStatics::{get_CaptionProperty, get_IsReadOnlyProperty, get_MaxRatingProperty, get_ValueProperty}
 Microsoft::UI::Xaml::Controls::IRichEditBox::{add_TextChanged, get_Document, get_IsReadOnly, put_Header, put_IsReadOnly, put_PlaceholderText, remove_TextChanged}
 Microsoft::UI::Xaml::Controls::IRichEditBoxStatics::{get_IsReadOnlyProperty, get_PlaceholderTextProperty}
-Microsoft::UI::Xaml::Controls::IRichTextBlock::{get_Blocks, put_FontSize, put_IsTextSelectionEnabled, put_TextWrapping}
-Microsoft::UI::Xaml::Controls::IRichTextBlockStatics::{get_FontSizeProperty, get_IsTextSelectionEnabledProperty, get_TextWrappingProperty}
+Microsoft::UI::Xaml::Controls::IRichTextBlock::{get_Blocks, put_FontSize, put_Foreground, put_IsTextSelectionEnabled, put_TextWrapping}
+Microsoft::UI::Xaml::Controls::IRichTextBlockStatics::{get_FontSizeProperty, get_ForegroundProperty, get_IsTextSelectionEnabledProperty, get_TextWrappingProperty}
 Microsoft::UI::Xaml::Controls::IRowDefinition::{put_Height, put_MaxHeight, put_MinHeight}
 Microsoft::UI::Xaml::Controls::IScrollView::{put_Content, put_HorizontalScrollBarVisibility, put_VerticalScrollBarVisibility}
 Microsoft::UI::Xaml::Controls::IScrollViewer::{add_ViewChanged, ChangeViewWithOptionalAnimation, get_VerticalOffset, put_HorizontalScrollBarVisibility, put_VerticalAnchorRatio, put_VerticalScrollBarVisibility, remove_ViewChanged}
@@ -339,7 +339,7 @@ Microsoft::UI::Xaml::DependencyPropertyChangedCallback
 Microsoft::UI::Xaml::DispatcherShutdownMode::OnExplicitShutdown
 Microsoft::UI::Xaml::Documents::Block::{}
 Microsoft::UI::Xaml::Documents::Hyperlink::CreateInstance
-Microsoft::UI::Xaml::Documents::IHyperlink::put_NavigateUri
+Microsoft::UI::Xaml::Documents::IHyperlink::{add_Click, put_NavigateUri, remove_Click}
 Microsoft::UI::Xaml::Documents::Inline::{}
 Microsoft::UI::Xaml::Documents::IParagraph::get_Inlines
 Microsoft::UI::Xaml::Documents::IRun::put_Text

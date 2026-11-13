@@ -2979,6 +2979,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
     events.insert("CommandInvoked", "String");
     events.insert("MenuOpening", "Unit");
     events.insert("MenuClosed", "Unit");
+    events.insert("LinkClick", "String");
     for object in &schema.objects {
         for property in &object.properties {
             properties

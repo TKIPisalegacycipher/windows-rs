@@ -953,6 +953,21 @@ impl RetainedGraph {
                     if current.as_ref() == Some(callback)
             ));
         }
+        if dispatch.event == EventId::LinkClick {
+            let current = object.properties.iter().find_map(|property| {
+                match (&property.id, &property.value) {
+                    (PropertyId::Blocks, PropertyValue::RichText(text)) => {
+                        text.on_link_click.as_ref()
+                    }
+                    _ => None,
+                }
+            });
+            return Ok(matches!(
+                (&dispatch.callback, &dispatch.payload),
+                (EventValue::String(callback), EventPayload::String(_))
+                    if current == Some(callback)
+            ));
+        }
         if dispatch.event == EventId::CommandInvoked {
             let Some(flyout) = object
                 .attachments

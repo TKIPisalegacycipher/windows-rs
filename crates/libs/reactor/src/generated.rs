@@ -326,6 +326,7 @@ pub enum EventId {
     ItemClicked,
     ItemInvoked,
     KeyUp,
+    LinkClick,
     LostFocus,
     MenuClosed,
     MenuItemInvoked,
@@ -2575,6 +2576,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::F64,
         }),
+        (ObjectType::RichTextBlock, PropertyId::Foreground) => Some(PropertyContract {
+            id,
+            value: ValueType::Brush,
+        }),
         _ => None,
     }
 }
@@ -2896,6 +2901,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::RichTextBlock, PropertyId::IsTextSelectionEnabled) => 32,
         (ObjectType::RichTextBlock, PropertyId::TextWrapping) => 33,
         (ObjectType::RichTextBlock, PropertyId::FontSize) => 34,
+        (ObjectType::RichTextBlock, PropertyId::Foreground) => 35,
         _ => usize::MAX,
     }
 }

@@ -465,6 +465,9 @@ impl WinUiAdapter {
                 {
                     break 'apply result;
                 }
+                if property == PropertyId::Blocks && kind == ObjectType::RichTextBlock {
+                    break 'apply self.set_rich_text(object, None);
+                }
                 if let Some(Handle::Generated(handle)) = self.handles.get(&object)
                     && let Some(result) = handle.set_property(property, None, None)
                 {
@@ -616,6 +619,11 @@ impl WinUiAdapter {
                 {
                     break 'apply self.set_image_source(object, source);
                 }
+                if property.id == PropertyId::Blocks
+                    && let PropertyValue::RichText(text) = &property.value
+                {
+                    break 'apply self.set_rich_text(object, Some(text));
+                }
                 let image = if let PropertyValue::Icon(icon) = &property.value {
                     self.shared_icon_image(icon)?
                 } else {
@@ -764,6 +772,7 @@ impl WinUiAdapter {
     /// completion, and replacement all end an object's native lifetime through this path.
     fn release_object(&mut self, object: ObjectId, handle: Handle) -> Result<(), WinUiError> {
         self.release_image(object);
+        self.rich_text_links.remove(&object);
         self.resource_override_keys.remove(&object);
         self.controlled_index_selectors.remove(&object);
         self.style_states.remove(&object);

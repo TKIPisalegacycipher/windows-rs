@@ -2090,6 +2090,10 @@ name = "TextWrapping"
 name = "FontSize"
 validation = "finite_positive"
 
+[[objects.properties]]
+name = "Foreground"
+adapter = "theme_brush"
+
 [[objects]]
 name = "WebView2"
 reference = true

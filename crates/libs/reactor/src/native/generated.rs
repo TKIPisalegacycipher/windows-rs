@@ -509,6 +509,9 @@ fn theme_style_info(
         ObjectType::Line => Some(("Line", &[(PropertyId::Stroke, "Stroke")])),
         ObjectType::SymbolIcon => Some(("SymbolIcon", &[(PropertyId::Foreground, "Foreground")])),
         ObjectType::FontIcon => Some(("FontIcon", &[(PropertyId::Foreground, "Foreground")])),
+        ObjectType::RichTextBlock => {
+            Some(("RichTextBlock", &[(PropertyId::Foreground, "Foreground")]))
+        }
         _ => None,
     }
 }
@@ -8951,6 +8954,24 @@ impl GeneratedHandle {
                 PropertyId::FontSize,
                 Some(PropertyValue::F64(value)),
             ) => Some(object.SetFontSize(*value).map_err(Into::into)),
+            (Self::RichTextBlock(object), PropertyId::Foreground, None) => Some(
+                object
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::RichTextBlock::ForegroundProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::RichTextBlock(object),
+                PropertyId::Foreground,
+                Some(PropertyValue::Brush(Brush::Solid(value))),
+            ) => Some(
+                solid_color_brush(*value)
+                    .and_then(|brush| object.SetForeground(&brush).map_err(Into::into)),
+            ),
             _ => None,
         }
     }

@@ -417,12 +417,13 @@ pub(crate) fn registered_resource_fonts() -> Vec<(&'static str, &'static str)> {
     RESOURCE_FONTS.lock().unwrap().clone()
 }
 
-/// Registers the font family of plain `TextBlock`s, replacing any earlier family.
+/// Registers the font family of plain `TextBlock`s and `RichTextBlock`s, replacing any earlier
+/// family.
 ///
-/// A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so
-/// [`register_resource_fonts`] does not reach plain text. This installs an implicit `TextBlock`
-/// style whose only setter is `FontFamily`, so plain text uses `family`. It reaches plain
-/// `TextBlock`s only, not `RichTextBlock`s (the reactor's [`RichText`]).
+/// Neither inherits `ContentControlThemeFontFamily`, so [`register_resource_fonts`] does not
+/// reach plain text. This installs an implicit `TextBlock` style and an implicit `RichTextBlock`
+/// style whose only setter is `FontFamily`, so plain and rich text (the reactor's [`RichText`])
+/// use `family`.
 ///
 /// An implicit style ranks below a local value and below a value set by a control template, so a
 /// `TextBlock` with its own `FontFamily`, set either way, keeps it. It ranks above an inherited
@@ -790,20 +791,36 @@ impl Color {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RichText {
     pub(crate) paragraphs: Rc<Vec<RichTextParagraph>>,
+    pub(crate) on_link_click: Option<Callback<Rc<str>>>,
 }
+
+// A callback compares by identity, which is an equivalence.
+impl Eq for RichText {}
 
 impl RichText {
     pub fn new(paragraphs: impl IntoIterator<Item = RichTextParagraph>) -> Self {
         Self {
             paragraphs: Rc::new(paragraphs.into_iter().collect()),
+            on_link_click: None,
         }
     }
 
     pub fn single_paragraph(inlines: impl IntoIterator<Item = RichTextInline>) -> Self {
         Self::new([RichTextParagraph::new(inlines)])
+    }
+
+    /// Calls `on_link_click` with a hyperlink's `uri` when it is clicked (`Hyperlink::Click`),
+    /// instead of letting WinUI navigate to it: the app opens the address itself (a browser of
+    /// its choice, a check first). Without it a hyperlink navigates (`NavigateUri`).
+    ///
+    /// The text's blocks are built again when the callback changes, so pass one that keeps its
+    /// identity across renders (a component's capture-free callback).
+    pub fn on_link_click(mut self, on_link_click: impl IntoPayloadCallback<Rc<str>>) -> Self {
+        self.on_link_click = Some(on_link_click.into_payload_callback());
+        self
     }
 }
 

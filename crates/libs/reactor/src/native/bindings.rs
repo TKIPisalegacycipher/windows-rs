@@ -5652,6 +5652,34 @@ impl windows_core::RuntimeName for HyperlinkButton {
 }
 unsafe impl Send for HyperlinkButton {}
 unsafe impl Sync for HyperlinkButton {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HyperlinkClickEventArgs(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    HyperlinkClickEventArgs,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(HyperlinkClickEventArgs, RoutedEventArgs);
+impl windows_core::RuntimeType for HyperlinkClickEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, IHyperlinkClickEventArgs>();
+}
+unsafe impl windows_core::Interface for HyperlinkClickEventArgs {
+    type Vtable = <IHyperlinkClickEventArgs as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <IHyperlinkClickEventArgs as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for HyperlinkClickEventArgs {
+    type Target = IHyperlinkClickEventArgs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for HyperlinkClickEventArgs {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs";
+}
+unsafe impl Send for HyperlinkClickEventArgs {}
+unsafe impl Sync for HyperlinkClickEventArgs {}
 windows_core::imp::define_interface!(
     IAppBar,
     IAppBar_Vtbl,
@@ -12341,6 +12369,35 @@ impl IHyperlink {
             .ok()
         }
     }
+    pub(crate) fn Click<F>(&self, handler: F) -> windows_core::Result<windows_core::EventRevoker>
+    where
+        F: Fn(windows_core::Ref<Hyperlink>, windows_core::Ref<HyperlinkClickEventArgs>) + 'static,
+    {
+        let handler: TypedEventHandler<Hyperlink, HyperlinkClickEventArgs> = {
+            let com = windows_core::imp::DelegateBox::<
+                TypedEventHandler<Hyperlink, HyperlinkClickEventArgs>,
+                F,
+            >::new(
+                &TypedEventHandlerBox::<Hyperlink, HyperlinkClickEventArgs, F>::VTABLE,
+                handler,
+            );
+            unsafe { core::mem::transmute(windows_core::imp::box_new(com)) }
+        };
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            let token__ = (windows_core::Interface::vtable(self).Click)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Interface::as_raw(&handler),
+                &mut result__,
+            )
+            .map(|| result__)?;
+            Ok(windows_core::EventRevoker::new(
+                self.clone(),
+                token__,
+                windows_core::Interface::vtable(self).RemoveClick,
+            ))
+        }
+    }
 }
 #[repr(C)]
 pub struct IHyperlink_Vtbl {
@@ -12350,6 +12407,38 @@ pub struct IHyperlink_Vtbl {
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
+    UnderlineStyle: usize,
+    SetUnderlineStyle: usize,
+    XYFocusLeft: usize,
+    SetXYFocusLeft: usize,
+    XYFocusRight: usize,
+    SetXYFocusRight: usize,
+    XYFocusUp: usize,
+    SetXYFocusUp: usize,
+    XYFocusDown: usize,
+    SetXYFocusDown: usize,
+    ElementSoundMode: usize,
+    SetElementSoundMode: usize,
+    FocusState: usize,
+    XYFocusUpNavigationStrategy: usize,
+    SetXYFocusUpNavigationStrategy: usize,
+    XYFocusDownNavigationStrategy: usize,
+    SetXYFocusDownNavigationStrategy: usize,
+    XYFocusLeftNavigationStrategy: usize,
+    SetXYFocusLeftNavigationStrategy: usize,
+    XYFocusRightNavigationStrategy: usize,
+    SetXYFocusRightNavigationStrategy: usize,
+    IsTabStop: usize,
+    SetIsTabStop: usize,
+    TabIndex: usize,
+    SetTabIndex: usize,
+    pub Click: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut i64,
+    ) -> windows_core::HRESULT,
+    pub RemoveClick:
+        unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     IHyperlinkButton,
@@ -12418,6 +12507,19 @@ pub struct IHyperlinkButtonStatics_Vtbl {
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    IHyperlinkClickEventArgs,
+    IHyperlinkClickEventArgs_Vtbl,
+    0xf8f89552_873d_5ef5_82bf_c79a9509b07c
+);
+impl windows_core::RuntimeType for IHyperlinkClickEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IHyperlinkClickEventArgs_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
 }
 windows_core::imp::define_interface!(
     IIconElement,
@@ -18759,6 +18861,18 @@ impl IRichTextBlock {
             .ok()
         }
     }
+    pub(crate) fn SetForeground<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<Brush>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetForeground)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetTextWrapping(&self, value: TextWrapping) -> windows_core::Result<()> {
         unsafe {
             (windows_core::Interface::vtable(self).SetTextWrapping)(
@@ -18803,7 +18917,10 @@ pub struct IRichTextBlock_Vtbl {
     FontStretch: usize,
     SetFontStretch: usize,
     Foreground: usize,
-    SetForeground: usize,
+    pub SetForeground: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     TextWrapping: usize,
     pub SetTextWrapping:
         unsafe extern "system" fn(*mut core::ffi::c_void, TextWrapping) -> windows_core::HRESULT,
@@ -18849,7 +18966,10 @@ pub struct IRichTextBlockStatics_Vtbl {
     FontWeightProperty: usize,
     FontStyleProperty: usize,
     FontStretchProperty: usize,
-    ForegroundProperty: usize,
+    pub ForegroundProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub TextWrappingProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
@@ -31198,6 +31318,16 @@ impl RichTextBlock {
         Self::IRichTextBlockStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
             (windows_core::Interface::vtable(this).FontSizeProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn ForegroundProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IRichTextBlockStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).ForegroundProperty)(
                 windows_core::Interface::as_raw(this),
                 &mut result__,
             )

@@ -40,7 +40,7 @@ fn resource_doubles_are_plain_entries() {
 }
 
 #[test]
-fn text_block_font_is_an_implicit_text_block_style() {
+fn text_block_font_is_an_implicit_text_block_and_rich_text_block_style() {
     let xaml = text_block_style_xaml("{Segoe UI Variable");
     assert_eq!(
         xaml,
@@ -50,6 +50,11 @@ fn text_block_font_is_an_implicit_text_block_style() {
              <Setter.Value><FontFamily>{{Segoe UI Variable</FontFamily></Setter.Value>\
              </Setter></Style>\
              <Style TargetType='TextBlock' BasedOn='{{StaticResource DefaultTextBlockStyle}}'/>\
+             <Style x:Key='DefaultRichTextBlockStyle' TargetType='RichTextBlock'>\
+             <Setter Property='FontFamily'>\
+             <Setter.Value><FontFamily>{{Segoe UI Variable</FontFamily></Setter.Value>\
+             </Setter></Style>\
+             <Style TargetType='RichTextBlock' BasedOn='{{StaticResource DefaultRichTextBlockStyle}}'/>\
              </ResourceDictionary>"
         )
     );

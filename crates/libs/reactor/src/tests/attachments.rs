@@ -331,6 +331,46 @@ fn menu_opening_reaches_the_current_callback() {
 }
 
 #[test]
+fn link_click_reaches_the_current_callback_with_the_address() {
+    let clicked = Rc::new(RefCell::new(Vec::new()));
+    let text = |name: &'static str| {
+        let capture = Rc::clone(&clicked);
+        RichText::single_paragraph([
+            RichTextInline::Run(RichTextRun::plain("see ")),
+            RichTextInline::Hyperlink(RichTextHyperlink {
+                text: "example.com".into(),
+                uri: "https://example.com/".into(),
+            }),
+        ])
+        .on_link_click(move |uri: Rc<str>| capture.borrow_mut().push((name, uri.to_string())))
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(RichTextBlock::new().paragraphs(text("first")))
+        .unwrap();
+    let target = runtime.graph().root().unwrap();
+
+    runtime
+        .adapter_mut()
+        .queue_link_click(target, "https://example.com/");
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(
+        &*clicked.borrow(),
+        &[("first", "https://example.com/".to_string())]
+    );
+
+    // A new callback answers the next click.
+    runtime
+        .update(RichTextBlock::new().paragraphs(text("second")))
+        .unwrap();
+    runtime
+        .adapter_mut()
+        .queue_link_click(target, "https://example.com/");
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(clicked.borrow()[1].0, "second");
+}
+
+#[test]
 fn menu_closed_reaches_the_current_callback() {
     let closed = Rc::new(RefCell::new(Vec::new()));
     let menu = |name: &'static str| {

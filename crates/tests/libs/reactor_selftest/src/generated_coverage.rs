@@ -1822,6 +1822,11 @@ pub fn cases() -> Vec<CoverageCase> {
             set: coverage_362_set,
             clear: coverage_362_clear,
         },
+        CoverageCase {
+            contract: "RichTextBlock.Foreground",
+            set: coverage_363_set,
+            clear: coverage_363_clear,
+        },
     ]
 }
 fn coverage_0_set() -> View {
@@ -4109,5 +4114,11 @@ fn coverage_362_set() -> View {
     RichTextBlock::new().font_size(1.0).into()
 }
 fn coverage_362_clear() -> View {
+    RichTextBlock::new().into()
+}
+fn coverage_363_set() -> View {
+    RichTextBlock::new().foreground(Color::rgb(1, 2, 3)).into()
+}
+fn coverage_363_clear() -> View {
     RichTextBlock::new().into()
 }

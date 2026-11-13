@@ -1261,6 +1261,15 @@ impl WinUiAdapter {
                     )
                 });
             }
+            if queued.event == EventId::LinkClick {
+                let links = self.rich_text_links.get(&queued.object)?;
+                return Some(EventDispatch::new(
+                    queued.object,
+                    queued.event,
+                    EventValue::String(links.callback.clone()),
+                    queued.payload.clone(),
+                ));
+            }
             if queued.event == EventId::CommandInvoked {
                 let flyout = self.command_bar_flyouts.get(&queued.object)?;
                 return (flyout.revision == queued.revision).then(|| {

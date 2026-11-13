@@ -146,6 +146,28 @@ impl RecordingAdapter {
         ));
     }
 
+    /// Clicks `target`'s hyperlink to `uri`, as WinUI's `Hyperlink::Click` does with
+    /// `RichText::on_link_click` set.
+    pub fn queue_link_click(&mut self, target: ObjectId, uri: &str) {
+        let callback = self
+            .objects
+            .get(&target)
+            .unwrap()
+            .properties
+            .iter()
+            .find_map(|property| match &property.value {
+                PropertyValue::RichText(text) => text.on_link_click.clone(),
+                _ => None,
+            })
+            .unwrap();
+        self.queue_event(EventDispatch::new(
+            target,
+            EventId::LinkClick,
+            EventValue::String(callback),
+            EventPayload::String(Rc::from(uri)),
+        ));
+    }
+
     /// Opens `target`'s menu, as WinUI's `FlyoutBase::Opening` does.
     pub fn queue_menu_opening(&mut self, target: ObjectId) {
         let callback = self

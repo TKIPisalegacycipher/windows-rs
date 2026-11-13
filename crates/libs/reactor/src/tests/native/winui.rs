@@ -190,6 +190,41 @@ fn menu_opening_resolves_to_the_current_on_opening_whatever_the_revision() {
 }
 
 #[test]
+fn link_click_resolves_to_the_texts_callback_while_it_has_one() {
+    let object = ObjectId::test(1);
+    let callback = Callback::new(|_: Rc<str>| panic!("resolution must not invoke callbacks"));
+    let mut adapter = WinUiAdapter::default();
+    let uri: Rc<str> = Rc::from("https://example.com/");
+    queue_link_click(&adapter.event_queue, object, &uri);
+    assert_eq!(
+        adapter.pop_native_event(),
+        Some(NativeEvent::new(None, None)),
+        "no callback, nothing to call"
+    );
+
+    adapter.rich_text_links.insert(
+        object,
+        NativeRichTextLinks {
+            callback: callback.clone(),
+            _revokers: Vec::new(),
+        },
+    );
+    queue_link_click(&adapter.event_queue, object, &uri);
+    assert_eq!(
+        adapter.pop_native_event(),
+        Some(NativeEvent::new(
+            None,
+            Some(EventDispatch::new(
+                object,
+                EventId::LinkClick,
+                EventValue::String(callback),
+                EventPayload::String(uri),
+            )),
+        ))
+    );
+}
+
+#[test]
 fn menu_closed_resolves_to_the_current_on_closed_not_on_opening() {
     let object = ObjectId::test(1);
     let opening = Callback::new(|()| panic!("resolution must not invoke callbacks"));

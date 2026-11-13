@@ -202,6 +202,12 @@ impl NativeMenu {
     }
 }
 
+/// A RichTextBlock's hyperlinks' clicks (`RichText::on_link_click`).
+struct NativeRichTextLinks {
+    callback: Callback<Rc<str>>,
+    _revokers: Vec<windows_core::EventRevoker>,
+}
+
 struct NativeMenu {
     menu: Menu,
     revision: u64,
@@ -1784,11 +1790,23 @@ fn set_rich_text_blocks(
     target: &native::RichTextBlock,
     value: Option<&RichText>,
 ) -> Result<(), WinUiError> {
+    build_rich_text_blocks(target, value).map(|_| ())
+}
+
+/// Replaces `target`'s blocks with `value`'s. A hyperlink navigates to its address, unless the
+/// text has `RichText::on_link_click`: then it has no `NavigateUri`, and it is returned with its
+/// address for the caller to handle its `Click` (`WinUiAdapter::set_rich_text`).
+fn build_rich_text_blocks(
+    target: &native::RichTextBlock,
+    value: Option<&RichText>,
+) -> Result<Vec<(native::Hyperlink, Rc<str>)>, WinUiError> {
     let blocks = target.Blocks()?;
     blocks.Clear()?;
+    let mut links = Vec::new();
     let Some(value) = value else {
-        return Ok(());
+        return Ok(links);
     };
+    let routed = value.on_link_click.is_some();
     let append_run =
         |inlines: &IVector<native::Inline>, value: &RichTextRun| -> Result<(), WinUiError> {
             let run = native::Run::new()?;
@@ -1813,7 +1831,11 @@ fn set_rich_text_blocks(
                 RichTextInline::Run(value) => append_run(&inlines, value)?,
                 RichTextInline::Hyperlink(value) => {
                     let hyperlink = native::Hyperlink::new()?;
-                    hyperlink.SetNavigateUri(&native::Uri::CreateUri(&value.uri)?)?;
+                    if routed {
+                        links.push((hyperlink.clone(), Rc::from(value.uri.as_str())));
+                    } else {
+                        hyperlink.SetNavigateUri(&native::Uri::CreateUri(&value.uri)?)?;
+                    }
                     let hyperlink_inlines = hyperlink.cast::<native::ISpan>()?.Inlines()?;
                     append_run(&hyperlink_inlines, &RichTextRun::plain(&value.text))?;
                     let hyperlink: native::Inline = hyperlink.cast()?;
@@ -1828,7 +1850,48 @@ fn set_rich_text_blocks(
         let native_paragraph: native::Block = native_paragraph.cast()?;
         blocks.Append(&native_paragraph)?;
     }
-    Ok(())
+    Ok(links)
+}
+
+/// Tells `target`'s rich text that its hyperlink to `uri` was clicked (`RichText::on_link_click`).
+/// The text's current callback answers: the blocks are built again whenever it changes.
+fn queue_link_click(event_queue: &Rc<NativeEventQueue>, target: ObjectId, uri: &Rc<str>) {
+    event_queue.queue(
+        None,
+        Some(QueuedEvent {
+            object: target,
+            event: EventId::LinkClick,
+            revision: 0,
+            payload: EventPayload::String(Rc::clone(uri)),
+        }),
+    );
+}
+
+impl WinUiAdapter {
+    /// Sets RichTextBlock `object`'s text (`None`: clears it). With `RichText::on_link_click`,
+    /// each hyperlink's `Click` queues a `LinkClick` for the text's callback, kept until the text
+    /// is set again or the object goes.
+    fn set_rich_text(&mut self, object: ObjectId, value: Option<&RichText>) -> Result<(), WinUiError> {
+        self.rich_text_links.remove(&object);
+        let target: native::RichTextBlock = self.ui_element(object)?.cast()?;
+        let links = build_rich_text_blocks(&target, value)?;
+        let Some(callback) = value.and_then(|value| value.on_link_click.clone()) else {
+            return Ok(());
+        };
+        let mut revokers = Vec::with_capacity(links.len());
+        for (hyperlink, uri) in links {
+            let queue = Rc::clone(&self.event_queue);
+            revokers.push(hyperlink.Click(move |_, _| queue_link_click(&queue, object, &uri))?);
+        }
+        self.rich_text_links.insert(
+            object,
+            NativeRichTextLinks {
+                callback,
+                _revokers: revokers,
+            },
+        );
+        Ok(())
+    }
 }
 
 fn parse_path_data(value: &str) -> Result<native::Geometry, WinUiError> {
@@ -2183,6 +2246,8 @@ pub struct WinUiAdapter {
     /// A Border flyout's `Closed` subscription (`ElementRef<Border>::request_show_flyout_then`).
     flyout_closed: HashMap<ObjectId, windows_core::EventRevoker>,
     menus: HashMap<ObjectId, NativeMenu>,
+    /// RichTextBlocks whose hyperlinks report their clicks (`RichText::on_link_click`).
+    rich_text_links: HashMap<ObjectId, NativeRichTextLinks>,
     command_bar_flyouts: HashMap<ObjectId, NativeCommandBarFlyout>,
     content_dialogs: HashMap<ObjectId, ObjectId>,
     content_dialog_owners: HashMap<ObjectId, ObjectId>,
@@ -2244,6 +2309,7 @@ impl Default for WinUiAdapter {
             flyout_owners: HashMap::new(),
             flyout_closed: HashMap::new(),
             menus: HashMap::new(),
+            rich_text_links: HashMap::new(),
             command_bar_flyouts: HashMap::new(),
             content_dialogs: HashMap::new(),
             content_dialog_owners: HashMap::new(),

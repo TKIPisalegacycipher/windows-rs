@@ -7394,6 +7394,13 @@ impl RichTextBlock {
             .property(PropertyId::FontSize, PropertyValue::F64(font_size));
         self
     }
+    pub fn foreground(mut self, foreground: impl Into<Brush>) -> Self {
+        self.0 = self.0.property(
+            PropertyId::Foreground,
+            PropertyValue::Brush(foreground.into()),
+        );
+        self
+    }
     visual_methods!();
 }
 impl Default for RichTextBlock {

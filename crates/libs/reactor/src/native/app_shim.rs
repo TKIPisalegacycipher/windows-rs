@@ -142,6 +142,11 @@ fn text_block_style_xaml(family: &str) -> String {
          <Setter.Value><FontFamily>{family}</FontFamily></Setter.Value>\
          </Setter></Style>\
          <Style TargetType='TextBlock' BasedOn='{{StaticResource DefaultTextBlockStyle}}'/>\
+         <Style x:Key='DefaultRichTextBlockStyle' TargetType='RichTextBlock'>\
+         <Setter Property='FontFamily'>\
+         <Setter.Value><FontFamily>{family}</FontFamily></Setter.Value>\
+         </Setter></Style>\
+         <Style TargetType='RichTextBlock' BasedOn='{{StaticResource DefaultRichTextBlockStyle}}'/>\
          </ResourceDictionary>"
     )
 }
