@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-76 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-77 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -120,6 +120,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 75 | `56e50fbea` | `Menu::on_closed` (`FlyoutBase::Closed`, context and button menus; `MenuClosed` joins tool-reactor's hand-listed events) | none | New | With 55's `on_opening` the app knows while a menu is open: Okojo keeps a folder's tree item in place while its menu is open, since rebuilding the item would close the menu (Okojo#1469). Evidence: unit |
 | 60 | `93338694e` | `register_resource_fonts`: app-wide `FontFamily` resources by family name (it loads no font files) | none | New | Lets an app set its interface font through `ContentControlThemeFontFamily`. Evidence: unit |
 | 61 | `cd6484d6b` | `register_text_block_font`, an opt-in implicit `TextBlock` style that sets `FontFamily`, so plain text uses the app's interface font | none | New | A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so `register_resource_fonts` misses plain text. The style is merged after the Fluent dictionaries. A local or template `FontFamily` still wins, but an inherited one loses, so it is opt-in. Evidence: unit |
+| 77 | `0b2f4b6b` | `RichText::on_link_click` (`Hyperlink::Click` instead of `NavigateUri`; `LinkClick` joins tool-reactor's hand-listed events), `RichTextBlock::foreground`, and `register_text_block_font` also styles `RichTextBlock` | none | New | A text message's links open where the app chooses (the account's browser), and rich text matches plain text's font and colour (Okojo#2002). Evidence: unit |
 | 63 | `9e55c72a6` | `ButtonStyle::Default` and theme brushes keep the app's implicit (Fluent) style | none | New | Bug. Setting a local null `Style` hides the implicit style, and a brush `Style` without `BasedOn` replaces it, so a `Default` or themed `Button` fell back to the framework's square template. Now the Style is cleared, and a brush style is based on `Default<Type>Style` when the app has it; 61's `TextBlock` style is keyed `DefaultTextBlockStyle` for the same reason. Evidence: unit; desktop |
 | 13 | `b7e6f5e8a` | Button and `DropDownButton` menus open below the button | 2 | New | Bug. Upstream still leaves the flyout placement at its default |
 
@@ -292,18 +293,18 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-76 came after the rebuild and have no original.
+Commits 46-77 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-76 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
 `automation_accessibility_view`, `ScrollViewer::vertical_anchor_ratio`, `can_be_scroll_anchor`,
 `PointerEventInfo::timestamp_us`, `NavigationViewItem::on_got_focus`, `on_lost_focus` and
-`element_ref`, `Menu::on_closed`, `Button::on_double_tapped`); none changes an existing item. `register_resource_fonts` is missing
+`element_ref`, `Menu::on_closed`, `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`); none changes an existing item. `register_resource_fonts` is missing
 from `public-api.txt`, which commit 60 did not update. These are source-breaking for code that names them:
 
 | Item | Change | Commit |
