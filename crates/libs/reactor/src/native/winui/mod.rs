@@ -165,14 +165,14 @@ struct QueuedEvent {
     revision: u64,
     payload: EventPayload,
     /// A pointer event's callback as it was when the input happened
-    /// ([`WinUiAdapter::queue_event`]).
+    /// ([`WinUiAdapter::queue_event`], `EventDispatch::holds_callback`).
     held: Option<HeldCallback>,
 }
 
 /// The callback a queued pointer event keeps ([`QueuedEvent::held`]).
 struct HeldCallback {
     callback: EventValue,
-    /// Whether the element still has a handler for the event: replaced since, or not removed.
+    /// Whether the element still has a callback for the event (replaced or not, but not removed).
     live: Rc<dyn Fn() -> bool>,
 }
 
@@ -183,7 +183,8 @@ impl QueuedEvent {
     /// re-renders on every move, so dropping the event would lose a move or the release
     /// (Okojo#2173). The old callback, not the new one, because the element may stand for
     /// something else by now (a recycled list row). Any other event's is `current`, the element's
-    /// callback for it if it is still the one the event was queued under.
+    /// callback for it if it is still the one the event was queued under. The runtime takes a
+    /// held callback only from a dispatch marked so (`EventDispatch::held`, in `native_event`).
     fn callback(&self, current: impl FnOnce() -> Option<EventValue>) -> Option<EventValue> {
         match &self.held {
             Some(held) => (held.live)().then(|| held.callback.clone()),

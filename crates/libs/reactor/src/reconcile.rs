@@ -395,6 +395,9 @@ pub struct EventDispatch {
     pub event: EventId,
     callback: EventValue,
     payload: EventPayload,
+    /// A pointer event delivered to the callback installed when the input happened
+    /// ([`Self::held`]), which a render may have replaced since.
+    held: bool,
 }
 
 impl EventDispatch {
@@ -409,7 +412,34 @@ impl EventDispatch {
             event,
             callback,
             payload,
+            held: false,
         }
+    }
+
+    /// Whether an adapter holds a queued `event`'s callback as it is queued: a pointer event's,
+    /// capture lost and canceled included.
+    pub(crate) fn holds_callback(event: EventId) -> bool {
+        matches!(
+            event,
+            EventId::PointerPressed
+                | EventId::PointerMoved
+                | EventId::PointerReleased
+                | EventId::PointerEntered
+                | EventId::PointerExited
+                | EventId::PointerCaptureLost
+                | EventId::PointerCanceled
+        )
+    }
+
+    /// Marks this pointer dispatch as going to the callback installed when the input happened:
+    /// the runtime takes it while the object still has a handler for the event, even if a render
+    /// has replaced that handler since ([`Self::holds_callback`], Okojo#2173). This departs from
+    /// upstream, which drops every event queued for a replaced callback. A callback whose
+    /// closure captures data is new on every render, and a drag re-renders on every move, so
+    /// dropping lost the moves or the release that waited in the queue.
+    pub(crate) fn held(mut self) -> Self {
+        self.held = Self::holds_callback(self.event);
+        self
     }
 
     pub fn invoke(self) {
@@ -1091,13 +1121,15 @@ impl RetainedGraph {
                 return Ok(false);
             }
         }
+        // A held pointer dispatch goes to its own callback while the object still handles the
+        // event (`EventDispatch::held`); any other only to the callback the object has now.
         Ok(object
             .events
             .as_deref()
             .into_iter()
             .flatten()
             .find(|event| event.id == dispatch.event)
-            .is_some_and(|event| event.value == dispatch.callback))
+            .is_some_and(|event| dispatch.held || event.value == dispatch.callback))
     }
 
     /// A `SelectItems` request with its keys resolved to the list's `Items` children (keys with

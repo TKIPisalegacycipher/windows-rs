@@ -181,6 +181,26 @@ fn a_pointer_event_queued_before_a_render_replaced_its_callback_reaches_that_cal
     let resolved = queued.callback(|| current_callback(&moved, queued.revision, pointer));
     assert_eq!(resolved, None);
 
+    // Capture lost carries no pointer data, and is held all the same.
+    let lost_first = Callback::new(|_: ()| {});
+    let lost = Rc::new(RefCell::new(NativeUnitEvent {
+        revision: 1,
+        callback: Some(lost_first.clone()),
+    }));
+    assert!(WinUiAdapter::queue_event(
+        &lost,
+        &queue,
+        object,
+        EventId::PointerCaptureLost,
+        None,
+        ()
+    ));
+    set_callback(&lost, Some(Callback::new(|_: ()| {})));
+    let queued = pop_queued(&queue);
+    let resolved =
+        queued.callback(|| current_callback(&lost, queued.revision, EventValue::Unit));
+    assert_eq!(resolved, Some(EventValue::Unit(lost_first)));
+
     // Another kind of event keeps the revision rule: stale, it is dropped.
     let clicked = Rc::new(RefCell::new(NativeUnitEvent {
         revision: 1,

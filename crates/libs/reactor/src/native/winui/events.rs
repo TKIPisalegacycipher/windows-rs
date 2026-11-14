@@ -1,9 +1,9 @@
 trait IntoEventPayload: Sized {
     fn into_payload(self) -> EventPayload;
 
-    /// The callback an event of this payload keeps as it is queued ([`QueuedEvent::held`]): a
-    /// pointer event's. `None`: it is looked up when the event is popped.
-    fn held(_callback: &Callback<Self>) -> Option<EventValue> {
+    /// `callback` as the event value a queued event can hold ([`QueuedEvent::held`]): for the
+    /// payloads of pointer events (`PointerEventInfo`, and `()` for capture lost and canceled).
+    fn event_value(_callback: &Callback<Self>) -> Option<EventValue> {
         None
     }
 }
@@ -11,6 +11,10 @@ trait IntoEventPayload: Sized {
 impl IntoEventPayload for () {
     fn into_payload(self) -> EventPayload {
         EventPayload::Unit
+    }
+
+    fn event_value(callback: &Callback<Self>) -> Option<EventValue> {
+        Some(EventValue::Unit(callback.clone()))
     }
 }
 
@@ -47,7 +51,7 @@ impl IntoEventPayload for PointerEventInfo {
         EventPayload::PointerEventInfo(self)
     }
 
-    fn held(callback: &Callback<Self>) -> Option<EventValue> {
+    fn event_value(callback: &Callback<Self>) -> Option<EventValue> {
         Some(EventValue::PointerEventInfo(callback.clone()))
     }
 }
@@ -118,13 +122,17 @@ impl WinUiAdapter {
             event: event_id,
             revision: event.revision,
             payload: value.into_payload(),
-            held: T::held(callback).map(|callback| {
-                let cell = Rc::clone(cell);
-                HeldCallback {
-                    callback,
-                    live: Rc::new(move || cell.borrow().callback.is_some()),
-                }
-            }),
+            // A pointer event keeps the callback installed now (`EventDispatch::held`).
+            held: EventDispatch::holds_callback(event_id)
+                .then(|| T::event_value(callback))
+                .flatten()
+                .map(|callback| {
+                    let cell = Rc::clone(cell);
+                    HeldCallback {
+                        callback,
+                        live: Rc::new(move || cell.borrow().callback.is_some()),
+                    }
+                }),
         });
         let queue = observation.is_some() || queued.is_some();
         if queue {
