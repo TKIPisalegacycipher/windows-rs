@@ -475,8 +475,123 @@ fn pointer_motion_events_use_the_shared_typed_payload() {
     );
 }
 
+/// Upstream's `stale_pointer_event_does_not_reach_replacement_callback`, inverted (Okojo#2173): a
+/// pointer event the adapter holds (`EventDispatch::held`), queued before a render replaced its
+/// callback, reaches the callback it was raised under, not the replacement. A dispatch that
+/// isn't held keeps upstream's rule: dropped.
 #[test]
-fn stale_pointer_event_does_not_reach_replacement_callback() {
+fn stale_held_pointer_event_reaches_the_callback_it_was_raised_under() {
+    let (mut runtime, border, first, first_count, second, second_count) = released_twice(true);
+    let mut active = runtime.next_native_event().unwrap().unwrap();
+    active.invoke();
+    runtime
+        .update(Border::new().on_pointer_released(second))
+        .unwrap();
+    drop(active);
+
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 1);
+    assert_eq!(first_count.get(), 2);
+    assert_eq!(second_count.get(), 0);
+    let _ = (border, first);
+}
+
+/// `EventDispatch::held` marks only the pointer events: on any other it changes nothing.
+#[test]
+fn only_a_pointer_dispatch_can_be_held() {
+    let object = ObjectId::test(1);
+    let click = EventDispatch::new(
+        object,
+        EventId::Click,
+        EventValue::Unit(Callback::new(|_: ()| {})),
+        EventPayload::Unit,
+    );
+    assert_eq!(click.clone().held(), click);
+    for event in [
+        EventId::PointerPressed,
+        EventId::PointerMoved,
+        EventId::PointerReleased,
+        EventId::PointerEntered,
+        EventId::PointerExited,
+        EventId::PointerCaptureLost,
+        EventId::PointerCanceled,
+    ] {
+        assert!(EventDispatch::holds_callback(event), "{event:?}");
+    }
+    assert!(!EventDispatch::holds_callback(EventId::Click));
+}
+
+#[test]
+fn stale_unheld_event_does_not_reach_replacement_callback() {
+    let (mut runtime, _, _, first_count, second, second_count) = released_twice(false);
+    let mut active = runtime.next_native_event().unwrap().unwrap();
+    active.invoke();
+    runtime
+        .update(Border::new().on_pointer_released(second))
+        .unwrap();
+    drop(active);
+
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 0);
+    assert_eq!(first_count.get(), 1);
+    assert_eq!(second_count.get(), 0);
+}
+
+/// A held pointer event is still dropped once its handler is removed, or its element is gone.
+#[test]
+fn held_pointer_event_is_dropped_once_its_handler_or_element_is_gone() {
+    let (mut runtime, _, _, first_count, _, _) = released_twice(true);
+    let mut active = runtime.next_native_event().unwrap().unwrap();
+    active.invoke();
+    runtime.update(Border::new()).unwrap();
+    drop(active);
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 0);
+    assert_eq!(first_count.get(), 1, "the handler was removed");
+
+    // A border in a panel, rendered away while a held release for it waits.
+    let count = Rc::new(Cell::new(0));
+    let count_for_callback = Rc::clone(&count);
+    let released = Callback::new(move |_: PointerEventInfo| {
+        count_for_callback.set(count_for_callback.get() + 1);
+    });
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(StackPanel::new().children([Border::new()
+            .on_pointer_released(released.clone())
+            .into()]))
+        .unwrap();
+    let panel = runtime.graph().root().unwrap();
+    let border = runtime.graph().children(panel, RelationId::Children).unwrap()[0];
+    for _ in 0..2 {
+        runtime.adapter_mut().queue_event(
+            EventDispatch::new(
+                border,
+                EventId::PointerReleased,
+                EventValue::PointerEventInfo(released.clone()),
+                EventPayload::PointerEventInfo(PointerEventInfo::default()),
+            )
+            .held(),
+        );
+    }
+    let mut active = runtime.next_native_event().unwrap().unwrap();
+    active.invoke();
+    runtime.update(StackPanel::new()).unwrap();
+    drop(active);
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 0);
+    assert_eq!(count.get(), 1, "the element is gone");
+}
+
+/// A runtime showing a `Border` whose `on_pointer_released` is `first`, with two releases queued
+/// for it (held or not), and the two callbacks' counts.
+#[allow(clippy::type_complexity)]
+fn released_twice(
+    held: bool,
+) -> (
+    Runtime<RecordingAdapter>,
+    ObjectId,
+    Callback<PointerEventInfo>,
+    Rc<Cell<u32>>,
+    Callback<PointerEventInfo>,
+    Rc<Cell<u32>>,
+) {
     let first_count = Rc::new(Cell::new(0));
     let first_count_for_callback = Rc::clone(&first_count);
     let first = Callback::new(move |_: PointerEventInfo| {
@@ -493,23 +608,17 @@ fn stale_pointer_event_does_not_reach_replacement_callback() {
         .unwrap();
     let border = runtime.graph().root().unwrap();
     for _ in 0..2 {
-        runtime.adapter_mut().queue_event(EventDispatch::new(
+        let dispatch = EventDispatch::new(
             border,
             EventId::PointerReleased,
             EventValue::PointerEventInfo(first.clone()),
             EventPayload::PointerEventInfo(PointerEventInfo::default()),
-        ));
+        );
+        runtime
+            .adapter_mut()
+            .queue_event(if held { dispatch.held() } else { dispatch });
     }
-    let mut active = runtime.next_native_event().unwrap().unwrap();
-    active.invoke();
-    runtime
-        .update(Border::new().on_pointer_released(second))
-        .unwrap();
-    drop(active);
-
-    assert_eq!(runtime.dispatch_native_events().unwrap(), 0);
-    assert_eq!(first_count.get(), 1);
-    assert_eq!(second_count.get(), 0);
+    (runtime, border, first, first_count, second, second_count)
 }
 
 #[test]

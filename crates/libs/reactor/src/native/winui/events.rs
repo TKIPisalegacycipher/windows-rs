@@ -1,10 +1,20 @@
-trait IntoEventPayload {
+trait IntoEventPayload: Sized {
     fn into_payload(self) -> EventPayload;
+
+    /// `callback` as the event value a queued event can hold ([`QueuedEvent::held`]): for the
+    /// payloads of pointer events (`PointerEventInfo`, and `()` for capture lost and canceled).
+    fn event_value(_callback: &Callback<Self>) -> Option<EventValue> {
+        None
+    }
 }
 
 impl IntoEventPayload for () {
     fn into_payload(self) -> EventPayload {
         EventPayload::Unit
+    }
+
+    fn event_value(callback: &Callback<Self>) -> Option<EventValue> {
+        Some(EventValue::Unit(callback.clone()))
     }
 }
 
@@ -32,9 +42,18 @@ into_event_payload! {
     Option<f64> => OptionalF64,
     Option<TimeSpan> => OptionalTimeSpan,
     Option<usize> => SelectionIndex,
-    PointerEventInfo => PointerEventInfo,
     Rc<str> => String,
     Vec<String> => StringList,
+}
+
+impl IntoEventPayload for PointerEventInfo {
+    fn into_payload(self) -> EventPayload {
+        EventPayload::PointerEventInfo(self)
+    }
+
+    fn event_value(callback: &Callback<Self>) -> Option<EventValue> {
+        Some(EventValue::PointerEventInfo(callback.clone()))
+    }
 }
 
 impl WinUiAdapter {
@@ -70,12 +89,13 @@ impl WinUiAdapter {
                 event: EventId::TextChanged,
                 revision: event.revision,
                 payload: EventPayload::String(text),
+                held: None,
             }),
         );
         Self::schedule_event_wake(event_queue);
     }
 
-    fn dispatch<T: IntoEventPayload>(
+    fn dispatch<T: IntoEventPayload + 'static>(
         event: &Rc<RefCell<NativeValueEvent<T>>>,
         event_queue: &Rc<NativeEventQueue>,
         object: ObjectId,
@@ -88,20 +108,31 @@ impl WinUiAdapter {
         }
     }
 
-    fn queue_event<T: IntoEventPayload>(
-        event: &Rc<RefCell<NativeValueEvent<T>>>,
+    fn queue_event<T: IntoEventPayload + 'static>(
+        cell: &Rc<RefCell<NativeValueEvent<T>>>,
         event_queue: &Rc<NativeEventQueue>,
         object: ObjectId,
         event_id: EventId,
         observation: Option<Observation>,
         value: T,
     ) -> bool {
-        let event = event.borrow();
-        let queued = event.callback.is_some().then(|| QueuedEvent {
+        let event = cell.borrow();
+        let queued = event.callback.as_ref().map(|callback| QueuedEvent {
             object,
             event: event_id,
             revision: event.revision,
             payload: value.into_payload(),
+            // A pointer event keeps the callback installed now (`EventDispatch::held`).
+            held: EventDispatch::holds_callback(event_id)
+                .then(|| T::event_value(callback))
+                .flatten()
+                .map(|callback| {
+                    let cell = Rc::clone(cell);
+                    HeldCallback {
+                        callback,
+                        live: Rc::new(move || cell.borrow().callback.is_some()),
+                    }
+                }),
         });
         let queue = observation.is_some() || queued.is_some();
         if queue {
@@ -153,6 +184,7 @@ impl WinUiAdapter {
                 event: EventId::SelectedKeysChanged,
                 revision: event.revision,
                 payload: EventPayload::Items(selected),
+                held: None,
             }),
         );
         Self::schedule_event_wake(event_queue);
@@ -182,6 +214,7 @@ impl WinUiAdapter {
                 event: EventId::ItemClick,
                 revision: event.revision,
                 payload: EventPayload::Items(vec![item]),
+                held: None,
             }),
         );
         Self::schedule_event_wake(event_queue);
@@ -319,6 +352,7 @@ impl WinUiAdapter {
                             event: event_id,
                             revision,
                             payload: EventPayload::DroppedData(value),
+                            held: None,
                         }),
                     );
                     Self::schedule_event_wake(&event_queue);
@@ -442,6 +476,7 @@ impl WinUiAdapter {
                     item: selected_object,
                     value,
                 }),
+                held: None,
             }),
         );
         Self::schedule_event_wake(event_queue);

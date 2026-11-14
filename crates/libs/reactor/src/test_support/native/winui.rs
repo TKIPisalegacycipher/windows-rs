@@ -1562,6 +1562,7 @@ impl WinUiAdapter {
                 event: EventId::PasswordChanged,
                 revision: event.revision,
                 payload: EventPayload::String(value),
+                held: None,
             }),
         );
         Self::schedule_event_wake(&self.event_queue);
@@ -1601,6 +1602,7 @@ impl WinUiAdapter {
                 event: EventId::ValueChanged,
                 revision: event.revision,
                 payload: EventPayload::OptionalF64(value),
+                held: None,
             }),
         );
         Self::schedule_event_wake(&self.event_queue);

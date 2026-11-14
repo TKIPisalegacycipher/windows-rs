@@ -1319,16 +1319,11 @@ impl WinUiAdapter {
                         .flatten()
                 }
                 (Some(Handle::Generated(handle)), event) => {
-                    handle.event_callback(event, queued.revision)
+                    queued.callback(|| handle.event_callback(event, queued.revision))
                 }
                 _ => None,
             }?;
-            Some(EventDispatch::new(
-                queued.object,
-                queued.event,
-                callback,
-                queued.payload.clone(),
-            ))
+            Some(queued.dispatch(callback))
         });
         Some(NativeEvent::new(queued.observation.clone(), event))
     }
