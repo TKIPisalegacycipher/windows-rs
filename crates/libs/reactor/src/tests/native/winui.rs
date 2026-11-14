@@ -166,6 +166,27 @@ fn a_pointer_event_queued_before_a_render_replaced_its_callback_reaches_that_cal
     let resolved = queued.callback(|| current_callback(&moved, queued.revision, pointer));
     assert_eq!(resolved, Some(EventValue::PointerEventInfo(first.clone())));
     assert_eq!(queued.payload, EventPayload::PointerEventInfo(at));
+    // Its dispatch is marked, so the runtime takes it (`EventDispatch::held`).
+    assert_eq!(
+        queued.dispatch(resolved.unwrap()),
+        EventDispatch::new(
+            object,
+            EventId::PointerMoved,
+            EventValue::PointerEventInfo(first.clone()),
+            EventPayload::PointerEventInfo(at),
+        )
+        .held()
+    );
+    assert_ne!(
+        queued.dispatch(EventValue::PointerEventInfo(first.clone())),
+        EventDispatch::new(
+            object,
+            EventId::PointerMoved,
+            EventValue::PointerEventInfo(first.clone()),
+            EventPayload::PointerEventInfo(at),
+        ),
+        "not an unmarked dispatch"
+    );
 
     // Removed: nothing handles it any more.
     assert!(WinUiAdapter::queue_event(

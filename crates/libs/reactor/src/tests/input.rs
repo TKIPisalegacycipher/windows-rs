@@ -495,6 +495,31 @@ fn stale_held_pointer_event_reaches_the_callback_it_was_raised_under() {
     let _ = (border, first);
 }
 
+/// `EventDispatch::held` marks only the pointer events: on any other it changes nothing.
+#[test]
+fn only_a_pointer_dispatch_can_be_held() {
+    let object = ObjectId::test(1);
+    let click = EventDispatch::new(
+        object,
+        EventId::Click,
+        EventValue::Unit(Callback::new(|_: ()| {})),
+        EventPayload::Unit,
+    );
+    assert_eq!(click.clone().held(), click);
+    for event in [
+        EventId::PointerPressed,
+        EventId::PointerMoved,
+        EventId::PointerReleased,
+        EventId::PointerEntered,
+        EventId::PointerExited,
+        EventId::PointerCaptureLost,
+        EventId::PointerCanceled,
+    ] {
+        assert!(EventDispatch::holds_callback(event), "{event:?}");
+    }
+    assert!(!EventDispatch::holds_callback(EventId::Click));
+}
+
 #[test]
 fn stale_unheld_event_does_not_reach_replacement_callback() {
     let (mut runtime, _, _, first_count, second, second_count) = released_twice(false);

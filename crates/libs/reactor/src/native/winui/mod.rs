@@ -191,6 +191,18 @@ impl QueuedEvent {
             None => current(),
         }
     }
+
+    /// This event's dispatch to `callback` (from [`Self::callback`]): marked held for a pointer
+    /// event that keeps its callback, which the runtime then takes even after a render replaced
+    /// it (`EventDispatch::held`).
+    fn dispatch(&self, callback: EventValue) -> EventDispatch {
+        let dispatch = EventDispatch::new(self.object, self.event, callback, self.payload.clone());
+        if self.held.is_some() {
+            dispatch.held()
+        } else {
+            dispatch
+        }
+    }
 }
 
 struct QueuedNativeEvent {

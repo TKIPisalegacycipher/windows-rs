@@ -1323,18 +1323,7 @@ impl WinUiAdapter {
                 }
                 _ => None,
             }?;
-            let dispatch = EventDispatch::new(
-                queued.object,
-                queued.event,
-                callback,
-                queued.payload.clone(),
-            );
-            // A held pointer callback (`QueuedEvent::callback`) is one the runtime takes even
-            // after a render replaced it.
-            Some(match (queued.held.is_some(), self.handles.get(&queued.object)) {
-                (true, Some(Handle::Generated(_))) => dispatch.held(),
-                _ => dispatch,
-            })
+            Some(queued.dispatch(callback))
         });
         Some(NativeEvent::new(queued.observation.clone(), event))
     }
