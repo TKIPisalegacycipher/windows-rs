@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-77 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-78 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -131,6 +131,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 14 | `93ff359f5` | Queue `PointerReleased` before releasing pointer capture | 4 | New | Bug, still present upstream: `pointer_event_info` calls `ReleasePointerCapture` while building the event, and WinUI raises `PointerCaptureLost` inside that call. A finished drag looks like a cancelled one |
 | 57 | `6e6f33ef2` | `Border::handles_plain_presses`: a plain left press and its release are taken by the `Border`; Ctrl, Shift and right presses still reach the list row | none | New | A photo tile that opens its flyout without selecting the row it sits in |
 | 73 | `5dea1b36f` | `PointerEventInfo::timestamp_us`: the input's own time (`PointerPoint.Timestamp`, microseconds since boot), 0 if unavailable; binds `IPointerPoint::get_Timestamp` | none | New | Bug-adjacent: Okojo timed a double click by when each press was handled, so a second press that waited on a busy UI thread (the reading pane's first web view being created) missed it (Okojo#1612). Evidence: unit (the field is carried); app (Okojo's popout-margins scenario) |
+| 78 | `ca566038` | A queued pointer event (a `PointerEventInfo` payload) keeps the callback installed when the input happened (`QueuedEvent::held`) and goes to it while the element still has a handler for the event, even after a render replaced that callback; resolution through `QueuedEvent::callback` | none | New | Bug: a callback whose closure captures data is new on every render, and the adapter dropped every event queued under the old revision, so a drag that re-renders on each move lost moves or its release (Okojo#2173). The old callback rather than the new one, as the element may stand for something else by now (a recycled row); a removed handler still drops, and other events keep the revision rule. Evidence: unit |
 
 ## 6. Drag and drop
 
@@ -293,12 +294,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-77 came after the rebuild and have no original.
+Commits 46-78 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-78 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
