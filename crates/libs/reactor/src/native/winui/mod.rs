@@ -164,6 +164,32 @@ struct QueuedEvent {
     event: EventId,
     revision: u64,
     payload: EventPayload,
+    /// A pointer event's callback as it was when the input happened
+    /// ([`WinUiAdapter::queue_event`]).
+    held: Option<HeldCallback>,
+}
+
+/// The callback a queued pointer event keeps ([`QueuedEvent::held`]).
+struct HeldCallback {
+    callback: EventValue,
+    /// Whether the element still has a handler for the event: replaced since, or not removed.
+    live: Rc<dyn Fn() -> bool>,
+}
+
+impl QueuedEvent {
+    /// The callback this event goes to. A pointer event's is the one installed when the input
+    /// happened, while the element still has a handler for it: a render can replace a callback
+    /// whose closure captures data while the input it raised waits in the queue, and a drag
+    /// re-renders on every move, so dropping the event would lose a move or the release
+    /// (Okojo#2173). The old callback, not the new one, because the element may stand for
+    /// something else by now (a recycled list row). Any other event's is `current`, the element's
+    /// callback for it if it is still the one the event was queued under.
+    fn callback(&self, current: impl FnOnce() -> Option<EventValue>) -> Option<EventValue> {
+        match &self.held {
+            Some(held) => (held.live)().then(|| held.callback.clone()),
+            None => current(),
+        }
+    }
 }
 
 struct QueuedNativeEvent {
@@ -309,6 +335,7 @@ fn queue_menu_event(event_queue: &Rc<NativeEventQueue>, target: ObjectId, event:
             event,
             revision: 0,
             payload: EventPayload::Unit,
+            held: None,
         }),
     );
     WinUiAdapter::schedule_event_wake(event_queue);
@@ -1751,6 +1778,7 @@ fn build_menu_items(
                             event: EventId::MenuItemInvoked,
                             revision,
                             payload: EventPayload::Key(clicked_key.clone()),
+                            held: None,
                         }),
                     );
                     WinUiAdapter::schedule_event_wake(&clicked_queue);
@@ -1863,6 +1891,7 @@ fn queue_link_click(event_queue: &Rc<NativeEventQueue>, target: ObjectId, uri: &
             event: EventId::LinkClick,
             revision: 0,
             payload: EventPayload::String(Rc::clone(uri)),
+            held: None,
         }),
     );
 }

@@ -1319,7 +1319,7 @@ impl WinUiAdapter {
                         .flatten()
                 }
                 (Some(Handle::Generated(handle)), event) => {
-                    handle.event_callback(event, queued.revision)
+                    queued.callback(|| handle.event_callback(event, queued.revision))
                 }
                 _ => None,
             }?;

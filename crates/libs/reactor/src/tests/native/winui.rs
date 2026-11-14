@@ -53,6 +53,7 @@ fn native_queue_preview_uses_current_callback_and_preserves_order() {
             event: EventId::MenuItemInvoked,
             revision: 0,
             payload: EventPayload::Key("stale".into()),
+            held: None,
         }),
     );
     adapter.event_queue.queue(Some(observation.clone()), None);
@@ -63,6 +64,7 @@ fn native_queue_preview_uses_current_callback_and_preserves_order() {
             event: EventId::MenuItemInvoked,
             revision: 1,
             payload: EventPayload::Key("current".into()),
+            held: None,
         }),
     );
     adapter.event_queue.queue(Some(observation.clone()), None);
@@ -102,6 +104,103 @@ fn native_queue_preview_uses_current_callback_and_preserves_order() {
     assert_eq!(adapter.pop_native_event(), None);
 }
 
+/// What a generated `event_callback` resolves for a value event queued at `revision`: the
+/// element's callback, if it is still the one the event was queued under.
+fn current_callback<T>(
+    event: &Rc<RefCell<NativeValueEvent<T>>>,
+    revision: u64,
+    value: impl Fn(Callback<T>) -> EventValue,
+) -> Option<EventValue> {
+    let event = event.borrow();
+    (event.revision == revision)
+        .then(|| event.callback.clone())
+        .flatten()
+        .map(value)
+}
+
+/// A render replacing (`Some`) or removing (`None`) an event's callback, as `SetEvents` does: the
+/// revision moves on.
+fn set_callback<T>(event: &Rc<RefCell<NativeValueEvent<T>>>, callback: Option<Callback<T>>) {
+    let mut event = event.borrow_mut();
+    event.callback = callback;
+    event.revision += 1;
+}
+
+/// The event `queue` holds first.
+fn pop_queued(queue: &NativeEventQueue) -> QueuedEvent {
+    let queued = queue.events.borrow_mut().pop_front().unwrap();
+    queued.event.unwrap()
+}
+
+/// Okojo#2173: a pointer event queued while a render replaced its callback (a closure that
+/// captures data, so a new callback each render) reaches the callback it was raised under, with
+/// its payload. One whose handler the render removed doesn't, and a stale event of another kind
+/// is still dropped.
+#[test]
+fn a_pointer_event_queued_before_a_render_replaced_its_callback_reaches_that_callback() {
+    let object = ObjectId::test(1);
+    let queue = Rc::new(NativeEventQueue::default());
+    let first = Callback::new(|_: PointerEventInfo| {});
+    let moved = Rc::new(RefCell::new(NativePointerEventInfoEvent {
+        revision: 1,
+        callback: Some(first.clone()),
+    }));
+    let at = PointerEventInfo {
+        x: 12.0,
+        y: 34.0,
+        ..PointerEventInfo::default()
+    };
+    let pointer = EventValue::PointerEventInfo;
+
+    // Replaced.
+    assert!(WinUiAdapter::queue_event(
+        &moved,
+        &queue,
+        object,
+        EventId::PointerMoved,
+        None,
+        at
+    ));
+    set_callback(&moved, Some(Callback::new(|_: PointerEventInfo| {})));
+    let queued = pop_queued(&queue);
+    let resolved = queued.callback(|| current_callback(&moved, queued.revision, pointer));
+    assert_eq!(resolved, Some(EventValue::PointerEventInfo(first.clone())));
+    assert_eq!(queued.payload, EventPayload::PointerEventInfo(at));
+
+    // Removed: nothing handles it any more.
+    assert!(WinUiAdapter::queue_event(
+        &moved,
+        &queue,
+        object,
+        EventId::PointerMoved,
+        None,
+        at
+    ));
+    set_callback(&moved, None);
+    let queued = pop_queued(&queue);
+    let resolved = queued.callback(|| current_callback(&moved, queued.revision, pointer));
+    assert_eq!(resolved, None);
+
+    // Another kind of event keeps the revision rule: stale, it is dropped.
+    let clicked = Rc::new(RefCell::new(NativeUnitEvent {
+        revision: 1,
+        callback: Some(Callback::new(|_: ()| {})),
+    }));
+    assert!(WinUiAdapter::queue_event(
+        &clicked,
+        &queue,
+        object,
+        EventId::Click,
+        None,
+        ()
+    ));
+    set_callback(&clicked, Some(Callback::new(|_: ()| {})));
+    let queued = pop_queued(&queue);
+    let resolved =
+        queued.callback(|| current_callback(&clicked, queued.revision, EventValue::Unit));
+    assert_eq!(resolved, None);
+}
+
 #[test]
 fn native_queue_reports_queued_events_by_object_and_event_beyond_the_preview() {
     let first = ObjectId::test(1);
@@ -112,6 +211,7 @@ fn native_queue_reports_queued_events_by_object_and_event_beyond_the_preview() {
         event: EventId::SelectedKeysChanged,
         revision: 0,
         payload: EventPayload::Items(Vec::new()),
+        held: None,
     };
     adapter.event_queue.queue(None, Some(keys(first)));
     adapter.event_queue.queue(
@@ -121,6 +221,7 @@ fn native_queue_reports_queued_events_by_object_and_event_beyond_the_preview() {
             event: EventId::ItemClick,
             revision: 0,
             payload: EventPayload::Items(Vec::new()),
+            held: None,
         }),
     );
     adapter.event_queue.queue(None, Some(keys(second)));

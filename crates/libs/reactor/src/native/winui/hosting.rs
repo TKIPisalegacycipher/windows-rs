@@ -916,6 +916,7 @@ impl WinUiAdapter {
                             event: EventId::CommandInvoked,
                             revision,
                             payload: EventPayload::Key(clicked_key.clone()),
+                            held: None,
                         }),
                     );
                     Self::schedule_event_wake(&clicked_queue);
