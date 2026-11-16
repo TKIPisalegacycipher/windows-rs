@@ -176,20 +176,12 @@ fn child(arm: Arm) {
             ticks.set(now);
             let mut runtime = runtime.borrow_mut();
             runtime.dispatch_native_events().unwrap();
-            let theme = |theme| {
-                runtime
-                    .adapter()
-                    .ui_element(root)
-                    .unwrap()
-                    .cast::<native::FrameworkElement>()
-                    .unwrap()
-                    .SetRequestedTheme(theme)
-                    .unwrap();
-            };
             match (arm, now) {
-                (Arm::Late, 10) => runtime.update(page(true)).unwrap(),
-                (Arm::Theme, 10) => theme(native::ElementTheme::Dark),
-                (Arm::Theme, 15) => theme(native::ElementTheme::Light),
+                (Arm::Late, 10) => {
+                    runtime.update(page(true)).unwrap();
+                }
+                (Arm::Theme, 10) => set_theme(&runtime, root, native::ElementTheme::Dark),
+                (Arm::Theme, 15) => set_theme(&runtime, root, native::ElementTheme::Light),
                 _ => {}
             }
             if now >= 100
@@ -203,4 +195,16 @@ fn child(arm: Arm) {
         Ok((timer, tick))
     });
     result.unwrap();
+}
+
+/// Sets the requested theme of the window's root element.
+fn set_theme(runtime: &Runtime<WinUiAdapter>, root: ObjectId, theme: native::ElementTheme) {
+    runtime
+        .adapter()
+        .ui_element(root)
+        .unwrap()
+        .cast::<native::FrameworkElement>()
+        .unwrap()
+        .SetRequestedTheme(theme)
+        .unwrap();
 }
