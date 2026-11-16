@@ -2295,9 +2295,10 @@ pub struct WinUiAdapter {
     content_dialog_owners: HashMap<ObjectId, ObjectId>,
     resource_override_keys: HashMap<ObjectId, HashSet<String>>,
     style_states: HashMap<ObjectId, NativeStyleState>,
-    /// Each ComboBox's `Loaded` handler, which keeps its drop-down inside the window
-    /// (`keep_drop_down_in_window`).
-    combo_box_drop_downs: HashMap<ObjectId, windows_core::EventRevoker>,
+    /// Each ComboBox's `Loaded` and `SizeChanged` handlers, which keep its drop-down inside the
+    /// window (`keep_drop_down_in_window`).
+    combo_box_drop_downs:
+        HashMap<ObjectId, (windows_core::EventRevoker, windows_core::EventRevoker)>,
     style_cache: HashMap<NativeStyleKey, native::Style>,
     pending_focus_states: Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
     tree_node_texts: Rc<RefCell<HashMap<usize, Rc<str>>>>,

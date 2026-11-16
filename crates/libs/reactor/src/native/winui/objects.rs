@@ -771,28 +771,37 @@ impl WinUiAdapter {
         }
     }
 
-    /// Drops all adapter state for an object whose handle was just removed. Destroy, retirement
-    /// completion, and replacement all end an object's native lifetime through this path.
-    /// Keeps ComboBox `object`'s drop-down inside the window: once its template is applied
-    /// (`Loaded`, again each time it enters the tree), the template's `Popup` is constrained to
-    /// the root's bounds. WinUI otherwise opens the drop-down as a window of its own
-    /// (`PopupWindowSiteBridge`), and once a UI Automation client has read it there, the
+    /// Keeps ComboBox `object`'s drop-down inside the window: the `Popup` in its template is
+    /// constrained to the root's bounds. WinUI otherwise opens the drop-down as a window of its
+    /// own (`PopupWindowSiteBridge`), and once a UI Automation client has read it there, the
     /// ComboBox leaving the tree leaves a dead element in the window's automation tree that
-    /// hides every element after it (Okojo#2474). The handler holds the ComboBox weakly.
+    /// hides every element after it (Okojo#2474).
+    ///
+    /// The template may come after `Loaded` (a ComboBox under a collapsed ancestor is loaded but
+    /// not measured, and so not templated), so `SizeChanged` tries again, as
+    /// `ObserveVisibleRange` does, until the Popup is found; then both do nothing. The handlers
+    /// hold the ComboBox weakly, and their revokers go with the object (`release_object`).
     fn keep_drop_down_in_window(&mut self, object: ObjectId) -> Result<(), WinUiError> {
         let element = self.ui_element(object)?;
         let weak = element.cast::<native::DependencyObject>()?.downgrade()?;
-        let loaded = element
-            .cast::<native::IFrameworkElement>()?
-            .Loaded(move |_, _| {
-                if let Some(combo_box) = weak.upgrade() {
-                    constrain_popups_to_root_bounds(&combo_box);
-                }
-            })?;
-        self.combo_box_drop_downs.insert(object, loaded);
+        let done = Rc::new(Cell::new(false));
+        let constrain = Rc::new(move || {
+            if !done.get()
+                && let Some(combo_box) = weak.upgrade()
+            {
+                done.set(constrain_popup_to_root_bounds(&combo_box));
+            }
+        });
+        let framework = element.cast::<native::IFrameworkElement>()?;
+        let on_loaded = Rc::clone(&constrain);
+        let loaded = framework.Loaded(move |_, _| on_loaded())?;
+        let size = framework.SizeChanged(move |_, _| constrain())?;
+        self.combo_box_drop_downs.insert(object, (loaded, size));
         Ok(())
     }
 
+    /// Drops all adapter state for an object whose handle was just removed. Destroy, retirement
+    /// completion, and replacement all end an object's native lifetime through this path.
     fn release_object(&mut self, object: ObjectId, handle: Handle) -> Result<(), WinUiError> {
         self.release_image(object);
         self.rich_text_links.remove(&object);
@@ -1001,21 +1010,26 @@ impl WinUiAdapter {
     }
 }
 
-/// Constrains every `Popup` in `root`'s visual tree to the root's bounds (a ComboBox template
-/// holds its drop-down's), so none opens as a window of its own (`keep_drop_down_in_window`).
-fn constrain_popups_to_root_bounds(root: &native::DependencyObject) {
+/// Constrains the first `Popup` in `root`'s visual tree (a ComboBox template's drop-down) to the
+/// root's bounds, so it doesn't open as a window of its own (`keep_drop_down_in_window`). Whether
+/// one was found. A failure to set it is ignored, not reported: WinUI can't constrain a popup
+/// once it has been shown in a window, and that drop-down then stays as WinUI made it, which is
+/// no reason to end the app.
+fn constrain_popup_to_root_bounds(root: &native::DependencyObject) -> bool {
     let Ok(count) = native::VisualTreeHelper::GetChildrenCount(root) else {
-        return;
+        return false;
     };
     for index in 0..count {
         let Ok(child) = native::VisualTreeHelper::GetChild(root, index) else {
             continue;
         };
-        if let Ok(popup) = child.cast::<native::IPopup>()
-            && let Err(error) = popup.SetShouldConstrainToRootBounds(true)
-        {
-            report_error(error);
+        if let Ok(popup) = child.cast::<native::IPopup>() {
+            let _ = popup.SetShouldConstrainToRootBounds(true);
+            return true;
         }
-        constrain_popups_to_root_bounds(&child);
+        if constrain_popup_to_root_bounds(&child) {
+            return true;
+        }
     }
+    false
 }
