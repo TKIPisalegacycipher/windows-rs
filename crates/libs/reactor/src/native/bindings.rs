@@ -17470,11 +17470,7 @@ pub struct IPointerRoutedEventArgs_Vtbl {
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
 }
-windows_core::imp::define_interface!(
-    IPopup,
-    IPopup_Vtbl,
-    0x4e3ab19d_2f95_579c_9535_906c58629437
-);
+windows_core::imp::define_interface!(IPopup, IPopup_Vtbl, 0x4e3ab19d_2f95_579c_9535_906c58629437);
 impl windows_core::RuntimeType for IPopup {
     const SIGNATURE: windows_core::imp::ConstBuffer =
         windows_core::imp::ConstBuffer::for_interface::<Self>();
@@ -17510,11 +17506,6 @@ pub struct IPopup_Vtbl {
     ShouldConstrainToRootBounds: usize,
     pub SetShouldConstrainToRootBounds:
         unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
-    IsConstrainedToRootBounds: usize,
-    Opened: usize,
-    RemoveOpened: usize,
-    Closed: usize,
-    RemoveClosed: usize,
 }
 windows_core::imp::define_interface!(
     IProgressBar,
