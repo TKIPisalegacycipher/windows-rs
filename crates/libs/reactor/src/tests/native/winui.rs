@@ -22,6 +22,9 @@ mod text_box;
 #[path = "transitions.rs"]
 mod transitions;
 
+#[path = "combo_box_drop_down.rs"]
+mod combo_box_drop_down;
+
 #[test]
 fn native_queue_preview_uses_current_callback_and_preserves_order() {
     let object = ObjectId::test(1);

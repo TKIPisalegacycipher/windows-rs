@@ -17471,6 +17471,52 @@ pub struct IPointerRoutedEventArgs_Vtbl {
     ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
+    IPopup,
+    IPopup_Vtbl,
+    0x4e3ab19d_2f95_579c_9535_906c58629437
+);
+impl windows_core::RuntimeType for IPopup {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl IPopup {
+    pub(crate) fn SetShouldConstrainToRootBounds(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetShouldConstrainToRootBounds)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
+}
+#[repr(C)]
+pub struct IPopup_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    Child: usize,
+    SetChild: usize,
+    IsOpen: usize,
+    SetIsOpen: usize,
+    HorizontalOffset: usize,
+    SetHorizontalOffset: usize,
+    VerticalOffset: usize,
+    SetVerticalOffset: usize,
+    ChildTransitions: usize,
+    SetChildTransitions: usize,
+    IsLightDismissEnabled: usize,
+    SetIsLightDismissEnabled: usize,
+    LightDismissOverlayMode: usize,
+    SetLightDismissOverlayMode: usize,
+    ShouldConstrainToRootBounds: usize,
+    pub SetShouldConstrainToRootBounds:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
+    IsConstrainedToRootBounds: usize,
+    Opened: usize,
+    RemoveOpened: usize,
+    Closed: usize,
+    RemoveClosed: usize,
+}
+windows_core::imp::define_interface!(
     IProgressBar,
     IProgressBar_Vtbl,
     0x87555c8c_0aaf_52c1_8390_0db17f40438e

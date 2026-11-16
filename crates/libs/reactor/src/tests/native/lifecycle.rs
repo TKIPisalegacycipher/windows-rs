@@ -32,6 +32,7 @@ fn assert_released(adapter: &WinUiAdapter) {
     assert!(adapter.image_subscriptions.is_empty());
     assert!(adapter.images.is_empty());
     assert!(adapter.released_images.is_empty());
+    assert!(adapter.combo_box_drop_downs.is_empty());
 }
 
 #[test]

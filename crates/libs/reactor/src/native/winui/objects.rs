@@ -321,6 +321,9 @@ impl WinUiAdapter {
             }
         };
         self.handles.insert(object, handle);
+        if kind == ObjectType::ComboBox {
+            self.keep_drop_down_in_window(object)?;
+        }
         if kind == ObjectType::ContentDialog {
             let Some(Handle::Generated(GeneratedHandle::ContentDialog(value))) =
                 self.handles.get(&object)
@@ -770,12 +773,33 @@ impl WinUiAdapter {
 
     /// Drops all adapter state for an object whose handle was just removed. Destroy, retirement
     /// completion, and replacement all end an object's native lifetime through this path.
+    /// Keeps ComboBox `object`'s drop-down inside the window: once its template is applied
+    /// (`Loaded`, again each time it enters the tree), the template's `Popup` is constrained to
+    /// the root's bounds. WinUI otherwise opens the drop-down as a window of its own
+    /// (`PopupWindowSiteBridge`), and once a UI Automation client has read it there, the
+    /// ComboBox leaving the tree leaves a dead element in the window's automation tree that
+    /// hides every element after it (Okojo#2474). The handler holds the ComboBox weakly.
+    fn keep_drop_down_in_window(&mut self, object: ObjectId) -> Result<(), WinUiError> {
+        let element = self.ui_element(object)?;
+        let weak = element.cast::<native::DependencyObject>()?.downgrade()?;
+        let loaded = element
+            .cast::<native::IFrameworkElement>()?
+            .Loaded(move |_, _| {
+                if let Some(combo_box) = weak.upgrade() {
+                    constrain_popups_to_root_bounds(&combo_box);
+                }
+            })?;
+        self.combo_box_drop_downs.insert(object, loaded);
+        Ok(())
+    }
+
     fn release_object(&mut self, object: ObjectId, handle: Handle) -> Result<(), WinUiError> {
         self.release_image(object);
         self.rich_text_links.remove(&object);
         self.resource_override_keys.remove(&object);
         self.controlled_index_selectors.remove(&object);
         self.style_states.remove(&object);
+        self.combo_box_drop_downs.remove(&object);
         self.virtual_items.remove(&object);
         self.observations
             .retain(|(observed, _), _| *observed != object);
@@ -974,5 +998,24 @@ impl WinUiAdapter {
         });
         self.event_queue.feedback.borrow_mut().remove_object(object);
         Ok(())
+    }
+}
+
+/// Constrains every `Popup` in `root`'s visual tree to the root's bounds (a ComboBox template
+/// holds its drop-down's), so none opens as a window of its own (`keep_drop_down_in_window`).
+fn constrain_popups_to_root_bounds(root: &native::DependencyObject) {
+    let Ok(count) = native::VisualTreeHelper::GetChildrenCount(root) else {
+        return;
+    };
+    for index in 0..count {
+        let Ok(child) = native::VisualTreeHelper::GetChild(root, index) else {
+            continue;
+        };
+        if let Ok(popup) = child.cast::<native::IPopup>()
+            && let Err(error) = popup.SetShouldConstrainToRootBounds(true)
+        {
+            report_error(error);
+        }
+        constrain_popups_to_root_bounds(&child);
     }
 }
