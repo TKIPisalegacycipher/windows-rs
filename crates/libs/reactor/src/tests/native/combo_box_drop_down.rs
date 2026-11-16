@@ -31,7 +31,7 @@ function Handles {
   [void][Probe.Win]::EnumWindows({ param($h, $l) $p = 0; [void][Probe.Win]::GetWindowThreadProcessId($h, [ref]$p); if ($p -eq $ProcessId -and [Probe.Win]::IsWindowVisible($h)) { $handles.Add($h) }; $true }, [System.IntPtr]::Zero)
   $handles
 }
-function Class($h) { $b = [System.Text.StringBuilder]::new(256); [void][Probe.Win]::GetClassName($h, $b, 256); $b.ToString() }
+function Get-WindowClass($h) { $b = [System.Text.StringBuilder]::new(256); [void][Probe.Win]::GetClassName($h, $b, 256); $b.ToString() }
 function Find-Box {
   foreach ($h in Handles) {
     $w = try { $A::FromHandle($h) } catch { $null }
@@ -52,7 +52,7 @@ $expand = $box.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePatter
 $expand.Expand()
 Start-Sleep -Milliseconds 800
 "EXPANDED=$($expand.Current.ExpandCollapseState)"
-"WINDOWS_OPEN=$((Handles | ForEach-Object { Class $_ }) -join ',')"
+"WINDOWS_OPEN=$((Handles | ForEach-Object { Get-WindowClass $_ }) -join ',')"
 $expand.Collapse()
 "#;
 
