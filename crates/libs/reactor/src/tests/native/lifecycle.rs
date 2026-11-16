@@ -14,6 +14,7 @@ fn page(mounted: bool, grid: &ElementRef<Grid>, web: &ElementRef<WebView2>) -> V
             Grid::new().width(10.0).height(10.0).element_ref(grid),
             WebView2::new().width(10.0).height(10.0).element_ref(web),
             Image::new().source_svg(EncodedImage::from_static(images::SVG)),
+            ComboBox::new().items_source(["a", "b"]),
         ))
         .exit_fade(Duration::from_millis(50));
     StackPanel::new()
@@ -32,6 +33,7 @@ fn assert_released(adapter: &WinUiAdapter) {
     assert!(adapter.image_subscriptions.is_empty());
     assert!(adapter.images.is_empty());
     assert!(adapter.released_images.is_empty());
+    assert!(adapter.combo_box_drop_downs.is_empty());
 }
 
 #[test]
@@ -98,6 +100,7 @@ fn retirement_and_replacement_release_adapter_state() {
                     assert_eq!(adapter.data_items.borrow().len(), 2);
                     assert_eq!(adapter.observations.len(), 1);
                     assert_eq!(adapter.webview_initializations.borrow().len(), 1);
+                    assert_eq!(adapter.combo_box_drop_downs.len(), 1);
                     runtime.update(page(false, &grid, &web)).unwrap();
                     runtime.dispatch_native_events().unwrap();
                     let adapter = runtime.adapter();
