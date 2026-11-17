@@ -1,8 +1,9 @@
 # Fork patch catalogue
 
-Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
+Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6` (and 87, on `okojo-2662` until it
+lands there), grouped by what it is for,
 followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-86 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-87 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -162,6 +163,7 @@ own modal `DoDragDrop` loop, which a headless test cannot reproduce.
 | # | Commit | Change | Was | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 35 | `d0d2e1195` | Apply `SelectedIndex` after the item changes of the same update, on mount and on update; suppress the selection events WinUI raises meanwhile, only for lists that declare an index | 31, 39, 40 | New | Bug: the index named an item of the old list, so removing a row and selecting the next one across a header selected the header |
+| 87 | `7cb1c7d0` | A selector whose items are its `ItemsSource` (`ComboBox`, `RadioButtons`) gets its declared `SelectedIndex` written after every `ItemsSource` write, changed or not, on mount and on update (`select_after_items_source`) | none | New | Bug: WinUI drops a ComboBox's selection when its `ItemsSource` is replaced, and the reconciler wrote `SelectedIndex` only when it changed, so a box whose items changed under an unchanged index showed its placeholder (Okojo#2662, the rule editor's action types). 35 covers `ListView` / `GridView`. Evidence: unit (`tests/selection.rs`); app (Okojo's `rules-actions` scenario, run 44135498949) |
 | 36 | `963bb1485` | Swallow `NavigationView`'s late "nothing selected" event after the reactor deselects | 58 | New | Bug: WinUI queues that event at low priority after the reactor's own-write suppression has ended. It cost a full render per folder pick in Okojo |
 | 58 | `477d35f4d` | `ElementRef<ListView>::request_selected_keys`: the runtime resolves keys to items; the adapter edits `SelectedItems` with `SelectionChanged` held and reports one change | none | New | A row checkbox that ticks the row into the list's own selection |
 | 59 | `aa8e6d812` | `ElementRef<ListView>::request_focused_key`: the realized container whose `FocusState` isn't `Unfocused` | none | New | Ctrl+Space ticks the focused row, which Ctrl+arrow keys can move off the selected one |
@@ -302,7 +304,7 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-86 came after the rebuild and have no original.
+Commits 46-87 came after the rebuild and have no original.
 
 ## Public API impact
 
@@ -315,7 +317,7 @@ requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_fo
 `NavigationViewItem::on_got_focus`, `on_lost_focus` and `element_ref`, `Menu::on_closed`,
 `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`,
 `ElementRef<ListView>::request_focus_key`, `ElementRef<ListView>::request_selected_keys_into_view`,
-`TextBlock::font_family`), 78-82 change behaviour (above, no public item), and 85 removes the one 57 added
+`TextBlock::font_family`), 78-82 and 87 change behaviour (above, no public item), and 85 removes the one 57 added
 (`Border::handles_plain_presses`); none changes an existing item. `register_resource_fonts` is
 missing from `public-api.txt`, which commit 60 did not update. These are source-breaking for code
 that names them:
