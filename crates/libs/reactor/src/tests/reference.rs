@@ -216,8 +216,11 @@ fn list_view_reference_resolves_selected_keys_to_its_items() {
         .to_vec();
     assert!(reference.request_selected_keys(["c", "gone", "a"]));
     assert!(reference.request_selected_keys(Vec::<Key>::new()));
+    assert!(reference.request_selected_keys_into_view(["gone", "b"]));
     runtime.dispatch_native_events().unwrap();
     let keys = |k: &[&str]| k.iter().map(|k| Key::from(*k)).collect::<Vec<_>>();
+    // `request_selected_keys` never scrolls (Okojo's tick boxes: the ticked row is in view, the
+    // first selected one may not be); `request_selected_keys_into_view` asks for its first item.
     assert_eq!(
         runtime.adapter().imperatives(),
         [
@@ -225,11 +228,19 @@ fn list_view_reference_resolves_selected_keys_to_its_items() {
                 object,
                 keys: keys(&["c", "gone", "a"]),
                 items: vec![items[2], items[0]],
+                into_view: false,
             },
             ImperativeRequest::SelectItems {
                 object,
                 keys: Vec::new(),
                 items: Vec::new(),
+                into_view: false,
+            },
+            ImperativeRequest::SelectItems {
+                object,
+                keys: keys(&["gone", "b"]),
+                items: vec![items[1]],
+                into_view: true,
             },
         ]
     );

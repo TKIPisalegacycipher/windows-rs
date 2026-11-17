@@ -3448,6 +3448,61 @@ fn selection_edits(selected: &[usize], wanted: &[usize]) -> (Vec<usize>, Vec<usi
     (removals, appends)
 }
 
+/// Where `list`'s item `value` lies against the list's viewport: its realized container's top and
+/// bottom, in DIPs from the top of the list's ScrollViewer, and the viewport's height (the
+/// ScrollViewer's). `None` when the item has no realized container (it is out of view, or the list
+/// isn't laid out) or the list has no ScrollViewer yet.
+fn list_item_span(
+    list: &native::ListView,
+    value: &IInspectable,
+) -> Result<Option<ItemSpan>, WinUiError> {
+    let container = match list
+        .cast::<native::IItemContainerMapping>()?
+        .ContainerFromItem(value)
+    {
+        Ok(container) => container,
+        // No realized container (a null result).
+        Err(error) if error.code().is_ok() => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+    let Some(scroller) = find_scroller(&list.cast::<native::DependencyObject>()?) else {
+        return Ok(None);
+    };
+    let scroller = scroller.cast::<native::UIElement>()?;
+    let top = container
+        .cast::<native::IUIElement>()?
+        .TransformToVisual(&scroller)?
+        .TransformPoint(native::Point { x: 0.0, y: 0.0 })?
+        .y;
+    let height = |element: &native::DependencyObject| {
+        element.cast::<native::IFrameworkElement>()?.ActualHeight()
+    };
+    let top = f64::from(top);
+    Ok(Some(ItemSpan {
+        top,
+        bottom: top + height(&container)?,
+        viewport: height(&scroller.cast()?)?,
+    }))
+}
+
+/// A list item's container against its list's viewport (`list_item_span`), in DIPs.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct ItemSpan {
+    /// The container's top and bottom, from the viewport's top.
+    top: f64,
+    bottom: f64,
+    /// The viewport's height.
+    viewport: f64,
+}
+
+/// Whether a list item must be scrolled to be fully in view: it has no realized container
+/// (`None`), or its container reaches above the viewport's top or below its bottom. Half a DIP of
+/// slack takes up layout rounding, so an item that fits exactly doesn't scroll.
+fn needs_scrolling_into_view(span: Option<ItemSpan>) -> bool {
+    const SLACK: f64 = 0.5;
+    span.is_none_or(|span| span.top < -SLACK || span.bottom > span.viewport + SLACK)
+}
+
 fn kept_selection<T>(selected: Vec<(usize, T)>, removed: &HashSet<usize>) -> Vec<T> {
     selected
         .into_iter()

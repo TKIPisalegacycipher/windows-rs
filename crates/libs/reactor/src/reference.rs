@@ -400,11 +400,36 @@ impl ElementRef<ListView> {
     /// a multiple selection: `selected_index` sets only the first selected item.
     #[must_use]
     pub fn request_selected_keys<K: Into<Key>>(&self, keys: impl IntoIterator<Item = K>) -> bool {
+        self.request_selection(keys, false)
+    }
+
+    /// As `request_selected_keys`, and then scrolls the item keyed the first of `keys` into view,
+    /// unless it is already fully in view: the list scrolls the least it can (`ScrollIntoView`'s
+    /// default alignment, to the nearer edge). It scrolls whether or not the selection changed.
+    ///
+    /// For a selection the app moves itself to an item the user may not see, such as a key that
+    /// selects the next item while the focus is elsewhere. A selection the user makes on an item in
+    /// view, such as a checkbox on a row, takes `request_selected_keys`, which never scrolls: its
+    /// first key may name an item selected earlier and scrolled out of view since.
+    #[must_use]
+    pub fn request_selected_keys_into_view<K: Into<Key>>(
+        &self,
+        keys: impl IntoIterator<Item = K>,
+    ) -> bool {
+        self.request_selection(keys, true)
+    }
+
+    fn request_selection<K: Into<Key>>(
+        &self,
+        keys: impl IntoIterator<Item = K>,
+        into_view: bool,
+    ) -> bool {
         let keys = keys.into_iter().map(Into::into).collect::<Vec<Key>>();
         self.enqueue(move |object, _, _| ImperativeRequest::SelectItems {
             object,
             keys,
             items: Vec::new(),
+            into_view,
         })
     }
 
@@ -920,11 +945,14 @@ pub enum ImperativeRequest {
         vertical_offset: f64,
     },
     /// `items` are the list's `Items` children keyed `keys`, which the runtime resolves as it
-    /// dispatches the request (`RetainedGraph::resolve_list_keys`).
+    /// dispatches the request (`RetainedGraph::resolve_list_keys`). `into_view`: the first of
+    /// `items` is then scrolled into view unless it is fully in view
+    /// (`request_selected_keys_into_view`).
     SelectItems {
         object: ObjectId,
         keys: Vec<Key>,
         items: Vec<ObjectId>,
+        into_view: bool,
     },
     /// `items` are the list's `Items` children with their keys, which the runtime fills in as it
     /// dispatches the request (`RetainedGraph::resolve_list_keys`).

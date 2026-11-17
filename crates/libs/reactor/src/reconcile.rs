@@ -1170,7 +1170,13 @@ impl RetainedGraph {
                 completion,
             };
         }
-        let ImperativeRequest::SelectItems { object, keys, .. } = request else {
+        let ImperativeRequest::SelectItems {
+            object,
+            keys,
+            into_view,
+            ..
+        } = request
+        else {
             return request;
         };
         let items = keys
@@ -1181,6 +1187,7 @@ impl RetainedGraph {
             object,
             keys,
             items,
+            into_view,
         }
     }
 

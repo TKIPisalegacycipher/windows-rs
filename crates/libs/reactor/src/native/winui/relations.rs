@@ -972,6 +972,31 @@ impl WinUiAdapter {
             .Focus(native::FocusState::Programmatic)?)
     }
 
+    /// Scrolls ListView `parent` so that its item `item` is in view
+    /// (`ElementRef<ListView>::request_selected_keys_into_view`), unless the item's container is
+    /// realized and lies fully inside the list's viewport. `ScrollIntoView` with its default
+    /// alignment scrolls the least it can, to the nearer edge. Nothing for an item the list
+    /// doesn't hold.
+    pub(super) fn bring_list_item_into_view(
+        &self,
+        parent: ObjectId,
+        item: ObjectId,
+    ) -> Result<(), WinUiError> {
+        let Some(Handle::ListView(list)) = self.handles.get(&parent) else {
+            return Ok(());
+        };
+        let Ok(value) = self.inspectable(item) else {
+            return Ok(());
+        };
+        if !needs_scrolling_into_view(list_item_span(&list.value, &value)?) {
+            return Ok(());
+        }
+        list.value
+            .cast::<native::IListViewBase>()?
+            .ScrollIntoView(&value)?;
+        Ok(())
+    }
+
     /// Reports ListView `parent`'s selection after a change made while its `SelectionChanged`
     /// events were held back: its `SelectedIndex` (observed, then the app's callback) and its
     /// selected keys.

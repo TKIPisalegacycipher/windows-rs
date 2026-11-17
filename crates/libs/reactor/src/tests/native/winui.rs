@@ -28,6 +28,9 @@ mod combo_box_drop_down;
 #[path = "button_menu.rs"]
 mod button_menu;
 
+#[path = "list_into_view.rs"]
+mod list_into_view;
+
 #[test]
 fn native_queue_preview_uses_current_callback_and_preserves_order() {
     let object = ObjectId::test(1);
@@ -553,6 +556,32 @@ fn a_list_selection_request_removes_the_unwanted_last_first_and_appends_the_miss
     assert_eq!(selection_edits(&[5], &[5]), (vec![], vec![]));
     assert_eq!(selection_edits(&[5, 7], &[]), (vec![1, 0], vec![]));
     assert_eq!(selection_edits(&[], &[4, 4, 2]), (vec![], vec![4, 2]));
+}
+
+#[test]
+fn a_selection_into_view_scrolls_only_an_item_not_fully_in_view() {
+    let span = |top: f64, bottom: f64| {
+        Some(ItemSpan {
+            top,
+            bottom,
+            viewport: 300.0,
+        })
+    };
+    // No realized container: out of view.
+    assert!(needs_scrolling_into_view(None));
+    // Fully inside, at either edge exactly, or off by layout rounding: no scroll.
+    assert!(!needs_scrolling_into_view(span(40.0, 80.0)));
+    assert!(!needs_scrolling_into_view(span(0.0, 40.0)));
+    assert!(!needs_scrolling_into_view(span(260.0, 300.0)));
+    assert!(!needs_scrolling_into_view(span(-0.25, 39.75)));
+    assert!(!needs_scrolling_into_view(span(260.4, 300.4)));
+    // Cut off by either edge, or wholly outside (a realized container in the list's cache).
+    assert!(needs_scrolling_into_view(span(-10.0, 30.0)));
+    assert!(needs_scrolling_into_view(span(280.0, 320.0)));
+    assert!(needs_scrolling_into_view(span(-200.0, -160.0)));
+    assert!(needs_scrolling_into_view(span(400.0, 440.0)));
+    // An item taller than the viewport is never fully in view.
+    assert!(needs_scrolling_into_view(span(0.0, 400.0)));
 }
 
 #[test]
