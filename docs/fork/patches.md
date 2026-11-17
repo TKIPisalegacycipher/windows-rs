@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-81 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-82 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -125,6 +125,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 63 | `9e55c72a6` | `ButtonStyle::Default` and theme brushes keep the app's implicit (Fluent) style | none | New | Bug. Setting a local null `Style` hides the implicit style, and a brush `Style` without `BasedOn` replaces it, so a `Default` or themed `Button` fell back to the framework's square template. Now the Style is cleared, and a brush style is based on `Default<Type>Style` when the app has it; 61's `TextBlock` style is keyed `DefaultTextBlockStyle` for the same reason. Evidence: unit; desktop |
 | 13 | `b7e6f5e8a` | Button and `DropDownButton` menus open below the button | 2 | New | Bug. Upstream still leaves the flyout placement at its default |
 | 79 | `7b75eb55` | A ComboBox's drop-down is kept inside the window: when the adapter creates a ComboBox it registers `Loaded` and `SizeChanged` (the box held weakly), which set `ShouldConstrainToRootBounds` on the first `Popup` in its template, retrying until the template is there; a failure to set it is ignored; binds `IPopup::put_ShouldConstrainToRootBounds` | none | New | Bug, an issue for WinUI rather than Reactor to fix: once a UI Automation client has read a ComboBox's drop-down in its own window (`PopupWindowSiteBridge`, WinUI's default), the ComboBox leaving the tree leaves a dead element in the window root's automation children and navigation ends there, so screen readers lose every later element (Okojo#2474). Evidence: the desktop test `combo_box_drop_downs_open_inside_the_window`; Okojo's GUI scenarios |
+| 82 | `0977bbb9` | A title bar WinAppSDK draws (content extended into it) keeps `AppWindowTitleBar.PreferredTheme` `Legacy`: `title_bar_theme` answers `Legacy` once content is extended into the title bar (set before `SetExtendsContentIntoTitleBar(true)`, and kept), and the window's theme otherwise; every `PreferredTheme` goes through `set_title_bar_theme` | none | New | Bug, an issue for WinAppSDK rather than Reactor: with any other value WinAppSDK redraws that title bar (`CTitleBar::UpdateColors`) on the thread-pool thread that raises `UISettings.ColorValuesChanged` (an agile callback), while the UI thread redraws it for the `WM_SYSCOLORCHANGE` a high contrast switch sends; the two race on one composition surface and `CCompositionSurface::EndDraw` faults in dcomp.dll, so turning high contrast on or off crashed the app now and then (Okojo#2649). For the system theme `Legacy` draws the same caption colours as `UseDefaultAppMode`; a forced Light or Dark theme's caption buttons follow the app mode instead. Evidence: unit (`tests/native/winui.rs`, the mapping); app (Okojo's `theme-switch` scenario: main's code crashed at the 15th switch, this commit's passed 96; crash dumps symbolised against Microsoft's public PDBs) |
 
 ## 5. Input fixes
 
@@ -297,12 +298,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-81 came after the rebuild and have no original.
+Commits 46-82 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77 only add items, and 78-81 change behaviour (above, no public item) (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77 only add items, and 78-82 change behaviour (above, no public item) (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
