@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6` (and 82, on `okojo-2649` until it
 lands there), grouped by what it is for, followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-82 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-83 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -163,6 +163,7 @@ own modal `DoDragDrop` loop, which a headless test cannot reproduce.
 | 36 | `963bb1485` | Swallow `NavigationView`'s late "nothing selected" event after the reactor deselects | 58 | New | Bug: WinUI queues that event at low priority after the reactor's own-write suppression has ended. It cost a full render per folder pick in Okojo |
 | 58 | `477d35f4d` | `ElementRef<ListView>::request_selected_keys`: the runtime resolves keys to items; the adapter edits `SelectedItems` with `SelectionChanged` held and reports one change | none | New | A row checkbox that ticks the row into the list's own selection |
 | 59 | `aa8e6d812` | `ElementRef<ListView>::request_focused_key`: the realized container whose `FocusState` isn't `Unfocused` | none | New | Ctrl+Space ticks the focused row, which Ctrl+arrow keys can move off the selected one |
+| 83 | `f4dc907e` | `ElementRef<ListView>::request_focus_key` (and `_result`): the runtime resolves the key to the list's item, the adapter focuses its realized container programmatically and leaves the selection as it is | none | New | A shortcut that opens a folder puts the focus on its first message rather than on the date-group header WinUI focuses first (Okojo#2436). An unrealized container is not brought into view: the request reports `false`. Evidence: unit (`tests/reference.rs`); app (Okojo's `mail-shortcuts` scenario) |
 | 72 | `2f057531f` | A `ListView`'s `SelectedKeysChanged` is latest wins: the runtime drops one it pops while a newer one for the same list is still queued, asking the adapter through a new provided `Adapter::has_queued_event` (default `false`; `Adapter` is public only with the `test` feature). Nothing else moves, other lists never coalesce, and a programmatic write's keys echo still arrives. The newer event can itself be discarded at its own pop (validation, if an item it names is gone, or a bumped revision): then neither is delivered, which is no staler than the dropped one, and the list reports again on its next change | none | New | Bug: keys were never treated as echoes, and the runtime renders after each event, so a `SelectedIndex` write's keys echo queued at the back. Two keys events out of step with the app each named a stale selection, and an app that selects what its keys name chased its own echoes for minutes (Okojo#1613, Okojo#1555). Decided in the runtime rather than the WinUI queue because `preview_prefix` stops at the next dispatch and so cannot see the newer event. Evidence: unit (the ring test flipped 40 times in 40 turns without it); Okojo's GUI test `folder-switch-checks` not yet run on it |
 
 ## 8. `ListView` row content and large lists
@@ -298,18 +299,18 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-82 came after the rebuild and have no original.
+Commits 46-83 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77 only add items, and 78-82 change behaviour (above, no public item) (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77 and 83 only add items, and 78-82 change behaviour (above, no public item) (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
 `automation_accessibility_view`, `ScrollViewer::vertical_anchor_ratio`, `can_be_scroll_anchor`,
 `PointerEventInfo::timestamp_us`, `NavigationViewItem::on_got_focus`, `on_lost_focus` and
-`element_ref`, `Menu::on_closed`, `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`); none changes an existing item. `register_resource_fonts` is missing
+`element_ref`, `Menu::on_closed`, `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`, `ElementRef<ListView>::request_focus_key`); none changes an existing item. `register_resource_fonts` is missing
 from `public-api.txt`, which commit 60 did not update. These are source-breaking for code that names them:
 
 | Item | Change | Commit |
