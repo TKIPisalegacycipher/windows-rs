@@ -196,7 +196,6 @@ enum PropertyAdapter {
     #[serde(rename = "optional_datetime")]
     OptionalDateTime,
     PathData,
-    PlainPresses,
     PointerCapture,
     PointerFocus,
     RatingValue,
@@ -235,7 +234,7 @@ impl PropertyAdapter {
             Self::NativeColor => "Color",
             Self::NumberBoxValue | Self::RatingValue => "OptionalF64",
             Self::OptionalDateTime => "OptionalDateTime",
-            Self::PlainPresses | Self::PointerCapture | Self::PointerFocus => "Bool",
+            Self::PointerCapture | Self::PointerFocus => "Bool",
             Self::ResourceOverrides => "ResourceOverrides",
             Self::ResourceStyle => "ButtonStyle",
             Self::RichTextBlocks => "RichText",
@@ -268,11 +267,7 @@ impl PropertyAdapter {
     fn has_managed_state(self) -> bool {
         matches!(
             self,
-            Self::PlainPresses
-                | Self::PointerCapture
-                | Self::PointerFocus
-                | Self::DropPolicy
-                | Self::ImageUri
+            Self::PointerCapture | Self::PointerFocus | Self::DropPolicy | Self::ImageUri
         )
     }
 
@@ -1481,15 +1476,6 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                             "None"
                         };
                         let released = event.name == "PointerReleased";
-                        let plain_presses = if event
-                            .active_properties
-                            .iter()
-                            .any(|property| property == "handles_plain_presses")
-                        {
-                            format!("handles_plain_presses_{field}.get()")
-                        } else {
-                            "false".to_string()
-                        };
                         let (release_capture, focus_on_release, release) = if released {
                             (
                                 "capture_pointer_on_press_pointer_released.get()",
@@ -1502,7 +1488,7 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                         code.push_str(&format!(
                             "let (value, {release}) = match WinUiAdapter::pointer_event_info(\
                              object, &source_{field}, args, {capture_on_press}, {release_capture}, \
-                             {focus_on_release}, {plain_presses}, &pending_focus_states_{field}) {{ \
+                             {focus_on_release}, &pending_focus_states_{field}) {{ \
                              Ok(value) => value, Err(error) => {{ \
                              report_error(error.into()); return; }} }};\n"
                         ));
@@ -2258,11 +2244,7 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
             }
             if matches!(
                 property.adapter,
-                Some(
-                    PropertyAdapter::PlainPresses
-                        | PropertyAdapter::PointerCapture
-                        | PropertyAdapter::PointerFocus
-                )
+                Some(PropertyAdapter::PointerCapture | PropertyAdapter::PointerFocus)
             ) {
                 let field = snake_case(&property.name);
                 output.push_str(&format!(

@@ -377,10 +377,6 @@ name = "FocusOnPointerRelease"
 adapter = "pointer_focus"
 
 [[objects.properties]]
-name = "HandlesPlainPresses"
-adapter = "plain_presses"
-
-[[objects.properties]]
 name = "DropPolicy"
 native = "AllowDrop"
 adapter = "drop_policy"
@@ -392,7 +388,7 @@ native = "Child"
 [[objects.events]]
 name = "PointerPressed"
 adapter = "pointer"
-active_properties = ["capture_pointer_on_press", "handles_plain_presses"]
+active_properties = ["capture_pointer_on_press"]
 
 [[objects.events]]
 name = "PointerMoved"
@@ -409,7 +405,7 @@ adapter = "pointer"
 [[objects.events]]
 name = "PointerReleased"
 adapter = "pointer"
-active_properties = ["capture_pointer_on_press", "focus_on_pointer_release", "handles_plain_presses"]
+active_properties = ["capture_pointer_on_press", "focus_on_pointer_release"]
 
 [[objects.events]]
 name = "PointerCaptureLost"
