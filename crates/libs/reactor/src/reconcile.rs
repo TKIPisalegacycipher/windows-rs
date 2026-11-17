@@ -3942,6 +3942,8 @@ impl Planner<'_, '_> {
                     clear.remove(at);
                     deferred_index = Some(None);
                 }
+            } else {
+                select_after_items_source(properties, &mut set);
             }
             self.retained.get_mut(object).properties = declaration.properties.clone();
             if !set.is_empty() || !clear.is_empty() {
@@ -4857,9 +4859,32 @@ fn split_selected_index(
     properties: &[Property],
 ) -> (Vec<Property>, Option<Property>) {
     let index_selection = selects_by_index(kind);
-    let (selected, rest): (Vec<_>, Vec<_>) = properties
+    let (selected, mut rest): (Vec<_>, Vec<_>) = properties
         .iter()
         .cloned()
         .partition(|property| index_selection && property.id == PropertyId::SelectedIndex);
+    if !index_selection {
+        select_after_items_source(properties, &mut rest);
+    }
     (rest, selected.into_iter().next())
+}
+
+/// A selector whose items are its `ItemsSource` (`ComboBox`, `RadioButtons`) drops its selection
+/// when the list is replaced, so a `SelectedIndex` the declaration kept would no longer show
+/// (Okojo#2662). Whenever `set` writes `ItemsSource`, the declared `SelectedIndex` is written
+/// after it, changed or not.
+fn select_after_items_source(properties: &[Property], set: &mut Vec<Property>) {
+    if !set
+        .iter()
+        .any(|property| property.id == PropertyId::ItemsSource)
+    {
+        return;
+    }
+    set.retain(|property| property.id != PropertyId::SelectedIndex);
+    if let Some(selected) = properties
+        .iter()
+        .find(|property| property.id == PropertyId::SelectedIndex)
+    {
+        set.push(selected.clone());
+    }
 }
