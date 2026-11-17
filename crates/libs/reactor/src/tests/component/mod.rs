@@ -4,6 +4,7 @@ mod context;
 mod lifecycle;
 mod messaging;
 mod native_queue;
+mod pending_native;
 mod reconcile;
 mod virtualization;
 mod window;

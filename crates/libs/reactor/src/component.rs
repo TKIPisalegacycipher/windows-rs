@@ -1629,6 +1629,12 @@ pub struct ComponentHost<A: Adapter> {
     free_scopes: Vec<u32>,
     scopes: Vec<ScopeSlot>,
     virtual_rows: HashMap<(ObjectId, Key), ComponentId>,
+    /// Scopes whose latest render was computed but not committed, because a native event was
+    /// queued while the app's own code ran (Okojo#2570). `drain` renders them again once the
+    /// native queue is clear, and a parent's render or a row's realization renders them even when
+    /// their input is unchanged. Committing a scope's render, or retiring the scope, removes it;
+    /// the scopes of one render keep their order.
+    deferred_renders: Vec<ComponentId>,
 }
 
 impl<A: Adapter> Drop for ComponentHost<A> {
@@ -1689,11 +1695,16 @@ impl<A: Adapter> ComponentHost<A> {
         Ok(())
     }
 
+    /// Whether an update is still to be applied: an input queued for a scope and not yet drained,
+    /// or a render deferred behind a native event (see `deferred_renders`). The app waits for it
+    /// before it activates a window it was asked to show, so the window shows its latest content.
     pub(crate) fn has_pending_input(&self) -> bool {
-        self.local_queue
-            .borrow()
-            .iter()
-            .any(|message| matches!(message.value, LocalMessageValue::Input(_)))
+        !self.deferred_renders.is_empty()
+            || self
+                .local_queue
+                .borrow()
+                .iter()
+                .any(|message| matches!(message.value, LocalMessageValue::Input(_)))
     }
 
     fn resolve_window_publication(
@@ -1809,6 +1820,7 @@ impl<A: Adapter> ComponentHost<A> {
             free_scopes: Vec::new(),
             scopes: Vec::new(),
             virtual_rows: HashMap::new(),
+            deferred_renders: Vec::new(),
         };
         let mut declarations = Vec::new();
         let mut keys = HashSet::new();
@@ -1917,6 +1929,24 @@ impl<A: Adapter> ComponentHost<A> {
             } else {
                 false
             };
+            // A render that met a queued native event goes first once the queue is clear, ahead
+            // of later messages, so the update it carries is applied in order (Okojo#2570).
+            if !native_pending
+                && active_event.is_none()
+                && let Some(&id) = self.deferred_renders.first()
+            {
+                processed += 1;
+                let mutations = match self.run_component_operation(|host| host.render_deferred(id))
+                {
+                    Ok(mutations) => mutations,
+                    Err(error) => {
+                        self.rearm_wake();
+                        return Err(error);
+                    }
+                };
+                report.mutations += mutations.len();
+                continue;
+            }
             let message = (!native_pending)
                 .then(|| {
                     let mut queue = self.queue.lock().unwrap();
@@ -2058,6 +2088,8 @@ impl<A: Adapter> ComponentHost<A> {
                 let mut expansion = ExpansionState::default();
                 let (id, view, created_row) = if let Some(id) = existing {
                     let reference = self.scope(id).unwrap().reference.clone();
+                    // As in `prepare_component`: a deferred row's input is not yet applied.
+                    let deferred = self.deferred_renders.contains(&id);
                     let view = {
                         let scope = self.scope_mut(id).unwrap();
                         let render = scope
@@ -2066,7 +2098,7 @@ impl<A: Adapter> ComponentHost<A> {
                             .map_err(ComponentError::from)?;
                         let render = match render {
                             Some(render) => Some(render),
-                            None if scope.dependencies_changed(&contexts) => Some(
+                            None if deferred || scope.dependencies_changed(&contexts) => Some(
                                 scope
                                     .component
                                     .render_view(reference, &contexts)
@@ -2150,6 +2182,8 @@ impl<A: Adapter> ComponentHost<A> {
                         .effects
                         .commit(&mut self.scope_mut(pending.id).unwrap().effects);
                     self.replace_dependencies(pending.id, pending.dependencies);
+                    self.deferred_renders
+                        .retain(|deferred| *deferred != pending.id);
                 }
                 self.retire_unseen(&expansion.seen);
                 self.sweep_virtual_rows();
@@ -2648,6 +2682,9 @@ impl<A: Adapter> ComponentHost<A> {
             if self.scope(id).unwrap().component.component_type() != node.factory.component_type() {
                 return Err(ComponentError::ComponentType(component_key));
             }
+            // A deferred scope's cached view and stored input are its uncommitted render's, so
+            // an unchanged input must not stand for "already applied" (Okojo#2570).
+            let deferred = self.deferred_renders.contains(&id);
             let scope = self.scope_mut(id).unwrap();
             let reference = scope.reference.clone();
             let render = scope
@@ -2660,7 +2697,7 @@ impl<A: Adapter> ComponentHost<A> {
                 .map_err(ComponentError::from)?;
             let render = match render {
                 Some(render) => Some(render),
-                None if scope.dependencies_changed(environment.contexts) => Some(
+                None if deferred || scope.dependencies_changed(environment.contexts) => Some(
                     scope
                         .component
                         .render_view(reference, environment.contexts)
@@ -2932,10 +2969,31 @@ impl<A: Adapter> ComponentHost<A> {
         }) {
             Ok(mutations) => mutations,
             Err(error) => {
+                let rendered: Vec<ComponentId> = match &pending {
+                    Some(pending) => pending.iter().map(|pending| pending.id).collect(),
+                    None => prepared.iter().map(|(id, ..)| *id).collect(),
+                };
                 for (_, prepared, _, _, _) in prepared {
                     prepared.cancel();
                 }
                 self.discard_created(&expansion.created);
+                if matches!(error, UpdateError::PendingNativeEvent) {
+                    // The app's code queued a native event after `drain` checked the queue (a
+                    // handler that pumps, Okojo#2570). Nothing reached the native tree, but scopes
+                    // rendered in this attempt hold inputs and views that were never committed:
+                    // render them again after the event, as the check before a message would have.
+                    // The event is met before `before_apply` runs, so no effects were prepared.
+                    debug_assert!(
+                        pending.is_some(),
+                        "PendingNativeEvent after before_apply prepared effects"
+                    );
+                    self.defer_renders(
+                        rendered
+                            .into_iter()
+                            .filter(|id| !expansion.created.contains(id)),
+                    );
+                    return Ok(UpdateStats::default());
+                }
                 return Err(self.runtime_error(error));
             }
         };
@@ -2948,10 +3006,41 @@ impl<A: Adapter> ComponentHost<A> {
             self.replace_dependencies(id, dependencies);
             self.scope_mut(id).unwrap().provided_contexts = environment.provided;
             self.scope_mut(id).unwrap().window = window;
+            self.deferred_renders.retain(|deferred| *deferred != id);
         }
         self.sweep_virtual_rows();
         self.publish_committed_window(publication);
         Ok(mutations)
+    }
+
+    /// Records scopes whose render met a queued native event; see `deferred_renders`.
+    fn defer_renders(&mut self, ids: impl IntoIterator<Item = ComponentId>) {
+        for id in ids {
+            if !self.deferred_renders.contains(&id) {
+                self.deferred_renders.push(id);
+            }
+        }
+    }
+
+    /// Renders a deferred scope from its current state and applies it. A scope retired since
+    /// has nothing left to show. The render can be deferred again if app code queues another
+    /// native event while it runs.
+    fn render_deferred(
+        &mut self,
+        id: ComponentId,
+    ) -> Result<UpdateStats, ComponentError<A::Error>> {
+        if self.scope(id).is_none() {
+            self.deferred_renders.retain(|deferred| *deferred != id);
+            return Ok(UpdateStats::default());
+        }
+        let scope = self.scope_mut(id).unwrap();
+        let reference = scope.reference.clone();
+        let contexts = scope.contexts.clone();
+        let render = scope
+            .component
+            .render_view(reference, &contexts)
+            .map_err(ComponentError::from)?;
+        self.apply_render(id, render)
     }
 
     fn retire_unseen(&mut self, seen: &HashMap<ComponentId, HashSet<Key>>) {
@@ -2994,6 +3083,7 @@ impl<A: Adapter> ComponentHost<A> {
         cleanup_effects(&mut scope.effects);
         slot.generation = slot.generation.wrapping_add(1);
         self.free_scopes.push(id.index);
+        self.deferred_renders.retain(|deferred| *deferred != id);
     }
 
     fn discard_created(&mut self, created: &[ComponentId]) {
@@ -3059,6 +3149,7 @@ impl<A: Adapter> ComponentHost<A> {
         self.keys.clear();
         self.order.clear();
         self.virtual_rows.clear();
+        self.deferred_renders.clear();
         self.free_scopes.clear();
         self.local_queue.borrow_mut().clear();
 
