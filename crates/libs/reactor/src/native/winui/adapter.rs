@@ -545,8 +545,7 @@ impl Adapter for WinUiAdapter {
                             return Err(error);
                         }
                         Ok(())
-                    })(
-                    ),
+                    })(),
                     _ => Err(windows_core::Error::new(
                         HRESULT(0x8000000E_u32 as i32),
                         "image unavailable",
@@ -798,8 +797,7 @@ impl Adapter for WinUiAdapter {
                 else {
                     return Ok(());
                 };
-                if let Some(scroller) =
-                    find_menu_scroller(&control.value.cast::<native::DependencyObject>()?)
+                if let Some(scroller) = find_menu_scroller(&control.value.cast::<native::DependencyObject>()?)
                 {
                     scroller.ChangeViewWithOptionalAnimation(
                         None,
@@ -817,7 +815,10 @@ impl Adapter for WinUiAdapter {
             } => {
                 self.set_list_selection(object, &items)?;
                 if into_view && let Some(first) = items.first() {
-                    self.bring_list_item_into_view(object, *first)?;
+                    // Best effort: the selection is set and reported by now, and an error here
+                    // would fail the request and with it the runtime. The crate has no logger,
+                    // so a failed scroll leaves the list where it was and nothing else.
+                    _ = self.bring_list_item_into_view(object, *first);
                 }
             }
             ImperativeRequest::FocusedItem {

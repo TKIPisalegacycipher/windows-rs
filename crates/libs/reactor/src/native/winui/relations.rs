@@ -976,7 +976,7 @@ impl WinUiAdapter {
     /// (`ElementRef<ListView>::request_selected_keys_into_view`), unless the item's container is
     /// realized and lies fully inside the list's viewport. `ScrollIntoView` with its default
     /// alignment scrolls the least it can, to the nearer edge. Nothing for an item the list
-    /// doesn't hold.
+    /// doesn't hold. The `SelectItems` request drops its error: the scroll is best effort.
     pub(super) fn bring_list_item_into_view(
         &self,
         parent: ObjectId,
