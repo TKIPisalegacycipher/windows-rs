@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6` (and 82, on `okojo-2649` until it
 lands there), grouped by what it is for, followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-84 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-85 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -132,7 +132,8 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | # | Commit | Change | Was | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 14 | `93ff359f5` | Queue `PointerReleased` before releasing pointer capture | 4 | New | Bug, still present upstream: `pointer_event_info` calls `ReleasePointerCapture` while building the event, and WinUI raises `PointerCaptureLost` inside that call. A finished drag looks like a cancelled one |
-| 57 | `6e6f33ef2` | `Border::handles_plain_presses`: a plain left press and its release are taken by the `Border`; Ctrl, Shift and right presses still reach the list row | none | New | A photo tile that opens its flyout without selecting the row it sits in |
+| 57 | `6e6f33ef2` | `Border::handles_plain_presses`: a plain left press and its release are taken by the `Border`; Ctrl, Shift and right presses still reach the list row | none | New | Dropped: reverted by commit 85, unused since Okojo#2546 (no list or drawer photo is a card trigger). Was: a photo tile that opens its flyout without selecting the row it sits in. Neither 57 nor 85 goes upstream |
+| 85 | `66d8b498` | Reverts commit 57: `Border::handles_plain_presses`, its `plain_presses` adapter in `tool-reactor`, its handling in `pointer_event_info`, its unit tests, and the `IPointerRoutedEventArgs::put_Handled` and `VisualTreeHelper::GetParent` bindings it alone used; `generated.rs` and `generated_coverage.rs` regenerated | none | New | Removal: Okojo had no user of 57 left, and each patch costs every rebase (Okojo#2547, Okojo#715). The `pointer_event_info` conflict keeps commit 73's `timestamp_us`. Goes upstream as nothing: drop 57 and 85 together at the next rebuild. Evidence: unit (the reactor's tests without 57's); app (Okojo's contact card and list photo scenarios) |
 | 73 | `5dea1b36f` | `PointerEventInfo::timestamp_us`: the input's own time (`PointerPoint.Timestamp`, microseconds since boot), 0 if unavailable; binds `IPointerPoint::get_Timestamp` | none | New | Bug-adjacent: Okojo timed a double click by when each press was handled, so a second press that waited on a busy UI thread (the reading pane's first web view being created) missed it (Okojo#1612). Evidence: unit (the field is carried); app (Okojo's popout-margins scenario) |
 | 78 | `97b4b9c9` | A queued pointer event keeps the callback installed when the input happened, and is delivered to it even after a render replaced that callback. The adapter holds the callback for the seven pointer event ids (capture lost and canceled included, so keyed on the event id; `QueuedEvent::held`, resolved by `QueuedEvent::callback`) and marks the dispatch (`EventDispatch::held`), and `validate_event_dispatch` takes a marked pointer dispatch while the object still has a handler for that event. A removed handler or a gone object still drops it; every other event keeps the revision rule | none | New | Bug, and a deliberate departure from upstream: upstream drops every event queued for a replaced callback, and its test `stale_pointer_event_does_not_reach_replacement_callback` pins that; here it is inverted (`stale_held_pointer_event_reaches_the_callback_it_was_raised_under`, with `stale_unheld_event_does_not_reach_replacement_callback` keeping upstream's rule for an unheld dispatch). A callback whose closure captures data is new on every render, and a drag re-renders on each move, so dropping lost the moves or the release that waited in the queue (Okojo#2173). The old callback rather than the new one, as the element may stand for something else by now (a recycled row). Evidence: unit (adapter, runtime, and the dispatch that joins them) |
 | 80 | `a4453a4d` | A render that meets a queued native event waits for it instead of failing the host: when the render after a dispatch gets `PendingNativeEvent` from `update_subtree`'s `prepare_update` (nothing has reached the native tree), the host records the render's scopes (`deferred_renders`), and `drain` renders them again from their current state once the native work is done, ahead of later messages. An expansion or a row's realization renders a deferred scope even when its input is unchanged, a commit or retirement clears it, and `has_pending_input` counts it | none | New | Bug, still present upstream: `drain` checks the native queue before it takes a message, but the handler's own code runs before the render reaches the runtime. A handler that pumps on the UI thread (Okojo's synchronous toast show) lets WinUI queue an event in between, and `run_component_operation` poisoned the host on the error, which ended the UI thread (Okojo#2570). Evidence: unit (`tests/component/pending_native.rs`, a backend the handler fills: a pumped event, a pumped realization, a child's effect, a retired child) |
@@ -300,14 +301,14 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-84 came after the rebuild and have no original.
+Commits 46-85 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77, 83 and 84 only add items, and 78-82 change behaviour (above, no public item) (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77, 83 and 84 only add items, 78-82 change behaviour (above, no public item), and 85 removes the item 57 added (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
-requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
+requests, `Menu::on_opening`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
 `automation_accessibility_view`, `ScrollViewer::vertical_anchor_ratio`, `can_be_scroll_anchor`,
 `PointerEventInfo::timestamp_us`, `NavigationViewItem::on_got_focus`, `on_lost_focus` and
