@@ -166,6 +166,10 @@ default = "14.0"
 validation = "finite_positive"
 
 [[objects.properties]]
+name = "FontFamily"
+adapter = "font_family"
+
+[[objects.properties]]
 name = "FontWeight"
 value = "FontWeight"
 

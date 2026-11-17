@@ -4691,6 +4691,55 @@ impl windows_core::RuntimeType for FocusState {
 }
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FontFamily(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    FontFamily,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl FontFamily {
+    pub(crate) fn CreateInstanceWithName(familyname: &str) -> windows_core::Result<Self> {
+        Self::IFontFamilyFactory(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).CreateInstanceWithName)(
+                windows_core::Interface::as_raw(this),
+                core::mem::transmute_copy(&windows_core::HSTRING::from(familyname)),
+                core::ptr::null_mut(),
+                core::ptr::null_mut(),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    fn IFontFamilyFactory<R, F: FnOnce(&IFontFamilyFactory) -> windows_core::Result<R>>(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<FontFamily, IFontFamilyFactory> =
+            windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
+impl windows_core::RuntimeType for FontFamily {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, IFontFamily>();
+}
+unsafe impl windows_core::Interface for FontFamily {
+    type Vtable = <IFontFamily as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <IFontFamily as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for FontFamily {
+    type Target = IFontFamily;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for FontFamily {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Media.FontFamily";
+}
+unsafe impl Send for FontFamily {}
+unsafe impl Sync for FontFamily {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FontIcon(windows_core::IUnknown);
 windows_core::imp::interface_hierarchy!(
     FontIcon,
@@ -11325,6 +11374,39 @@ impl windows_core::RuntimeType for IFlyoutFactory {
 pub struct IFlyoutFactory_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
     pub CreateInstance: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    IFontFamily,
+    IFontFamily_Vtbl,
+    0x18fa5bc1_7294_527c_bb02_b213e0b3a2a3
+);
+impl windows_core::RuntimeType for IFontFamily {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IFontFamily_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    IFontFamilyFactory,
+    IFontFamilyFactory_Vtbl,
+    0x61b88a77_d0f9_5e9e_8c28_eda01fede22e
+);
+impl windows_core::RuntimeType for IFontFamilyFactory {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IFontFamilyFactory_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub CreateInstanceWithName: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
@@ -21939,6 +22021,18 @@ impl ITextBlock {
             .ok()
         }
     }
+    pub(crate) fn SetFontFamily<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<FontFamily>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetFontFamily)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
     pub(crate) fn FontWeight(&self) -> windows_core::Result<FontWeight> {
         unsafe {
             let mut result__ = core::mem::zeroed();
@@ -22084,7 +22178,10 @@ pub struct ITextBlock_Vtbl {
     pub SetFontSize:
         unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
     FontFamily: usize,
-    SetFontFamily: usize,
+    pub SetFontFamily: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub FontWeight:
         unsafe extern "system" fn(*mut core::ffi::c_void, *mut FontWeight) -> windows_core::HRESULT,
     pub SetFontWeight:
@@ -22162,7 +22259,10 @@ impl windows_core::RuntimeType for ITextBlockStatics {
 pub struct ITextBlockStatics_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
     FontSizeProperty: usize,
-    FontFamilyProperty: usize,
+    pub FontFamilyProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub FontWeightProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
@@ -33823,6 +33923,16 @@ impl TextBlock {
             windows_core::imp::IGenericFactory,
         > = windows_core::imp::FactoryCache::new();
         SHARED.call(callback)
+    }
+    pub(crate) fn FontFamilyProperty() -> windows_core::Result<DependencyProperty> {
+        Self::ITextBlockStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).FontFamilyProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
     }
     pub(crate) fn FontWeightProperty() -> windows_core::Result<DependencyProperty> {
         Self::ITextBlockStatics(|this| unsafe {

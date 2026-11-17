@@ -1486,6 +1486,37 @@ fn icon_foregrounds_record_the_same_theme_brush_as_text() {
 }
 
 #[test]
+fn a_text_block_records_its_own_font_family_and_drops_it_when_undeclared() {
+    let family = Property {
+        id: PropertyId::FontFamily,
+        value: PropertyValue::String(Rc::from("Cascadia Mono, Consolas")),
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            TextBlock::new()
+                .text("482 913")
+                .font_family("Cascadia Mono, Consolas"),
+        )
+        .unwrap();
+    let text = runtime.graph().root().unwrap();
+    assert!(runtime.graph().properties(text).unwrap().contains(&family));
+
+    // Undeclared again, the text goes back to the implicit style's font
+    // (`register_text_block_font`) or WinUI's.
+    runtime.update(TextBlock::new().text("482 913")).unwrap();
+    let text = runtime.graph().root().unwrap();
+    assert!(
+        !runtime
+            .graph()
+            .properties(text)
+            .unwrap()
+            .iter()
+            .any(|property| property.id == PropertyId::FontFamily)
+    );
+}
+
+#[test]
 fn theme_brush_resource_keys_must_be_xaml_names() {
     assert_eq!(
         Brush::from(ThemeBrush::Resource("App.Folder_Brush1")),

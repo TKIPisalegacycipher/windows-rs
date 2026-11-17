@@ -176,6 +176,7 @@ enum PropertyAdapter {
     DateTime,
     DropPolicy,
     FlowLayout,
+    FontFamily,
     GridColumns,
     GridRows,
     IconElement,
@@ -225,6 +226,7 @@ impl PropertyAdapter {
             Self::ImplicitScale | Self::ItemContainerMinHeight => "F64",
             Self::ImplicitTranslation => "Vector2",
             Self::AutomationId
+            | Self::FontFamily
             | Self::InspectableString
             | Self::PathData
             | Self::RichEditText
@@ -2592,6 +2594,25 @@ fn emit_native_property_arms(
              .and_then(|property| object.ClearValue(&property).map_err(Into::into)))),\n\
              {pattern}Some(PropertyValue::String(value))) => \
              Some({set}),\n"
+        ));
+        return;
+    }
+    if adapter == Some(PropertyAdapter::FontFamily) {
+        let (declaring_class, _) = metadata
+            .dependency_property(metadata_owner, native)
+            .unwrap_or_else(|| {
+                panic!("cannot resolve {metadata_owner}.{native} dependency property")
+            });
+        let declaring_class = declaring_class.rsplit('.').next().unwrap();
+        let set = native_interface_call(target, target_class, interface, metadata, |object| {
+            format!(
+                "native::FontFamily::CreateInstanceWithName(value.as_ref()).and_then(|value|                      {object}.Set{native}(&value)).map_err(Into::into)"
+            )
+        });
+        output.push_str(&format!(
+            "{pattern}None) =>              Some({target}.cast::<native::IDependencyObject>().map_err(Into::into)             .and_then(|object| native::{declaring_class}::{native}Property().map_err(Into::into)             .and_then(|property| object.ClearValue(&property).map_err(Into::into)))),
+             {pattern}Some(PropertyValue::String(value))) =>              Some({set}),
+"
         ));
         return;
     }

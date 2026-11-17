@@ -4091,6 +4091,25 @@ impl GeneratedHandle {
             (Self::TextBlock(object), PropertyId::FontSize, Some(PropertyValue::F64(value))) => {
                 Some(object.SetFontSize(*value).map_err(Into::into))
             }
+            (Self::TextBlock(object), PropertyId::FontFamily, None) => Some(
+                object
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::TextBlock::FontFamilyProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::TextBlock(object),
+                PropertyId::FontFamily,
+                Some(PropertyValue::String(value)),
+            ) => Some(
+                native::FontFamily::CreateInstanceWithName(value.as_ref())
+                    .and_then(|value| object.SetFontFamily(&value))
+                    .map_err(Into::into),
+            ),
             (Self::TextBlock(object), PropertyId::FontWeight, None) => Some(
                 object
                     .cast::<native::IDependencyObject>()

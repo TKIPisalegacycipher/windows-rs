@@ -2091,6 +2091,13 @@ impl TextBlock {
             .property(PropertyId::FontSize, PropertyValue::F64(font_size));
         self
     }
+    pub fn font_family(mut self, font_family: impl AsRef<str>) -> Self {
+        self.0 = self.0.property(
+            PropertyId::FontFamily,
+            PropertyValue::String(Rc::from(font_family.as_ref())),
+        );
+        self
+    }
     pub fn font_weight(mut self, font_weight: FontWeight) -> Self {
         self.0 = self.0.property(
             PropertyId::FontWeight,
