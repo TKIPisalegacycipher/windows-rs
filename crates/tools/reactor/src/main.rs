@@ -2574,16 +2574,24 @@ fn emit_native_property_arms(
     if adapter.is_some_and(PropertyAdapter::uses_framework_element) {
         return;
     }
-    if adapter == Some(PropertyAdapter::Uri) {
+    if matches!(
+        adapter,
+        Some(PropertyAdapter::Uri | PropertyAdapter::FontFamily)
+    ) {
         let (declaring_class, _) = metadata
             .dependency_property(metadata_owner, native)
             .unwrap_or_else(|| {
                 panic!("cannot resolve {metadata_owner}.{native} dependency property")
             });
         let declaring_class = declaring_class.rsplit('.').next().unwrap();
+        let create = if adapter == Some(PropertyAdapter::FontFamily) {
+            "native::FontFamily::CreateInstanceWithName"
+        } else {
+            "native::Uri::CreateUri"
+        };
         let set = native_interface_call(target, target_class, interface, metadata, |object| {
             format!(
-                "native::Uri::CreateUri(value.as_ref()).and_then(|value| \
+                "{create}(value.as_ref()).and_then(|value| \
                      {object}.Set{native}(&value)).map_err(Into::into)"
             )
         });
@@ -2594,25 +2602,6 @@ fn emit_native_property_arms(
              .and_then(|property| object.ClearValue(&property).map_err(Into::into)))),\n\
              {pattern}Some(PropertyValue::String(value))) => \
              Some({set}),\n"
-        ));
-        return;
-    }
-    if adapter == Some(PropertyAdapter::FontFamily) {
-        let (declaring_class, _) = metadata
-            .dependency_property(metadata_owner, native)
-            .unwrap_or_else(|| {
-                panic!("cannot resolve {metadata_owner}.{native} dependency property")
-            });
-        let declaring_class = declaring_class.rsplit('.').next().unwrap();
-        let set = native_interface_call(target, target_class, interface, metadata, |object| {
-            format!(
-                "native::FontFamily::CreateInstanceWithName(value.as_ref()).and_then(|value|                      {object}.Set{native}(&value)).map_err(Into::into)"
-            )
-        });
-        output.push_str(&format!(
-            "{pattern}None) =>              Some({target}.cast::<native::IDependencyObject>().map_err(Into::into)             .and_then(|object| native::{declaring_class}::{native}Property().map_err(Into::into)             .and_then(|property| object.ClearValue(&property).map_err(Into::into)))),
-             {pattern}Some(PropertyValue::String(value))) =>              Some({set}),
-"
         ));
         return;
     }
