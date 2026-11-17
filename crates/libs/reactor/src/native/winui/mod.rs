@@ -2520,6 +2520,12 @@ struct NativeWindowState {
     surface: native::Border,
     background_style: native::Style,
     title_bar: Cell<Option<(ObjectId, WindowTitleBarHeight)>>,
+    /// WinAppSDK draws this window's title bar: content has been extended into it, and the title
+    /// bar keeps `Legacy` (`title_bar_theme`). Deliberately not reset when the title bar is
+    /// cleared: nothing showed that WinAppSDK stops drawing it then, so `Legacy` stays to be safe.
+    /// Okojo never clears a window's title bar while the window is open (its `src/ui/chrome.rs`,
+    /// `closing_window_view`).
+    draws_title_bar: Cell<bool>,
     shown: Cell<bool>,
     closed: Cell<bool>,
     maximize_on_first_show: Cell<bool>,
@@ -2743,14 +2749,10 @@ impl NativeWindow {
         }
 
         if changes.theme {
-            app_window
-                .TitleBar()?
-                .cast::<native::IAppWindowTitleBar3>()?
-                .SetPreferredTheme(match visuals.theme {
-                    WindowTheme::System => native::TitleBarTheme::UseDefaultAppMode,
-                    WindowTheme::Light => native::TitleBarTheme::Light,
-                    WindowTheme::Dark => native::TitleBarTheme::Dark,
-                })?;
+            set_title_bar_theme(
+                &self.state.window,
+                title_bar_theme(visuals.theme, self.state.draws_title_bar.get()),
+            )?;
             self.state
                 .surface
                 .cast::<native::FrameworkElement>()?
@@ -2924,6 +2926,46 @@ fn window_visual_changes(previous: &WindowVisuals, next: &WindowVisuals) -> Wind
         icon: previous.icon != next.icon,
         theme: previous.theme != next.theme,
     }
+}
+
+/// `TitleBarTheme::Legacy`, which the generated bindings leave out: the title bar keeps the colours
+/// it was given, or Windows' defaults for the app mode, and WinAppSDK doesn't redraw it by itself.
+const TITLE_BAR_THEME_LEGACY: native::TitleBarTheme = native::TitleBarTheme(0);
+
+/// The `AppWindowTitleBar.PreferredTheme` for a window in `theme`; `draws_title_bar`: WinAppSDK
+/// draws the window's title bar itself (content was extended into it).
+///
+/// Such a window keeps `Legacy`, whatever its theme. With any other value WinAppSDK redraws that
+/// title bar on the thread-pool thread that raises `UISettings.ColorValuesChanged`, while the UI
+/// thread redraws it for the `WM_SYSCOLORCHANGE` the same switch sends; the two race on one
+/// composition surface, and turning high contrast on or off (with the theme change around it)
+/// crashed the app in dcomp.dll (`CCompositionSurface::EndDraw`) now and then (Okojo#2649). For the
+/// system theme `Legacy` draws the caption buttons as `UseDefaultAppMode` does (both follow the
+/// app mode, and high contrast takes the system colours either way). A forced Light or Dark
+/// theme's caption buttons follow the app mode too. A window with the system's title bar keeps
+/// its theme: there WinAppSDK only sets DWM's dark mode attribute, and draws nothing.
+fn title_bar_theme(theme: WindowTheme, draws_title_bar: bool) -> native::TitleBarTheme {
+    if draws_title_bar {
+        return TITLE_BAR_THEME_LEGACY;
+    }
+    match theme {
+        WindowTheme::System => native::TitleBarTheme::UseDefaultAppMode,
+        WindowTheme::Light => native::TitleBarTheme::Light,
+        WindowTheme::Dark => native::TitleBarTheme::Dark,
+    }
+}
+
+fn set_title_bar_theme(
+    window: &native::Window,
+    value: native::TitleBarTheme,
+) -> Result<(), WinUiError> {
+    window
+        .cast::<native::IWindow2>()?
+        .AppWindow()?
+        .TitleBar()?
+        .cast::<native::IAppWindowTitleBar3>()?
+        .SetPreferredTheme(value)?;
+    Ok(())
 }
 
 fn clear_window_icon(hwnd: *mut core::ffi::c_void) {

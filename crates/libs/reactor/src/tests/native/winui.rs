@@ -845,6 +845,31 @@ fn window_visual_changes_only_apply_changed_contracts() {
 }
 
 #[test]
+fn a_title_bar_the_app_draws_keeps_the_legacy_theme() {
+    // Any other value has WinAppSDK redraw it off the UI thread on a theme switch (Okojo#2649).
+    for theme in [WindowTheme::System, WindowTheme::Light, WindowTheme::Dark] {
+        assert_eq!(title_bar_theme(theme, true), TITLE_BAR_THEME_LEGACY);
+    }
+    assert_eq!(TITLE_BAR_THEME_LEGACY, native::TitleBarTheme(0));
+}
+
+#[test]
+fn the_system_title_bar_follows_the_window_theme() {
+    assert_eq!(
+        title_bar_theme(WindowTheme::System, false),
+        native::TitleBarTheme::UseDefaultAppMode
+    );
+    assert_eq!(
+        title_bar_theme(WindowTheme::Light, false),
+        native::TitleBarTheme::Light
+    );
+    assert_eq!(
+        title_bar_theme(WindowTheme::Dark, false),
+        native::TitleBarTheme::Dark
+    );
+}
+
+#[test]
 fn window_visual_changes_detect_icon_removal() {
     let previous = WindowVisuals::new().icon("test.ico");
     let changes = window_visual_changes(&previous, &WindowVisuals::new());

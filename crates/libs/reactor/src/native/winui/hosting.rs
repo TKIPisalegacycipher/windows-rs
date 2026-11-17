@@ -339,6 +339,7 @@ impl WinUiAdapter {
             surface,
             background_style,
             title_bar: Cell::new(None),
+            draws_title_bar: Cell::new(false),
             shown: Cell::new(false),
             closed: Cell::new(false),
             maximize_on_first_show: Cell::new(false),
@@ -404,6 +405,10 @@ impl WinUiAdapter {
         }
         let element = self.ui_element(object)?;
         element.SetIsTabStop(false)?;
+        // Legacy before WinAppSDK starts drawing the title bar, so it never draws it off the UI
+        // thread (`title_bar_theme`, Okojo#2649).
+        state.draws_title_bar.set(true);
+        set_title_bar_theme(&state.window, TITLE_BAR_THEME_LEGACY)?;
         state.window.SetExtendsContentIntoTitleBar(true)?;
         state.window.SetTitleBar(&element)?;
         state
@@ -1075,16 +1080,10 @@ impl WinUiAdapter {
             window.SetTitle(title)?;
         }
 
-        let window_2 = window.cast::<native::IWindow2>()?;
-        let app_window = window_2.AppWindow()?;
-        let title_bar = app_window.TitleBar()?;
-        title_bar
-            .cast::<native::IAppWindowTitleBar3>()?
-            .SetPreferredTheme(match policy.theme {
-                WindowTheme::System => native::TitleBarTheme::UseDefaultAppMode,
-                WindowTheme::Light => native::TitleBarTheme::Light,
-                WindowTheme::Dark => native::TitleBarTheme::Dark,
-            })?;
+        let app_window = window.cast::<native::IWindow2>()?.AppWindow()?;
+        // A new window: WinAppSDK doesn't draw its title bar until content is extended into it
+        // (`apply_title_bar_to_window`).
+        set_title_bar_theme(window, title_bar_theme(policy.theme, false))?;
         root.cast::<native::FrameworkElement>()?
             .SetRequestedTheme(match policy.theme {
                 WindowTheme::System => native::ElementTheme::Default,
