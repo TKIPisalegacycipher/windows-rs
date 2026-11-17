@@ -319,10 +319,13 @@ fn child() {
         rows.height > 1.0 && (rows.fifth - 5.0 * rows.height).abs() < Rows::SLACK,
         "{seen:?}"
     );
-    // Just below the viewport, its container realized: scrolled down, and fully in view.
+    // Just below the viewport, its container realized: scrolled down, and fully in view. The
+    // item starts at or past the bottom edge, so a row the edge cuts can't stand in for it.
     let (from, index, realized) = seen.below_from.unwrap();
     assert!(
-        realized && !rows.fully_in_view(from, index) && rows.top(index) >= from,
+        realized
+            && !rows.fully_in_view(from, index)
+            && rows.top(index) >= from + rows.viewport - Rows::SLACK,
         "{seen:?}"
     );
     let (offset, selected, in_view) = seen.below.unwrap();
