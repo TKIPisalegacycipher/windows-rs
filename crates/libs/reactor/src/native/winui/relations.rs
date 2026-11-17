@@ -941,6 +941,37 @@ impl WinUiAdapter {
         Ok(None)
     }
 
+    /// Gives ListView `parent`'s item `item` (`ElementRef<ListView>::request_focus_key`) the
+    /// keyboard focus: its realized container takes it, programmatically, as `focus` gives an
+    /// element. The selection isn't touched (in a single selection WinUI moves it with the
+    /// focus only for a navigation key). `false` with no such item or no realized container: an
+    /// item scrolled out of view isn't brought in.
+    pub(super) fn focus_list_item(
+        &self,
+        parent: ObjectId,
+        item: Option<ObjectId>,
+    ) -> Result<bool, WinUiError> {
+        let (Some(Handle::ListView(list)), Some(item)) = (self.handles.get(&parent), item) else {
+            return Ok(false);
+        };
+        let Ok(value) = self.inspectable(item) else {
+            return Ok(false);
+        };
+        let container = match list
+            .value
+            .cast::<native::IItemContainerMapping>()?
+            .ContainerFromItem(&value)
+        {
+            Ok(container) => container,
+            // No realized container (a null result).
+            Err(error) if error.code().is_ok() => return Ok(false),
+            Err(error) => return Err(error.into()),
+        };
+        Ok(container
+            .cast::<native::IUIElement>()?
+            .Focus(native::FocusState::Programmatic)?)
+    }
+
     /// Reports ListView `parent`'s selection after a change made while its `SelectionChanged`
     /// events were held back: its `SelectedIndex` (observed, then the app's callback) and its
     /// selected keys.

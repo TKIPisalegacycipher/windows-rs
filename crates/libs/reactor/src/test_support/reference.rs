@@ -25,6 +25,7 @@ impl ImperativeRequest {
             | Self::ChangeMenuView { object, .. }
             | Self::SelectItems { object, .. }
             | Self::FocusedItem { object, .. }
+            | Self::FocusItem { object, .. }
             | Self::HideFlyout { object }
             | Self::ShowFlyout { object, .. } => *object,
         }

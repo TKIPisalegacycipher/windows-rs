@@ -820,6 +820,17 @@ impl Adapter for WinUiAdapter {
                         .map_err(|error| integration_error(error.into())),
                 );
             }
+            ImperativeRequest::FocusItem {
+                object,
+                item,
+                completion,
+                ..
+            } => {
+                completion.call(
+                    self.focus_list_item(object, item)
+                        .map_err(|error| integration_error(error.into())),
+                );
+            }
             ImperativeRequest::HideFlyout { object } => {
                 if let Some((flyout, _, _)) = self.flyouts.get(&object) {
                     flyout.cast::<native::IFlyoutBase>()?.Hide()?;

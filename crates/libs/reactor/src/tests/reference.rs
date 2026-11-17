@@ -282,6 +282,106 @@ fn list_view_reference_asks_for_its_focused_item_among_its_keyed_items() {
 }
 
 #[test]
+fn list_view_reference_focuses_an_item_by_key_and_leaves_the_selection() {
+    let reference = ElementRef::<ListView>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    assert!(!reference.request_focus_key("b"));
+    let list = || {
+        ListView::new()
+            .element_ref(&reference)
+            .selection_mode(ListViewSelectionMode::Extended)
+            .items([
+                DataItem::new("hdr", "Header"),
+                DataItem::new("a", "A"),
+                DataItem::new("b", "B"),
+            ])
+    };
+    runtime.update(list()).unwrap();
+    let object = reference.get().unwrap();
+    let items = runtime
+        .graph()
+        .children(object, RelationId::Items)
+        .unwrap()
+        .to_vec();
+    runtime.adapter_mut().record_batches(true);
+
+    assert!(reference.request_focus_key("a"));
+    assert!(reference.request_focus_key(Key::from("gone")));
+    runtime.dispatch_native_events().unwrap();
+    runtime.update(list()).unwrap();
+
+    // The item keyed "a" is resolved for the adapter, a key with no item to none.
+    let [
+        ImperativeRequest::FocusItem {
+            object: first,
+            key: first_key,
+            item: first_item,
+            ..
+        },
+        ImperativeRequest::FocusItem {
+            object: second,
+            key: second_key,
+            item: second_item,
+            ..
+        },
+    ] = runtime.adapter().imperatives()
+    else {
+        panic!(
+            "expected two focus-item requests, got {:?}",
+            runtime.adapter().imperatives()
+        );
+    };
+    assert_eq!(
+        (*first, first_key, *first_item),
+        (object, &Key::from("a"), Some(items[1]))
+    );
+    assert_eq!(
+        (*second, second_key, *second_item),
+        (object, &Key::from("gone"), None)
+    );
+    // Nothing selects: no selection request, no element focus, and no mutation (the list's
+    // `SelectedIndex` included) reached the adapter.
+    assert!(runtime.adapter().focuses().is_empty());
+    assert!(
+        runtime
+            .adapter()
+            .batches()
+            .iter()
+            .all(|batch| batch.is_empty()),
+        "{:?}",
+        runtime.adapter().batches()
+    );
+}
+
+#[test]
+fn list_view_reference_reports_its_item_focus_result() {
+    let commands = Rc::new(RefCell::new(Vec::new()));
+    let reference = ElementRef::<ListView>::new();
+    let results = Rc::new(RefCell::new(Vec::new()));
+    let mut runtime = Runtime::new(HoldingImperativeAdapter {
+        inner: RecordingAdapter::default(),
+        commands: Rc::clone(&commands),
+    });
+    runtime
+        .update(
+            ListView::new()
+                .element_ref(&reference)
+                .items([DataItem::new("a", "A"), DataItem::new("b", "B")]),
+        )
+        .unwrap();
+    let callback_results = Rc::clone(&results);
+    assert!(reference.request_focus_key_result("b", move |result| {
+        callback_results.borrow_mut().push(result);
+    }));
+    runtime.dispatch_native_events().unwrap();
+    let ImperativeRequest::FocusItem { completion, .. } = commands.borrow_mut().remove(0) else {
+        panic!("expected a focus-item request");
+    };
+    completion.call(Ok(true));
+    assert_eq!(results.borrow().as_slice(), [Ok(true)]);
+}
+
+#[test]
 fn navigation_view_menu_vertical_offset_must_be_finite() {
     assert!(
         std::panic::catch_unwind(|| {

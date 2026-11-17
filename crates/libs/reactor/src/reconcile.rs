@@ -1137,9 +1137,24 @@ impl RetainedGraph {
     }
 
     /// A `SelectItems` request with its keys resolved to the list's `Items` children (keys with
-    /// none are dropped), a `FocusedItem` request with the children and their keys; any other
-    /// request as it is.
+    /// none are dropped), a `FocusedItem` request with the children and their keys, a
+    /// `FocusItem` request with the child keyed its key; any other request as it is.
     fn resolve_list_keys(&self, request: ImperativeRequest) -> ImperativeRequest {
+        if let ImperativeRequest::FocusItem {
+            object,
+            key,
+            completion,
+            ..
+        } = request
+        {
+            let item = self.list_item_keyed(object, &key);
+            return ImperativeRequest::FocusItem {
+                object,
+                key,
+                item,
+                completion,
+            };
+        }
         if let ImperativeRequest::FocusedItem {
             object, completion, ..
         } = request
@@ -1158,21 +1173,24 @@ impl RetainedGraph {
         let ImperativeRequest::SelectItems { object, keys, .. } = request else {
             return request;
         };
-        let children = self.children(object, RelationId::Items).unwrap_or_default();
         let items = keys
             .iter()
-            .filter_map(|key| {
-                children.iter().copied().find(|child| {
-                    self.get(*child)
-                        .is_some_and(|item| item.key.as_ref() == Some(key))
-                })
-            })
+            .filter_map(|key| self.list_item_keyed(object, key))
             .collect();
         ImperativeRequest::SelectItems {
             object,
             keys,
             items,
         }
+    }
+
+    /// List `object`'s `Items` child keyed `key`.
+    fn list_item_keyed(&self, object: ObjectId, key: &Key) -> Option<ObjectId> {
+        let children = self.children(object, RelationId::Items).unwrap_or_default();
+        children.iter().copied().find(|child| {
+            self.get(*child)
+                .is_some_and(|item| item.key.as_ref() == Some(key))
+        })
     }
 
     fn get(&self, object: ObjectId) -> Option<&RetainedObject> {

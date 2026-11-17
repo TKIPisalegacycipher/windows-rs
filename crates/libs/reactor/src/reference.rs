@@ -428,6 +428,39 @@ impl ElementRef<ListView> {
             },
         )
     }
+
+    /// Enqueues moving the keyboard focus to the currently published list's item keyed `key`:
+    /// its container takes the focus as `request_focus` gives it (programmatic), and the list's
+    /// selection stays as it is, nothing selected or deselected.
+    ///
+    /// For putting the focus on a chosen item rather than where the list puts it when it takes
+    /// the focus itself (its first item, or the one focused last), such as a list's first item
+    /// that is a group header. An item with no realized container (scrolled out of view) isn't
+    /// focused, nor brought into view.
+    #[must_use]
+    pub fn request_focus_key(&self, key: impl Into<Key>) -> bool {
+        self.request_focus_key_result(key, |_| {})
+    }
+
+    /// As `request_focus_key`, and reports the native result asynchronously: `Ok(false)` when no
+    /// item has `key` when the request runs, when its container isn't realized, or when the
+    /// container declined the focus.
+    #[must_use]
+    pub fn request_focus_key_result(
+        &self,
+        key: impl Into<Key>,
+        completion: impl Fn(Result<bool, FocusError>) + 'static,
+    ) -> bool {
+        let key = key.into();
+        self.enqueue(
+            move |object, binding, target| ImperativeRequest::FocusItem {
+                object,
+                key,
+                item: None,
+                completion: current_completion(target, binding, completion),
+            },
+        )
+    }
 }
 
 impl ElementRef<Button> {
@@ -900,6 +933,14 @@ pub enum ImperativeRequest {
         items: Vec<(ObjectId, Key)>,
         completion: Callback<Result<Option<Key>, IntegrationError>>,
     },
+    /// `item` is the list's `Items` child keyed `key` (`None`: none is), which the runtime
+    /// resolves as it dispatches the request (`RetainedGraph::resolve_list_keys`).
+    FocusItem {
+        object: ObjectId,
+        key: Key,
+        item: Option<ObjectId>,
+        completion: Callback<Result<bool, IntegrationError>>,
+    },
     HideFlyout {
         object: ObjectId,
     },
@@ -954,6 +995,9 @@ impl ImperativeRequest {
                 completion.call(Err(IntegrationError::Unavailable));
             }
             Self::FocusedItem { completion, .. } => {
+                completion.call(Err(IntegrationError::Unavailable));
+            }
+            Self::FocusItem { completion, .. } => {
                 completion.call(Err(IntegrationError::Unavailable));
             }
 
