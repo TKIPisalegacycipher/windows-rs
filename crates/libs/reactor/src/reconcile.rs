@@ -437,8 +437,12 @@ impl EventDispatch {
     /// upstream, which drops every event queued for a replaced callback. A callback whose
     /// closure captures data is new on every render, and a drag re-renders on every move, so
     /// dropping lost the moves or the release that waited in the queue.
+    ///
+    /// A menu item's click is marked too: one on the items an open menu kept showing after a
+    /// render replaced them goes to the callback declared with those items, which the runtime
+    /// takes while the object still has a menu (Okojo#2552).
     pub(crate) fn held(mut self) -> Self {
-        self.held = Self::holds_callback(self.event);
+        self.held = Self::holds_callback(self.event) || self.event == EventId::MenuItemInvoked;
         self
     }
 
@@ -961,7 +965,7 @@ impl RetainedGraph {
             return Ok(matches!(
                 (&dispatch.callback, &dispatch.payload),
                 (EventValue::Key(callback), EventPayload::Key(_))
-                    if callback == &menu.menu.on_click
+                    if dispatch.held || callback == &menu.menu.on_click
             ));
         }
         if matches!(dispatch.event, EventId::MenuOpening | EventId::MenuClosed) {

@@ -495,9 +495,10 @@ fn stale_held_pointer_event_reaches_the_callback_it_was_raised_under() {
     let _ = (border, first);
 }
 
-/// `EventDispatch::held` marks only the pointer events: on any other it changes nothing.
+/// `EventDispatch::held` marks only the pointer events and menu item clicks: on any other it
+/// changes nothing.
 #[test]
-fn only_a_pointer_dispatch_can_be_held() {
+fn only_a_pointer_or_menu_item_dispatch_can_be_held() {
     let object = ObjectId::test(1);
     let click = EventDispatch::new(
         object,
@@ -518,6 +519,17 @@ fn only_a_pointer_dispatch_can_be_held() {
         assert!(EventDispatch::holds_callback(event), "{event:?}");
     }
     assert!(!EventDispatch::holds_callback(EventId::Click));
+    let menu_click = EventDispatch::new(
+        object,
+        EventId::MenuItemInvoked,
+        EventValue::Key(Callback::new(|_: Key| {})),
+        EventPayload::Key(Key::from("a")),
+    );
+    assert_ne!(menu_click.clone().held(), menu_click);
+    assert!(
+        !EventDispatch::holds_callback(EventId::MenuItemInvoked),
+        "an adapter doesn't hold a menu click's callback as it is queued"
+    );
 }
 
 #[test]

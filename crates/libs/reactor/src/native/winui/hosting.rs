@@ -658,22 +658,13 @@ impl WinUiAdapter {
     ) -> Result<(), WinUiError> {
         let kind = self.kind(target)?;
         let host = menu_host(kind);
+        // New callbacks for the same items, or a button's or context menu's new items: the
+        // element keeps its flyout, which builds them as it next opens; open, it keeps the items
+        // it shows (`LazyMenu`, Okojo#2552). A menu bar item's new items replace its old ones.
         if let Some(menu) = menu
             && let Some(current) = self.menus.get_mut(&target)
-            && current.revision == revision
+            && current.update(menu, revision) == MenuChange::Kept
         {
-            current.menu.clone_from(menu);
-            return Ok(());
-        }
-        // A context menu keeps its flyout and builds the new items as it next opens; open, it
-        // keeps the items it shows.
-        if let Some(menu) = menu
-            && let Some(current) = self.menus.get_mut(&target)
-            && let Some(lazy) = &current.lazy
-        {
-            lazy.borrow_mut().update(&menu.items, revision);
-            current.menu.clone_from(menu);
-            current.revision = revision;
             return Ok(());
         }
         let mut previous_context = None;
@@ -715,41 +706,12 @@ impl WinUiAdapter {
         let Some(menu) = menu else {
             return Ok(());
         };
+        let mut native_menu = NativeMenu::declared(host, menu, revision);
         let mut revokers = Vec::new();
         let mut context_flyout = None;
-        let mut lazy = None;
-        let flyout = match host {
-            MenuHost::Button => {
-                let flyout = native::MenuFlyout::new()?;
-                build_menu_items(
-                    &menu.items,
-                    &flyout.Items()?,
-                    &mut revokers,
-                    &self.event_queue,
-                    target,
-                    revision,
-                )?;
-                if let Some(placement) = menu_placement(kind) {
-                    flyout.cast::<native::IFlyoutBase>()?.SetPlacement(placement)?;
-                }
-                let queue = Rc::clone(&self.event_queue);
-                revokers.push(
-                    flyout
-                        .cast::<native::IFlyoutBase>()?
-                        .Opening(move |_, _| queue_menu_opening(&queue, target))?,
-                );
-                let queue = Rc::clone(&self.event_queue);
-                revokers.push(
-                    flyout
-                        .cast::<native::IFlyoutBase>()?
-                        .Closed(move |_, _| queue_menu_closed(&queue, target))?,
-                );
-                self.ui_element(target)?
-                    .cast::<native::IButton>()?
-                    .SetFlyout(&flyout)?;
-                Some(flyout)
-            }
-            MenuHost::MenuBarItem => {
+        let flyout = match native_menu.lazy.clone() {
+            // A menu bar item owns its items, built as they are declared.
+            None => {
                 let Some(Handle::Generated(GeneratedHandle::MenuBarItem(item))) =
                     self.handles.get(&target)
                 else {
@@ -765,13 +727,10 @@ impl WinUiAdapter {
                 )?;
                 None
             }
-            MenuHost::Context => {
+            // A button's and a context menu's flyout builds its items as it opens (`LazyMenu`).
+            Some(opening) => {
                 let flyout = native::MenuFlyout::new()?;
-                let state = Rc::new(RefCell::new(LazyMenu::new(
-                    Rc::clone(&menu.items),
-                    revision,
-                )));
-                let (opening, queue) = (Rc::clone(&state), Rc::clone(&self.event_queue));
+                let queue = Rc::clone(&self.event_queue);
                 revokers.push(flyout.cast::<native::IFlyoutBase>()?.Opening(
                     move |sender, _| {
                         let Some(flyout) = sender
@@ -792,29 +751,33 @@ impl WinUiAdapter {
                         .cast::<native::IFlyoutBase>()?
                         .Closed(move |_, _| queue_menu_closed(&queue, target))?,
                 );
-                lazy = Some(state);
-                let element = self.ui_element(target)?;
-                context_flyout =
-                    original_context_flyout(previous_context, || match element.ContextFlyout() {
-                        Ok(flyout) => Ok(Some(flyout)),
-                        Err(error) if error.code().is_ok() => Ok(None),
-                        Err(error) => Err(error),
+                if host == MenuHost::Button {
+                    if let Some(placement) = menu_placement(kind) {
+                        flyout
+                            .cast::<native::IFlyoutBase>()?
+                            .SetPlacement(placement)?;
+                    }
+                    self.ui_element(target)?
+                        .cast::<native::IButton>()?
+                        .SetFlyout(&flyout)?;
+                } else {
+                    let element = self.ui_element(target)?;
+                    context_flyout = original_context_flyout(previous_context, || {
+                        match element.ContextFlyout() {
+                            Ok(flyout) => Ok(Some(flyout)),
+                            Err(error) if error.code().is_ok() => Ok(None),
+                            Err(error) => Err(error),
+                        }
                     })?;
-                element.SetContextFlyout(&flyout)?;
+                    element.SetContextFlyout(&flyout)?;
+                }
                 Some(flyout)
             }
         };
-        self.menus.insert(
-            target,
-            NativeMenu {
-                menu: menu.clone(),
-                revision,
-                flyout,
-                context_flyout,
-                lazy,
-                _revokers: revokers,
-            },
-        );
+        native_menu.flyout = flyout;
+        native_menu.context_flyout = context_flyout;
+        native_menu._revokers = revokers;
+        self.menus.insert(target, native_menu);
         Ok(())
     }
 

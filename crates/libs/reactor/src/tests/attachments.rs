@@ -429,6 +429,51 @@ fn menu_attachment_routes_nested_keys_and_suppresses_stale_clicks() {
     assert_eq!(&*clicked.borrow(), &[Key::from("email")]);
 }
 
+/// A click on the items an open menu kept showing after a render replaced them (Okojo#2552)
+/// reaches the callback declared with them when the adapter marks it held, while the button
+/// still has a menu. Unmarked, a click for a replaced callback is still dropped.
+#[test]
+fn held_menu_click_reaches_the_callback_declared_with_its_items() {
+    let clicked = Rc::new(RefCell::new(Vec::new()));
+    let menu = |name: &'static str, keys: &[&'static str]| {
+        let capture = Rc::clone(&clicked);
+        Menu::new(
+            keys.iter().map(|key| MenuItem::item(*key, *key)),
+            move |key| capture.borrow_mut().push((name, key)),
+        )
+    };
+    let first = menu("first", &["flag", "rules"]);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(Button::new().menu(first.clone())).unwrap();
+    let target = runtime.graph().root().unwrap();
+    runtime
+        .update(Button::new().menu(menu("second", &["flag"])))
+        .unwrap();
+
+    let click = || {
+        EventDispatch::new(
+            target,
+            EventId::MenuItemInvoked,
+            EventValue::Key(first.on_click.clone()),
+            EventPayload::Key(Key::from("rules")),
+        )
+    };
+    runtime.adapter_mut().queue_event(click());
+    assert_eq!(runtime.dispatch_native_events(), Ok(0), "unheld: dropped");
+    runtime.adapter_mut().queue_event(click().held());
+    assert_eq!(runtime.dispatch_native_events(), Ok(1));
+    assert_eq!(*clicked.borrow(), [("first", Key::from("rules"))]);
+
+    runtime.update(Button::new()).unwrap();
+    runtime.adapter_mut().queue_event(click().held());
+    assert_eq!(
+        runtime.dispatch_native_events(),
+        Ok(0),
+        "the button has no menu any more"
+    );
+    assert_eq!(clicked.borrow().len(), 1);
+}
+
 #[test]
 fn menu_attachment_supports_drop_down_and_menu_bar_targets() {
     let mut drop_down = Runtime::new(RecordingAdapter::default());

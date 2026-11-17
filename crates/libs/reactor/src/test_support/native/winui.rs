@@ -1288,7 +1288,8 @@ impl WinUiAdapter {
         Ok(flyout.IsOpen()?)
     }
 
-    /// The automation ids of a button or context menu's top-level items.
+    /// The automation ids of a button's or context menu's top-level items. Its flyout holds them
+    /// only once it has opened: they are built as it opens (`LazyMenu`).
     pub fn menu_item_automation_ids(&self, target: ObjectId) -> Result<Vec<String>, WinUiError> {
         let menu = self
             .menus

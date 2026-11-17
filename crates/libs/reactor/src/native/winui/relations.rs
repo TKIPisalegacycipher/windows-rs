@@ -1236,14 +1236,7 @@ impl WinUiAdapter {
         let event = queued.event.as_ref().and_then(|queued| {
             if queued.event == EventId::MenuItemInvoked {
                 let menu = self.menus.get(&queued.object)?;
-                return menu.accepts(queued.revision).then(|| {
-                    EventDispatch::new(
-                        queued.object,
-                        queued.event,
-                        EventValue::Key(menu.menu.on_click.clone()),
-                        queued.payload.clone(),
-                    )
-                });
+                return menu.click(queued.object, queued.revision, queued.payload.clone());
             }
             if matches!(queued.event, EventId::MenuOpening | EventId::MenuClosed) {
                 let menu = self.menus.get(&queued.object)?;

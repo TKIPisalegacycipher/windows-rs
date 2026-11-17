@@ -25,6 +25,9 @@ mod transitions;
 #[path = "combo_box_drop_down.rs"]
 mod combo_box_drop_down;
 
+#[path = "button_menu.rs"]
+mod button_menu;
+
 #[test]
 fn native_queue_preview_uses_current_callback_and_preserves_order() {
     let object = ObjectId::test(1);
@@ -1310,32 +1313,39 @@ fn menus_on_other_elements_become_context_flyouts() {
 
 #[test]
 fn context_menus_build_their_items_as_they_open_from_the_latest_menu() {
-    let first: Rc<Vec<MenuItem>> = Rc::new(vec![MenuItem::item("a", "A")]);
-    let second: Rc<Vec<MenuItem>> = Rc::new(vec![MenuItem::item("b", "B")]);
-    let mut lazy = LazyMenu::new(Rc::clone(&first), 1);
+    let first = Menu::new([MenuItem::item("a", "A")], |_| {});
+    let second = Menu::new([MenuItem::item("b", "B")], |_| {});
+    let mut lazy = LazyMenu::new(&first, 1);
     assert!(lazy.needs_build(), "nothing is built before it opens");
-    lazy.built = true;
+    lazy.built(Vec::new());
     assert!(!lazy.needs_build(), "a second opening keeps its items");
+    lazy.update(&first, 1);
+    assert!(!lazy.needs_build(), "new callbacks for the same items");
     lazy.update(&second, 2);
     assert!(
         lazy.needs_build(),
         "a new menu is built at the next opening"
     );
-    assert!(Rc::ptr_eq(&lazy.items, &second));
+    assert!(Rc::ptr_eq(&lazy.menu.items, &second.items));
     assert_eq!(lazy.revision, 2, "its clicks carry the new revision");
 }
 
 #[test]
 fn an_open_context_menu_keeps_its_clicks_when_its_menu_changes() {
-    let items: Rc<Vec<MenuItem>> = Rc::new(vec![MenuItem::item("a", "A")]);
-    let mut lazy = LazyMenu::new(Rc::clone(&items), 1);
-    assert!(!lazy.accepts(0));
-    lazy.built = true;
-    lazy.shown = Some(1);
-    lazy.update(&items, 2);
-    assert!(lazy.accepts(1), "the items on screen still click");
-    assert!(lazy.accepts(2));
-    assert!(!lazy.accepts(3));
+    let shown = Menu::new([MenuItem::item("a", "A")], |_| {});
+    let latest = Menu::new([MenuItem::item("a", "A")], |_| {});
+    let mut lazy = LazyMenu::new(&shown, 1);
+    assert_eq!(lazy.shown_click(1), None, "nothing is shown yet");
+    lazy.built(Vec::new());
+    assert_eq!(lazy.shown_click(1), None, "the latest items' go to the menu's");
+    lazy.update(&latest, 2);
+    assert_eq!(
+        lazy.shown_click(1),
+        Some(shown.on_click.clone()),
+        "the items on screen still click, through their own callback"
+    );
+    assert_eq!(lazy.shown_click(2), None);
+    assert_eq!(lazy.shown_click(0), None);
 }
 
 #[test]

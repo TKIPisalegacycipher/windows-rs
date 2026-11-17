@@ -231,13 +231,71 @@ struct NativeContentDialogState {
     retained_handle: Option<GeneratedContentDialog>,
 }
 
+/// What a new declaration of a menu does to the one its element holds ([`NativeMenu::update`]).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MenuChange {
+    /// Taken in place: new callbacks for the same items, or items the flyout builds as it next
+    /// opens. An open flyout stays open.
+    Kept,
+    /// The flyout has to be hidden and built again.
+    Replaced,
+}
+
+/// Whether `host`'s flyout builds its items as it opens (`LazyMenu`), rather than as it is
+/// declared: a button's and a context menu's. A menu bar item owns its items.
+fn builds_as_it_opens(host: MenuHost) -> bool {
+    matches!(host, MenuHost::Button | MenuHost::Context)
+}
+
 impl NativeMenu {
-    /// Whether a click on an item built at `revision` counts.
-    fn accepts(&self, revision: u64) -> bool {
-        match &self.lazy {
-            Some(lazy) => lazy.borrow().accepts(revision),
-            None => self.revision == revision,
+    /// `menu` at `revision` on a `host` element, before any native flyout is attached: the
+    /// adapter adds its flyout and handlers, and a test drives it with a fake flyout.
+    fn declared(host: MenuHost, menu: &Menu, revision: u64) -> Self {
+        Self {
+            menu: menu.clone(),
+            revision,
+            flyout: None,
+            context_flyout: None,
+            lazy: builds_as_it_opens(host)
+                .then(|| Rc::new(RefCell::new(LazyMenu::new(menu, revision)))),
+            _revokers: Vec::new(),
         }
+    }
+
+    /// A new declaration of this menu: taken in place, or left for the caller to replace.
+    fn update(&mut self, menu: &Menu, revision: u64) -> MenuChange {
+        if let Some(lazy) = &self.lazy {
+            lazy.borrow_mut().update(menu, revision);
+        } else if self.revision != revision {
+            return MenuChange::Replaced;
+        }
+        self.menu.clone_from(menu);
+        self.revision = revision;
+        MenuChange::Kept
+    }
+
+    /// The dispatch of a click on an item built at `revision`, if it counts: the latest items'
+    /// go to the menu's callback, and those of the items an open flyout still shows to the
+    /// callback declared with them (`LazyMenu::shown`).
+    fn click(
+        &self,
+        object: ObjectId,
+        revision: u64,
+        payload: EventPayload,
+    ) -> Option<EventDispatch> {
+        let dispatch = |callback: Callback<Key>| {
+            EventDispatch::new(
+                object,
+                EventId::MenuItemInvoked,
+                EventValue::Key(callback),
+                payload,
+            )
+        };
+        if revision == self.revision {
+            return Some(dispatch(self.menu.on_click.clone()));
+        }
+        let shown = self.lazy.as_ref()?.borrow().shown_click(revision)?;
+        Some(dispatch(shown).held())
     }
 }
 
@@ -252,30 +310,36 @@ struct NativeMenu {
     revision: u64,
     flyout: Option<native::MenuFlyout>,
     context_flyout: Option<native::FlyoutBase>,
-    /// A context menu's items, built as it opens (`LazyMenu`).
+    /// A button's or context menu's items, built as it opens (`LazyMenu`).
     lazy: Option<Rc<RefCell<LazyMenu>>>,
     _revokers: Vec<windows_core::EventRevoker>,
 }
 
-/// A context menu's items, built from the latest declaration as its flyout opens: the element
-/// keeps one flyout while its menu changes, and a menu nobody opens builds no items. A menu on
-/// every row of a long list then costs one empty flyout per realized row, and a row's menu can
-/// change (its row selected by the right-click that opened it) while it is open: the open items
-/// stay, and their clicks still count.
+/// A button's or context menu's items, built from the latest declaration as its flyout opens:
+/// the element keeps one flyout while its menu changes, and a menu nobody opens builds no items.
+/// A menu on every row of a long list then costs one empty flyout per realized row. A menu can
+/// change while it is open: a row's (its row selected by the right-click that opened it), or a
+/// button's when a sync changes its items (Okojo#2552). The open flyout stays open on the items
+/// it shows, and their clicks still count and reach the callback declared with them, as the
+/// latest one may not know them or may read their keys differently. The next opening builds the
+/// latest items.
 struct LazyMenu {
-    items: Rc<Vec<MenuItem>>,
+    /// The latest declaration.
+    menu: Menu,
     revision: u64,
-    /// The flyout holds `items` at `revision`.
+    /// The flyout holds `menu`'s items at `revision`.
     built: bool,
-    /// The revision of the items the flyout holds, whose clicks count too.
-    shown: Option<u64>,
+    /// The revision of the items the flyout holds, and the latest click callback declared with
+    /// them. It keeps that callback, and what its closure captures, alive until the next opening
+    /// builds new items (or the element's menu goes).
+    shown: Option<(u64, Callback<Key>)>,
     revokers: Vec<windows_core::EventRevoker>,
 }
 
 impl LazyMenu {
-    fn new(items: Rc<Vec<MenuItem>>, revision: u64) -> Self {
+    fn new(menu: &Menu, revision: u64) -> Self {
         Self {
-            items,
+            menu: menu.clone(),
             revision,
             built: false,
             shown: None,
@@ -283,21 +347,43 @@ impl LazyMenu {
         }
     }
 
-    /// Whether a click on an item built at `revision` counts: the latest, or the one shown.
-    fn accepts(&self, revision: u64) -> bool {
-        self.revision == revision || self.shown == Some(revision)
+    /// The callback a click on the items built at `revision` goes to, if the flyout holds them
+    /// and a newer menu replaced them; the latest items' clicks go to `menu`'s.
+    fn shown_click(&self, revision: u64) -> Option<Callback<Key>> {
+        match &self.shown {
+            Some((shown, on_click)) if *shown == revision && revision != self.revision => {
+                Some(on_click.clone())
+            }
+            _ => None,
+        }
     }
 
-    /// A new declaration: built again as the flyout next opens.
-    fn update(&mut self, items: &Rc<Vec<MenuItem>>, revision: u64) {
-        self.items = Rc::clone(items);
+    /// A new declaration. New items are built again as the flyout next opens; new callbacks for
+    /// the same items answer their clicks at once.
+    fn update(&mut self, menu: &Menu, revision: u64) {
+        if revision == self.revision {
+            if let Some((shown, on_click)) = &mut self.shown
+                && *shown == revision
+            {
+                on_click.clone_from(&menu.on_click);
+            }
+        } else {
+            self.built = false;
+        }
+        self.menu.clone_from(menu);
         self.revision = revision;
-        self.built = false;
     }
 
     /// Whether opening has to build the items.
     fn needs_build(&self) -> bool {
         !self.built
+    }
+
+    /// The flyout now holds `menu`'s items at `revision`, whose items' handlers `revokers` hold.
+    fn built(&mut self, revokers: Vec<windows_core::EventRevoker>) {
+        self.revokers = revokers;
+        self.built = true;
+        self.shown = Some((self.revision, self.menu.on_click.clone()));
     }
 }
 
@@ -316,16 +402,14 @@ fn fill_lazy_menu(
     output.Clear()?;
     let mut revokers = Vec::new();
     build_menu_items(
-        &lazy.items,
+        &lazy.menu.items,
         &output,
         &mut revokers,
         event_queue,
         target,
         lazy.revision,
     )?;
-    lazy.revokers = revokers;
-    lazy.built = true;
-    lazy.shown = Some(lazy.revision);
+    lazy.built(revokers);
     Ok(())
 }
 
