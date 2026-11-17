@@ -1,7 +1,7 @@
 # Fork patch catalogue
 
-Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6` (and 86, on `okojo-1227` until it
-lands there), grouped by what it is for, followed by a map from the original 58-commit stack.
+Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
+followed by a map from the original 58-commit stack.
 Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-86 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
