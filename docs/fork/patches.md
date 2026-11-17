@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack. Commits 1-45 are the rebuilt stack
-(`okojo-rebased`, `47c5b855d`); 46-80 were added on top of it since. Read [readme.md](readme.md) first for the
+(`okojo-rebased`, `47c5b855d`); 46-81 were added on top of it since. Read [readme.md](readme.md) first for the
 background.
 
 ## How to read the tables
@@ -118,6 +118,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 53 | `1e2dbc6e3` | Context menus build their items as they open (`FlyoutBase::Opening`, `LazyMenu`) | none | New | A menu on every message-list row costs little until one opens. Evidence: unit |
 | 55 | `452247a9a` | `Menu::on_opening` | none | New | Bug-adjacent: selecting a row on the right-button release raced WinUI's context request, and a selection that ran first cancelled the menu. Selecting as the menu opens avoids that. Evidence: unit |
 | 75 | `56e50fbea` | `Menu::on_closed` (`FlyoutBase::Closed`, context and button menus; `MenuClosed` joins tool-reactor's hand-listed events) | none | New | With 55's `on_opening` the app knows while a menu is open: Okojo keeps a folder's tree item in place while its menu is open, since rebuilding the item would close the menu (Okojo#1469). Evidence: unit |
+| 81 | `af365bf8` | A button's menu (`Button`, `DropDownButton`) builds its items as its flyout opens, as 53's context menus do: `set_menu` keeps the one flyout when the items change instead of hiding it and building a new one, so an open menu keeps the items it opened with and the next opening builds the latest. A click on the items an open flyout still shows, after a newer declaration replaced them, goes to the callback declared with them (`LazyMenu::shown`), as a held dispatch (`EventDispatch::held`) that `validate_event_dispatch` takes while the element still has a menu; context menus get the same routing | none | New | Bug, and a design question like 78: upstream hides an open button menu whenever its items change, so a menu closed under the pointer when a background sync changed it (Okojo#2552), and it would deliver a stale click to the latest callback or drop it. Here the click reaches the callback declared with the items the user saw, since the latest may not know the item or may read its key differently. Evidence: unit (`tests/native/button_menu.rs`, a fake flyout driving `NativeMenu` and `LazyMenu`; `tests/attachments.rs` for the held click); app (Okojo's `button-menu-keeps-items` scenario) |
 | 60 | `93338694e` | `register_resource_fonts`: app-wide `FontFamily` resources by family name (it loads no font files) | none | New | Lets an app set its interface font through `ContentControlThemeFontFamily`. Evidence: unit |
 | 61 | `cd6484d6b` | `register_text_block_font`, an opt-in implicit `TextBlock` style that sets `FontFamily`, so plain text uses the app's interface font | none | New | A `TextBlock` does not inherit `ContentControlThemeFontFamily`, so `register_resource_fonts` misses plain text. The style is merged after the Fluent dictionaries. A local or template `FontFamily` still wins, but an inherited one loses, so it is opt-in. Evidence: unit |
 | 77 | `0b2f4b6b` | `RichText::on_link_click` (`Hyperlink::Click` instead of `NavigateUri`; `LinkClick` joins tool-reactor's hand-listed events), `RichTextBlock::foreground`, and `register_text_block_font` also styles `RichTextBlock` | none | New | A text message's links open where the app chooses (the account's browser), and rich text matches plain text's font and colour (Okojo#2002). Evidence: unit |
@@ -296,12 +297,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-80 came after the rebuild and have no original.
+Commits 46-81 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77 only add items, and 78-80 change behaviour (above, no public item) (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77 only add items, and 78-81 change behaviour (above, no public item) (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `Border::handles_plain_presses`, `register_resource_fonts`,
 `register_text_block_font`, `Border::use_system_focus_visuals`, `Border::focus_visual_margin`,
