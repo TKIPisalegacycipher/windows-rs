@@ -812,10 +812,16 @@ impl WinUiAdapter {
         self.virtual_items.remove(&object);
         self.observations
             .retain(|(observed, _), _| *observed != object);
-        if let Some(initialization) = self.webview_initializations.borrow_mut().remove(&object) {
+        // Taken out before their completions, the app's code, run.
+        let initialization = self.webview_initializations.borrow_mut().remove(&object);
+        if let Some(initialization) = initialization {
             for completion in initialization.completions {
                 completion.call(Err(IntegrationError::Unavailable));
             }
+        }
+        let keys = self.webview_keys.borrow_mut().remove(&object);
+        if let Some(keys) = keys {
+            complete_webview_keys(keys.completions, &Err(IntegrationError::Unavailable));
         }
         self.event_queue
             .feedback

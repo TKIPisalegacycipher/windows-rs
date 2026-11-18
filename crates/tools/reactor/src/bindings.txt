@@ -436,10 +436,22 @@ Microsoft::UI::Xaml::Vector3Transition::CreateInstance
 Microsoft::UI::Xaml::VerticalAlignment
 Microsoft::UI::Xaml::Window::CreateInstance
 Microsoft::UI::Xaml::XamlTypeInfo::XamlControlsXamlMetaDataProvider::CreateInstance
+Microsoft::Web::WebView2::Core::CoreWebView2CompositionController::{}
+Microsoft::Web::WebView2::Core::CoreWebView2EnvironmentOptions::CreateInstance
+Microsoft::Web::WebView2::Core::CoreWebView2KeyEventKind::{KeyDown, SystemKeyDown}
+Microsoft::Web::WebView2::Core::CoreWebView2PhysicalKeyStatus
+Microsoft::Web::WebView2::Core::ICoreWebView2AcceleratorKeyPressedEventArgs::{get_KeyEventKind, get_PhysicalKeyStatus, get_VirtualKey, put_Handled}
+Microsoft::Web::WebView2::Core::ICoreWebView2Controller::{add_AcceleratorKeyPressed, remove_AcceleratorKeyPressed}
+Microsoft::Web::WebView2::Core::ICoreWebView2Environment::{add_NewBrowserVersionAvailable, CreateCoreWebView2ControllerAsync, CreateWebResourceResponse, get_BrowserVersionString, remove_NewBrowserVersionAvailable}
+Microsoft::Web::WebView2::Core::ICoreWebView2Environment3::{CreateCoreWebView2CompositionControllerAsync, CreateCoreWebView2PointerInfo}
+Microsoft::Web::WebView2::Core::ICoreWebView2EnvironmentOptions::put_Language
+Microsoft::Web::WebView2::Core::ICoreWebView2EnvironmentStatics::CreateWithOptionsAsync
 Windows::ApplicationModel::DataTransfer::DataPackageOperation::{Copy, Link, Move, None}
 Windows::ApplicationModel::DataTransfer::IDataPackageView::{Contains, GetStorageItemsAsync, GetTextAsync}
 Windows::Foundation::Numerics::Vector3
 Windows::Foundation::Uri::CreateUri
+Windows::Globalization::ApplicationLanguages::{}
+Windows::Globalization::IApplicationLanguagesStatics::get_Languages
 Windows::Graphics::{SizeInt32}
 Windows::Storage::IStorageItem::{get_Name, get_Path}
 Windows::Storage::Streams::DataWriter::CreateDataWriter

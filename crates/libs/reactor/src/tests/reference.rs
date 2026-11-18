@@ -116,6 +116,47 @@ fn webview_reference_queues_core_requests_with_their_environment() {
 }
 
 #[test]
+fn webview_reference_queues_accelerator_keys_before_its_core() {
+    let reference = ElementRef::<WebView2>::new();
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let on_key = RoutedCallback::new(|_: KeyEventInfo| true);
+    assert!(!reference.request_accelerator_keys(on_key.clone(), |_| {}));
+
+    runtime
+        .update(WebView2::new().element_ref(&reference))
+        .unwrap();
+    let object = reference.get().unwrap();
+    let results = Rc::new(RefCell::new(Vec::new()));
+    let recorded = Rc::clone(&results);
+    assert!(
+        reference.request_accelerator_keys(on_key.clone(), move |result| {
+            recorded.borrow_mut().push(result);
+        })
+    );
+    assert!(reference.request_core_web_view2(|_| {}));
+    runtime.dispatch_native_events().unwrap();
+    let requests = runtime.adapter().imperatives();
+    assert_eq!(requests.len(), 2);
+    match &requests[0] {
+        ImperativeRequest::WebView2AcceleratorKeys {
+            object: o,
+            on_key: queued,
+            ..
+        } => {
+            assert_eq!(*o, object);
+            assert_eq!(*queued, on_key);
+        }
+        other => panic!("unexpected request {other:?}"),
+    }
+    assert!(matches!(
+        requests[1],
+        ImperativeRequest::InitializeWebView2 { .. }
+    ));
+    // The recording adapter has no WebView2 to route keys from.
+    assert_eq!(*results.borrow(), [Err(IntegrationError::Unavailable)]);
+}
+
+#[test]
 fn scroll_viewer_reference_queues_vertical_offset() {
     let reference = ElementRef::<ScrollViewer>::new();
     let mut runtime = Runtime::new(RecordingAdapter::default());

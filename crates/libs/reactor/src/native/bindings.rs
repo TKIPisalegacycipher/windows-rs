@@ -495,6 +495,35 @@ impl windows_core::RuntimeName for ApplicationInitializationCallbackParams {
 }
 unsafe impl Send for ApplicationInitializationCallbackParams {}
 unsafe impl Sync for ApplicationInitializationCallbackParams {}
+pub struct ApplicationLanguages;
+impl ApplicationLanguages {
+    pub(crate) fn Languages()
+    -> windows_core::Result<windows_collections::IVectorView<windows_core::HSTRING>> {
+        Self::IApplicationLanguagesStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).Languages)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    fn IApplicationLanguagesStatics<
+        R,
+        F: FnOnce(&IApplicationLanguagesStatics) -> windows_core::Result<R>,
+    >(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<
+            ApplicationLanguages,
+            IApplicationLanguagesStatics,
+        > = windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
+impl windows_core::RuntimeName for ApplicationLanguages {
+    const NAME: &'static str = "Windows.Globalization.ApplicationLanguages";
+}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AutoSuggestBox(windows_core::IUnknown);
@@ -2998,12 +3027,161 @@ unsafe impl Send for CoreWebView2 {}
 unsafe impl Sync for CoreWebView2 {}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2AcceleratorKeyPressedEventArgs(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2AcceleratorKeyPressedEventArgs,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl windows_core::RuntimeType for CoreWebView2AcceleratorKeyPressedEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::for_class::<
+        Self,
+        ICoreWebView2AcceleratorKeyPressedEventArgs,
+    >();
+}
+unsafe impl windows_core::Interface for CoreWebView2AcceleratorKeyPressedEventArgs {
+    type Vtable = <ICoreWebView2AcceleratorKeyPressedEventArgs as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID =
+        <ICoreWebView2AcceleratorKeyPressedEventArgs as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2AcceleratorKeyPressedEventArgs {
+    type Target = ICoreWebView2AcceleratorKeyPressedEventArgs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2AcceleratorKeyPressedEventArgs {
+    const NAME: &'static str =
+        "Microsoft.Web.WebView2.Core.CoreWebView2AcceleratorKeyPressedEventArgs";
+}
+unsafe impl Send for CoreWebView2AcceleratorKeyPressedEventArgs {}
+unsafe impl Sync for CoreWebView2AcceleratorKeyPressedEventArgs {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2CompositionController(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2CompositionController,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(CoreWebView2CompositionController, CoreWebView2Controller);
+impl windows_core::RuntimeType for CoreWebView2CompositionController {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2CompositionController>();
+}
+unsafe impl windows_core::Interface for CoreWebView2CompositionController {
+    type Vtable = <ICoreWebView2CompositionController as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID =
+        <ICoreWebView2CompositionController as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2CompositionController {
+    type Target = ICoreWebView2CompositionController;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2CompositionController {
+    const NAME: &'static str = "Microsoft.Web.WebView2.Core.CoreWebView2CompositionController";
+}
+unsafe impl Send for CoreWebView2CompositionController {}
+unsafe impl Sync for CoreWebView2CompositionController {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2Controller(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2Controller,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl windows_core::RuntimeType for CoreWebView2Controller {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2Controller>();
+}
+unsafe impl windows_core::Interface for CoreWebView2Controller {
+    type Vtable = <ICoreWebView2Controller as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <ICoreWebView2Controller as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2Controller {
+    type Target = ICoreWebView2Controller;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2Controller {
+    const NAME: &'static str = "Microsoft.Web.WebView2.Core.CoreWebView2Controller";
+}
+unsafe impl Send for CoreWebView2Controller {}
+unsafe impl Sync for CoreWebView2Controller {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2ControllerWindowReference(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2ControllerWindowReference,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl windows_core::RuntimeType for CoreWebView2ControllerWindowReference {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2ControllerWindowReference>();
+}
+unsafe impl windows_core::Interface for CoreWebView2ControllerWindowReference {
+    type Vtable = <ICoreWebView2ControllerWindowReference as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID =
+        <ICoreWebView2ControllerWindowReference as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2ControllerWindowReference {
+    type Target = ICoreWebView2ControllerWindowReference;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2ControllerWindowReference {
+    const NAME: &'static str = "Microsoft.Web.WebView2.Core.CoreWebView2ControllerWindowReference";
+}
+unsafe impl Send for CoreWebView2ControllerWindowReference {}
+unsafe impl Sync for CoreWebView2ControllerWindowReference {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoreWebView2Environment(windows_core::IUnknown);
 windows_core::imp::interface_hierarchy!(
     CoreWebView2Environment,
     windows_core::IUnknown,
     windows_core::IInspectable
 );
+impl CoreWebView2Environment {
+    pub(crate) fn CreateWithOptionsAsync<P2>(
+        browserexecutablefolder: &str,
+        userdatafolder: &str,
+        options: P2,
+    ) -> windows_core::Result<windows_future::IAsyncOperation<Self>>
+    where
+        P2: windows_core::Param<CoreWebView2EnvironmentOptions>,
+    {
+        Self::ICoreWebView2EnvironmentStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).CreateWithOptionsAsync)(
+                windows_core::Interface::as_raw(this),
+                core::mem::transmute_copy(&windows_core::HSTRING::from(browserexecutablefolder)),
+                core::mem::transmute_copy(&windows_core::HSTRING::from(userdatafolder)),
+                options.param().abi(),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    fn ICoreWebView2EnvironmentStatics<
+        R,
+        F: FnOnce(&ICoreWebView2EnvironmentStatics) -> windows_core::Result<R>,
+    >(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<
+            CoreWebView2Environment,
+            ICoreWebView2EnvironmentStatics,
+        > = windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
 impl windows_core::RuntimeType for CoreWebView2Environment {
     const SIGNATURE: windows_core::imp::ConstBuffer =
         windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2Environment>();
@@ -3023,6 +3201,51 @@ impl windows_core::RuntimeName for CoreWebView2Environment {
 }
 unsafe impl Send for CoreWebView2Environment {}
 unsafe impl Sync for CoreWebView2Environment {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2EnvironmentOptions(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2EnvironmentOptions,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl CoreWebView2EnvironmentOptions {
+    pub(crate) fn new() -> windows_core::Result<Self> {
+        Self::IActivationFactory(|f| f.ActivateInstance::<Self>())
+    }
+    fn IActivationFactory<
+        R,
+        F: FnOnce(&windows_core::imp::IGenericFactory) -> windows_core::Result<R>,
+    >(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<
+            CoreWebView2EnvironmentOptions,
+            windows_core::imp::IGenericFactory,
+        > = windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
+impl windows_core::RuntimeType for CoreWebView2EnvironmentOptions {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2EnvironmentOptions>();
+}
+unsafe impl windows_core::Interface for CoreWebView2EnvironmentOptions {
+    type Vtable = <ICoreWebView2EnvironmentOptions as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID =
+        <ICoreWebView2EnvironmentOptions as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2EnvironmentOptions {
+    type Target = ICoreWebView2EnvironmentOptions;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2EnvironmentOptions {
+    const NAME: &'static str = "Microsoft.Web.WebView2.Core.CoreWebView2EnvironmentOptions";
+}
+unsafe impl Send for CoreWebView2EnvironmentOptions {}
+unsafe impl Sync for CoreWebView2EnvironmentOptions {}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoreWebView2InitializedEventArgs(windows_core::IUnknown);
@@ -3051,6 +3274,94 @@ impl windows_core::RuntimeName for CoreWebView2InitializedEventArgs {
 }
 unsafe impl Send for CoreWebView2InitializedEventArgs {}
 unsafe impl Sync for CoreWebView2InitializedEventArgs {}
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct CoreWebView2KeyEventKind(pub i32);
+impl CoreWebView2KeyEventKind {
+    pub const KeyDown: Self = Self(0);
+    pub const SystemKeyDown: Self = Self(2);
+}
+impl windows_core::imp::TypeKind for CoreWebView2KeyEventKind {
+    type TypeKind = windows_core::imp::CopyType;
+}
+impl windows_core::RuntimeType for CoreWebView2KeyEventKind {
+    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
+        b"enum(Microsoft.Web.WebView2.Core.CoreWebView2KeyEventKind;i4)",
+    );
+}
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct CoreWebView2PhysicalKeyStatus {
+    pub repeat_count: u32,
+    pub scan_code: u32,
+    pub is_extended_key: i32,
+    pub is_menu_key_down: i32,
+    pub was_key_down: i32,
+    pub is_key_released: i32,
+}
+impl windows_core::imp::TypeKind for CoreWebView2PhysicalKeyStatus {
+    type TypeKind = windows_core::imp::CopyType;
+}
+impl windows_core::RuntimeType for CoreWebView2PhysicalKeyStatus {
+    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
+        b"struct(Microsoft.Web.WebView2.Core.CoreWebView2PhysicalKeyStatus;u4;u4;i4;i4;i4;i4)",
+    );
+}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2PointerInfo(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2PointerInfo,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl windows_core::RuntimeType for CoreWebView2PointerInfo {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2PointerInfo>();
+}
+unsafe impl windows_core::Interface for CoreWebView2PointerInfo {
+    type Vtable = <ICoreWebView2PointerInfo as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <ICoreWebView2PointerInfo as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2PointerInfo {
+    type Target = ICoreWebView2PointerInfo;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2PointerInfo {
+    const NAME: &'static str = "Microsoft.Web.WebView2.Core.CoreWebView2PointerInfo";
+}
+unsafe impl Send for CoreWebView2PointerInfo {}
+unsafe impl Sync for CoreWebView2PointerInfo {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoreWebView2WebResourceResponse(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    CoreWebView2WebResourceResponse,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl windows_core::RuntimeType for CoreWebView2WebResourceResponse {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ICoreWebView2WebResourceResponse>();
+}
+unsafe impl windows_core::Interface for CoreWebView2WebResourceResponse {
+    type Vtable = <ICoreWebView2WebResourceResponse as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID =
+        <ICoreWebView2WebResourceResponse as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for CoreWebView2WebResourceResponse {
+    type Target = ICoreWebView2WebResourceResponse;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for CoreWebView2WebResourceResponse {
+    const NAME: &'static str = "Microsoft.Web.WebView2.Core.CoreWebView2WebResourceResponse";
+}
+unsafe impl Send for CoreWebView2WebResourceResponse {}
+unsafe impl Sync for CoreWebView2WebResourceResponse {}
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct CornerRadius {
@@ -6236,6 +6547,25 @@ impl windows_core::RuntimeType for IApplicationInitializationCallbackParams {
 #[repr(C)]
 pub struct IApplicationInitializationCallbackParams_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    IApplicationLanguagesStatics,
+    IApplicationLanguagesStatics_Vtbl,
+    0x75b40847_0a4c_4a92_9565_fd63c95f7aed
+);
+impl windows_core::RuntimeType for IApplicationLanguagesStatics {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IApplicationLanguagesStatics_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    PrimaryLanguageOverride: usize,
+    SetPrimaryLanguageOverride: usize,
+    pub Languages: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     IApplicationOverrides,
@@ -9653,6 +9983,184 @@ pub struct ICoreWebView2_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
 }
 windows_core::imp::define_interface!(
+    ICoreWebView2AcceleratorKeyPressedEventArgs,
+    ICoreWebView2AcceleratorKeyPressedEventArgs_Vtbl,
+    0x41a56100_92a5_59d1_9e71_9222e33ae38b
+);
+impl windows_core::RuntimeType for ICoreWebView2AcceleratorKeyPressedEventArgs {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl ICoreWebView2AcceleratorKeyPressedEventArgs {
+    pub(crate) fn KeyEventKind(&self) -> windows_core::Result<CoreWebView2KeyEventKind> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).KeyEventKind)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
+    pub(crate) fn VirtualKey(&self) -> windows_core::Result<u32> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).VirtualKey)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
+    pub(crate) fn PhysicalKeyStatus(&self) -> windows_core::Result<CoreWebView2PhysicalKeyStatus> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).PhysicalKeyStatus)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
+    pub(crate) fn SetHandled(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetHandled)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
+}
+#[repr(C)]
+pub struct ICoreWebView2AcceleratorKeyPressedEventArgs_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub KeyEventKind: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut CoreWebView2KeyEventKind,
+    ) -> windows_core::HRESULT,
+    pub VirtualKey:
+        unsafe extern "system" fn(*mut core::ffi::c_void, *mut u32) -> windows_core::HRESULT,
+    KeyEventLParam: usize,
+    pub PhysicalKeyStatus: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut CoreWebView2PhysicalKeyStatus,
+    ) -> windows_core::HRESULT,
+    Handled: usize,
+    pub SetHandled:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2CompositionController,
+    ICoreWebView2CompositionController_Vtbl,
+    0x31bbb153_11b2_58e8_9beb_69f5c8e14420
+);
+impl windows_core::RuntimeType for ICoreWebView2CompositionController {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ICoreWebView2CompositionController_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2Controller,
+    ICoreWebView2Controller_Vtbl,
+    0xa588121c_53bf_590e_80e5_29d729cbd743
+);
+impl windows_core::RuntimeType for ICoreWebView2Controller {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl ICoreWebView2Controller {
+    pub(crate) fn AcceleratorKeyPressed<F>(
+        &self,
+        handler: F,
+    ) -> windows_core::Result<windows_core::EventRevoker>
+    where
+        F: Fn(
+                windows_core::Ref<CoreWebView2Controller>,
+                windows_core::Ref<CoreWebView2AcceleratorKeyPressedEventArgs>,
+            ) + 'static,
+    {
+        let handler: TypedEventHandler<
+            CoreWebView2Controller,
+            CoreWebView2AcceleratorKeyPressedEventArgs,
+        > = {
+            let com = windows_core::imp::DelegateBox::<
+                TypedEventHandler<
+                    CoreWebView2Controller,
+                    CoreWebView2AcceleratorKeyPressedEventArgs,
+                >,
+                F,
+            >::new(
+                &TypedEventHandlerBox::<
+                    CoreWebView2Controller,
+                    CoreWebView2AcceleratorKeyPressedEventArgs,
+                    F,
+                >::VTABLE,
+                handler,
+            );
+            unsafe { core::mem::transmute(windows_core::imp::box_new(com)) }
+        };
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            let token__ = (windows_core::Interface::vtable(self).AcceleratorKeyPressed)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Interface::as_raw(&handler),
+                &mut result__,
+            )
+            .map(|| result__)?;
+            Ok(windows_core::EventRevoker::new(
+                self.clone(),
+                token__,
+                windows_core::Interface::vtable(self).RemoveAcceleratorKeyPressed,
+            ))
+        }
+    }
+}
+#[repr(C)]
+pub struct ICoreWebView2Controller_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    IsVisible: usize,
+    SetIsVisible: usize,
+    Bounds: usize,
+    SetBounds: usize,
+    ZoomFactor: usize,
+    SetZoomFactor: usize,
+    ParentWindow: usize,
+    SetParentWindow: usize,
+    CoreWebView2: usize,
+    ZoomFactorChanged: usize,
+    RemoveZoomFactorChanged: usize,
+    MoveFocusRequested: usize,
+    RemoveMoveFocusRequested: usize,
+    GotFocus: usize,
+    RemoveGotFocus: usize,
+    LostFocus: usize,
+    RemoveLostFocus: usize,
+    pub AcceleratorKeyPressed: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut i64,
+    ) -> windows_core::HRESULT,
+    pub RemoveAcceleratorKeyPressed:
+        unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2ControllerWindowReference,
+    ICoreWebView2ControllerWindowReference_Vtbl,
+    0x0feddad4_48a3_5cc4_9f61_e7adfd1e9c76
+);
+impl windows_core::RuntimeType for ICoreWebView2ControllerWindowReference {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ICoreWebView2ControllerWindowReference_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
     ICoreWebView2Environment,
     ICoreWebView2Environment_Vtbl,
     0xd8cc7831_b783_556b_b9ce_899c1e95d585
@@ -9661,9 +10169,223 @@ impl windows_core::RuntimeType for ICoreWebView2Environment {
     const SIGNATURE: windows_core::imp::ConstBuffer =
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
+impl ICoreWebView2Environment {
+    pub(crate) fn BrowserVersionString(&self) -> windows_core::Result<String> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).BrowserVersionString)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| {
+                let hstring: windows_core::HSTRING = core::mem::transmute(result__);
+                hstring.to_string_lossy()
+            })
+        }
+    }
+    pub(crate) fn NewBrowserVersionAvailable<F>(
+        &self,
+        handler: F,
+    ) -> windows_core::Result<windows_core::EventRevoker>
+    where
+        F: Fn(
+                windows_core::Ref<CoreWebView2Environment>,
+                windows_core::Ref<windows_core::IInspectable>,
+            ) + 'static,
+    {
+        let handler: TypedEventHandler<CoreWebView2Environment, windows_core::IInspectable> = {
+            let com = windows_core::imp::DelegateBox::< TypedEventHandler < CoreWebView2Environment , windows_core::IInspectable > , F >::new (& TypedEventHandlerBox::< CoreWebView2Environment , windows_core::IInspectable , F >::VTABLE , handler) ;
+            unsafe { core::mem::transmute(windows_core::imp::box_new(com)) }
+        };
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            let token__ = (windows_core::Interface::vtable(self).NewBrowserVersionAvailable)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Interface::as_raw(&handler),
+                &mut result__,
+            )
+            .map(|| result__)?;
+            Ok(windows_core::EventRevoker::new(
+                self.clone(),
+                token__,
+                windows_core::Interface::vtable(self).RemoveNewBrowserVersionAvailable,
+            ))
+        }
+    }
+    pub(crate) fn CreateCoreWebView2ControllerAsync<P0>(
+        &self,
+        parentwindow: P0,
+    ) -> windows_core::Result<windows_future::IAsyncOperation<CoreWebView2Controller>>
+    where
+        P0: windows_core::Param<CoreWebView2ControllerWindowReference>,
+    {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).CreateCoreWebView2ControllerAsync)(
+                windows_core::Interface::as_raw(self),
+                parentwindow.param().abi(),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+    pub(crate) fn CreateWebResourceResponse<P0>(
+        &self,
+        content: P0,
+        statuscode: i32,
+        reasonphrase: &str,
+        headers: &str,
+    ) -> windows_core::Result<CoreWebView2WebResourceResponse>
+    where
+        P0: windows_core::Param<IRandomAccessStream>,
+    {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).CreateWebResourceResponse)(
+                windows_core::Interface::as_raw(self),
+                content.param().abi(),
+                statuscode,
+                core::mem::transmute_copy(&windows_core::HSTRING::from(reasonphrase)),
+                core::mem::transmute_copy(&windows_core::HSTRING::from(headers)),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+}
 #[repr(C)]
 pub struct ICoreWebView2Environment_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
+    pub BrowserVersionString: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    pub NewBrowserVersionAvailable: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut i64,
+    ) -> windows_core::HRESULT,
+    pub RemoveNewBrowserVersionAvailable:
+        unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
+    pub CreateCoreWebView2ControllerAsync: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    pub CreateWebResourceResponse: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        i32,
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2Environment3,
+    ICoreWebView2Environment3_Vtbl,
+    0x5e33f46c_c0b9_5126_8840_17f9c11b3a8a
+);
+impl windows_core::RuntimeType for ICoreWebView2Environment3 {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl ICoreWebView2Environment3 {
+    pub(crate) fn CreateCoreWebView2CompositionControllerAsync<P0>(
+        &self,
+        parentwindow: P0,
+    ) -> windows_core::Result<windows_future::IAsyncOperation<CoreWebView2CompositionController>>
+    where
+        P0: windows_core::Param<CoreWebView2ControllerWindowReference>,
+    {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).CreateCoreWebView2CompositionControllerAsync)(
+                windows_core::Interface::as_raw(self),
+                parentwindow.param().abi(),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+    pub(crate) fn CreateCoreWebView2PointerInfo(
+        &self,
+    ) -> windows_core::Result<CoreWebView2PointerInfo> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).CreateCoreWebView2PointerInfo)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+}
+#[repr(C)]
+pub struct ICoreWebView2Environment3_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub CreateCoreWebView2CompositionControllerAsync:
+        unsafe extern "system" fn(
+            *mut core::ffi::c_void,
+            *mut core::ffi::c_void,
+            *mut *mut core::ffi::c_void,
+        ) -> windows_core::HRESULT,
+    pub CreateCoreWebView2PointerInfo: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2EnvironmentOptions,
+    ICoreWebView2EnvironmentOptions_Vtbl,
+    0x25d6dc39_0062_5735_8b09_a6f535f19e97
+);
+impl windows_core::RuntimeType for ICoreWebView2EnvironmentOptions {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl ICoreWebView2EnvironmentOptions {
+    pub(crate) fn SetLanguage(&self, value: &str) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetLanguage)(
+                windows_core::Interface::as_raw(self),
+                core::mem::transmute_copy(&windows_core::HSTRING::from(value)),
+            )
+            .ok()
+        }
+    }
+}
+#[repr(C)]
+pub struct ICoreWebView2EnvironmentOptions_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    AdditionalBrowserArguments: usize,
+    SetAdditionalBrowserArguments: usize,
+    Language: usize,
+    pub SetLanguage: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2EnvironmentStatics,
+    ICoreWebView2EnvironmentStatics_Vtbl,
+    0x0e33f804_f20b_5635_8491_162aaa27517b
+);
+impl windows_core::RuntimeType for ICoreWebView2EnvironmentStatics {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ICoreWebView2EnvironmentStatics_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    CreateAsync: usize,
+    pub CreateWithOptionsAsync: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     ICoreWebView2InitializedEventArgs,
@@ -9676,6 +10398,32 @@ impl windows_core::RuntimeType for ICoreWebView2InitializedEventArgs {
 }
 #[repr(C)]
 pub struct ICoreWebView2InitializedEventArgs_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2PointerInfo,
+    ICoreWebView2PointerInfo_Vtbl,
+    0xc3860e0d_c018_5a84_bc06_9f8f7b275dff
+);
+impl windows_core::RuntimeType for ICoreWebView2PointerInfo {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ICoreWebView2PointerInfo_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+}
+windows_core::imp::define_interface!(
+    ICoreWebView2WebResourceResponse,
+    ICoreWebView2WebResourceResponse_Vtbl,
+    0x14621923_e485_5f44_8f5d_bd4243bc398f
+);
+impl windows_core::RuntimeType for ICoreWebView2WebResourceResponse {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ICoreWebView2WebResourceResponse_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
 }
 pub const IDYES: i32 = 6;

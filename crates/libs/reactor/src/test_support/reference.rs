@@ -11,6 +11,7 @@ impl ImperativeRequest {
         match self {
             Self::Focus { object, .. }
             | Self::InitializeWebView2 { object, .. }
+            | Self::WebView2AcceleratorKeys { object, .. }
             | Self::ObserveSwapChainPanel { object, .. }
             | Self::RequestSwapChainPanelFrame { object, .. }
             | Self::SetSwapChain { object, .. }
