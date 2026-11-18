@@ -1249,6 +1249,9 @@ impl Adapter for RecordingAdapter {
             ImperativeRequest::InitializeWebView2 { completion, .. } => {
                 completion.call(Err(IntegrationError::Unavailable));
             }
+            ImperativeRequest::WebView2AcceleratorKeys { completion, .. } => {
+                completion.call(Err(IntegrationError::Unavailable));
+            }
             ImperativeRequest::RequestSwapChainPanelFrame { completion, .. }
             | ImperativeRequest::SetSwapChain { completion, .. }
             | ImperativeRequest::SetNativeImageSource { completion, .. }

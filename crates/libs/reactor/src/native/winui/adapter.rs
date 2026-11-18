@@ -367,23 +367,16 @@ impl Adapter for WinUiAdapter {
                 } else {
                     let control = control.clone();
                     let initializations = Rc::clone(&self.webview_initializations);
+                    let keys = Rc::clone(&self.webview_keys);
                     let environment = environment.clone();
                     let loaded = framework.Loaded(move |_, _| {
-                        let result = ensure_core_web_view2(&control, environment.as_ref());
-                        match result {
-                            Ok(action) => {
-                                if let Some(initialization) =
-                                    initializations.borrow_mut().get_mut(&object)
-                                {
-                                    initialization._action = Some(action);
-                                }
-                            }
-                            Err(error) => complete_webview_initialization(
-                                &initializations,
-                                object,
-                                Err(integration_error(error)),
-                            ),
-                        }
+                        start_webview_core(
+                            &control,
+                            object,
+                            environment.as_ref(),
+                            &initializations,
+                            &keys,
+                        );
                     });
                     match loaded {
                         Ok(loaded) => Some(loaded),
@@ -403,21 +396,51 @@ impl Adapter for WinUiAdapter {
                     },
                 );
                 if is_loaded {
-                    match ensure_core_web_view2(control, environment.as_ref()) {
-                        Ok(action) => {
-                            if let Some(initialization) =
-                                self.webview_initializations.borrow_mut().get_mut(&object)
-                            {
-                                initialization._action = Some(action);
-                            }
-                        }
-                        Err(error) => complete_webview_initialization(
-                            &self.webview_initializations,
-                            object,
-                            Err(integration_error(error)),
-                        ),
-                    }
+                    start_webview_core(
+                        control,
+                        object,
+                        environment.as_ref(),
+                        &self.webview_initializations,
+                        &self.webview_keys,
+                    );
                 }
+            }
+            ImperativeRequest::WebView2AcceleratorKeys {
+                object,
+                on_key,
+                completion,
+            } => {
+                let Some(Handle::Generated(GeneratedHandle::WebView2(control))) =
+                    self.handles.get(&object)
+                else {
+                    completion.call(Err(IntegrationError::Unavailable));
+                    return Ok(());
+                };
+                let mut keys = self.webview_keys.borrow_mut();
+                if let Some(entry) = keys.get_mut(&object) {
+                    *entry.on_key.borrow_mut() = on_key;
+                    if entry.pressed.is_some() {
+                        completion.call(Ok(()));
+                    } else {
+                        entry.completions.push(completion);
+                    }
+                    return Ok(());
+                }
+                // A core made, or being made, without the proxy can't be reached.
+                if control.CoreWebView2().is_ok()
+                    || self.webview_initializations.borrow().contains_key(&object)
+                {
+                    completion.call(Err(IntegrationError::Unavailable));
+                    return Ok(());
+                }
+                keys.insert(
+                    object,
+                    WebViewKeys {
+                        on_key: Rc::new(RefCell::new(on_key)),
+                        completions: vec![completion],
+                        pressed: None,
+                    },
+                );
             }
             ImperativeRequest::ObserveSwapChainPanel {
                 object,

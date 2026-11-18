@@ -817,6 +817,9 @@ impl WinUiAdapter {
                 completion.call(Err(IntegrationError::Unavailable));
             }
         }
+        if let Some(mut keys) = self.webview_keys.borrow_mut().remove(&object) {
+            keys.complete(&Err(IntegrationError::Unavailable));
+        }
         self.event_queue
             .feedback
             .borrow_mut()

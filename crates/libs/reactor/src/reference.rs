@@ -240,6 +240,39 @@ impl ElementRef<WebView2> {
         self.request_core_web_view2_in(Some(environment), completion)
     }
 
+    /// Enqueues routing the WebView2's accelerator keys to `on_key`: the keys WebView2 reports
+    /// with the focus in its page (`CoreWebView2Controller.AcceleratorKeyPressed`, raised before
+    /// the page sees the key): one pressed with Ctrl or Alt held, Esc, and a key that types no
+    /// character (Delete, Insert, F1 to F24, the arrows...). `on_key` gets each key-down
+    /// (`KeyDown`, `SystemKeyDown`; never a key-up), its modifiers read from the keyboard state as
+    /// `on_key_down`'s are, and returns whether it handled it: a handled key never reaches the
+    /// page. Nothing is opened toward the page: no script, no web message, no host object.
+    ///
+    /// WinUI's WebView2 keeps its controller to itself, so the core has to be started for this:
+    /// request it before the WebView2's first `request_core_web_view2` (or
+    /// `request_core_web_view2_with_environment`). The core is then created in a proxy of its
+    /// environment (of the default one WinUI would create, made the same way, when none is
+    /// given), which hands the reactor the controller the control creates in it. A view whose
+    /// core already exists, or is being created without it, completes `Unavailable`.
+    ///
+    /// `completion` gets `Ok` once the keys are connected, after the core is created; or the
+    /// error, and the view then works as before without them. A later request replaces `on_key`
+    /// (and completes at once if the keys are connected).
+    #[must_use]
+    pub fn request_accelerator_keys(
+        &self,
+        on_key: RoutedCallback<KeyEventInfo>,
+        completion: impl Fn(Result<(), IntegrationError>) + 'static,
+    ) -> bool {
+        self.enqueue(
+            move |object, binding, target| ImperativeRequest::WebView2AcceleratorKeys {
+                object,
+                on_key,
+                completion: current_completion(target, binding, completion),
+            },
+        )
+    }
+
     fn request_core_web_view2_in(
         &self,
         environment: Option<windows_core::IUnknown>,
@@ -887,6 +920,12 @@ pub enum ImperativeRequest {
         environment: Option<windows_core::IUnknown>,
         completion: Callback<Result<windows_core::IUnknown, IntegrationError>>,
     },
+    /// `ElementRef<WebView2>::request_accelerator_keys`.
+    WebView2AcceleratorKeys {
+        object: ObjectId,
+        on_key: RoutedCallback<KeyEventInfo>,
+        completion: Callback<Result<(), IntegrationError>>,
+    },
     ObserveSwapChainPanel {
         object: ObjectId,
         observation: u64,
@@ -1020,6 +1059,9 @@ impl ImperativeRequest {
                 completion.call(Err(IntegrationError::Unavailable));
             }
             Self::InitializeWebView2 { completion, .. } => {
+                completion.call(Err(IntegrationError::Unavailable));
+            }
+            Self::WebView2AcceleratorKeys { completion, .. } => {
                 completion.call(Err(IntegrationError::Unavailable));
             }
             Self::FocusedItem { completion, .. } => {
