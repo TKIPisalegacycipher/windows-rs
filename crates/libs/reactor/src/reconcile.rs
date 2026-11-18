@@ -4863,6 +4863,7 @@ fn split_selected_index(
         .iter()
         .cloned()
         .partition(|property| index_selection && property.id == PropertyId::SelectedIndex);
+    // Defensive: property order already writes `ItemsSource` before `SelectedIndex` on mount.
     if !index_selection {
         select_after_items_source(properties, &mut rest);
     }

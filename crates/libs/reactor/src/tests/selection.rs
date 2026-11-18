@@ -1442,7 +1442,7 @@ fn combo_box_selected_index_is_written_again_after_its_items_source() {
         .update(combo(&["Mark as read", "Complete flag"]))
         .unwrap();
     let object = runtime.graph().root().unwrap();
-    // Declared before its items, the index is still written after them.
+    // On mount the items come first by property order, and the index follows them.
     assert_eq!(
         set_ids(mutations, object),
         [PropertyId::ItemsSource, PropertyId::SelectedIndex]
