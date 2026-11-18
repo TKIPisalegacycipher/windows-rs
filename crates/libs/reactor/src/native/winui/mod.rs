@@ -553,14 +553,29 @@ struct WebViewKeys {
     completions: Vec<Callback<Result<(), IntegrationError>>>,
     /// The controller's `AcceleratorKeyPressed`, once connected.
     pressed: Option<windows_core::EventRevoker>,
+    /// The environment the core starts in, made once for the view (`start_webview_core`), so
+    /// every start, and WinUI's own restart after a browser-process failure, sees the same one.
+    environment: WebViewKeysEnvironment,
 }
 
-impl WebViewKeys {
-    /// Completes the waiting requests with `result`.
-    fn complete(&mut self, result: &Result<(), IntegrationError>) {
-        for completion in std::mem::take(&mut self.completions) {
-            completion.call(result.clone());
-        }
+/// Where a [`WebViewKeys`]'s environment is.
+enum WebViewKeysEnvironment {
+    /// Not made: the core hasn't started.
+    Unmade,
+    /// The default environment is being created; its completion starts the core.
+    Creating,
+    /// The proxy (`webview_keys::proxy_environment`) the core starts in.
+    Made(windows_core::IUnknown),
+}
+
+/// Completes `completions` with `result`. Called with no adapter state borrowed: a completion is
+/// the app's code.
+fn complete_webview_keys(
+    completions: Vec<Callback<Result<(), IntegrationError>>>,
+    result: &Result<(), IntegrationError>,
+) {
+    for completion in completions {
+        completion.call(result.clone());
     }
 }
 
@@ -2186,10 +2201,13 @@ fn ensure_core_web_view2(
 }
 
 /// Starts `object`'s core (`control`) in `environment`: plainly (`ensure_core_web_view2`), or,
-/// when its accelerator keys were requested (`keys` has it), in a proxy of `environment`, or of
-/// the default environment made here when there is none (`webview_keys`). What starts it is kept
-/// in its initialization; an error completes it. If the keys can't be routed, their requests
-/// complete with the error and the core starts plainly.
+/// when its accelerator keys were requested (`keys` has it), in their proxy of `environment`, or
+/// of the default environment made here when there is none (`webview_keys`). The proxy, and the
+/// default environment, are made once for the view: a later start (`Loaded` again, a request
+/// after a failed start) reuses them, and one that finds the default environment still being
+/// created leaves the start to its completion. What starts the core is kept in its
+/// initialization; an error completes it. If the keys can't be routed, their requests complete
+/// with the error and the core starts plainly.
 fn start_webview_core(
     control: &native::WebView2,
     object: ObjectId,
@@ -2197,52 +2215,127 @@ fn start_webview_core(
     initializations: &Rc<RefCell<HashMap<ObjectId, WebViewInitialization>>>,
     keys: &Rc<RefCell<HashMap<ObjectId, WebViewKeys>>>,
 ) {
-    let keep = |action: IInspectable| {
-        if let Some(initialization) = initializations.borrow_mut().get_mut(&object) {
-            initialization._action = Some(action);
-        }
-    };
-    let plain = |environment: Option<&windows_core::IUnknown>| match ensure_core_web_view2(
-        control,
-        environment,
-    ) {
-        Ok(action) => keep(action.into()),
-        Err(error) => {
-            complete_webview_initialization(initializations, object, Err(integration_error(error)))
-        }
-    };
-    if !keys.borrow().contains_key(&object) {
-        return plain(environment);
+    /// How the core starts.
+    enum Start<'a> {
+        /// In `environment`, without the keys.
+        Plain,
+        /// In the keys' proxy, made by an earlier start.
+        Proxied(windows_core::IUnknown),
+        /// In a proxy, made now, of the app's environment.
+        Proxy(&'a windows_core::IUnknown),
+        /// In a proxy of the default environment, created now.
+        Default,
+        /// Not here: the default environment is being created, and its completion starts it.
+        Waiting,
     }
-    let Some(environment) = environment else {
-        match start_default_environment(control, object, initializations, keys) {
+    let start = {
+        let mut keys = keys.borrow_mut();
+        match keys.get_mut(&object) {
+            None => Start::Plain,
+            Some(entry) => {
+                if let WebViewKeysEnvironment::Made(proxy) = &entry.environment {
+                    Start::Proxied(proxy.clone())
+                } else if matches!(entry.environment, WebViewKeysEnvironment::Creating) {
+                    Start::Waiting
+                } else if let Some(environment) = environment {
+                    Start::Proxy(environment)
+                } else {
+                    entry.environment = WebViewKeysEnvironment::Creating;
+                    Start::Default
+                }
+            }
+        }
+    };
+    match start {
+        Start::Plain => ensure_webview_core(control, object, environment, initializations),
+        Start::Proxied(proxy) => {
+            ensure_webview_core(control, object, Some(&proxy), initializations)
+        }
+        Start::Proxy(environment) => {
+            start_in_proxy(control, object, environment, initializations, keys);
+        }
+        Start::Default => match start_default_environment(control, object, initializations, keys) {
             Ok(operation) => {
                 if let Ok(operation) = operation.cast::<IInspectable>() {
-                    keep(operation);
+                    keep_webview_start(initializations, object, operation);
                 }
             }
             Err(error) => {
-                fail_webview_keys(keys, object, &error);
-                plain(None);
+                fail_webview_keys(keys, object, integration_error(error));
+                ensure_webview_core(control, object, None, initializations);
             }
-        }
-        return;
-    };
-    let observer: webview_keys::ControllerObserver = {
-        let keys = Rc::clone(keys);
-        Rc::new(move |controller| connect_webview_keys(&keys, object, controller))
-    };
-    match webview_keys::proxy_environment(environment, observer) {
-        Ok(proxy) => plain(Some(&proxy)),
+        },
+        Start::Waiting => {}
+    }
+}
+
+/// `EnsureCoreWebView2Async` (`ensure_core_web_view2`) for `object`, its action kept in the
+/// initialization; an error completes the initialization.
+fn ensure_webview_core(
+    control: &native::WebView2,
+    object: ObjectId,
+    environment: Option<&windows_core::IUnknown>,
+    initializations: &Rc<RefCell<HashMap<ObjectId, WebViewInitialization>>>,
+) {
+    match ensure_core_web_view2(control, environment) {
+        Ok(action) => keep_webview_start(initializations, object, action.into()),
         Err(error) => {
-            fail_webview_keys(keys, object, &error);
-            plain(Some(environment));
+            complete_webview_initialization(initializations, object, Err(integration_error(error)));
         }
     }
 }
 
-/// Creates the default environment for `object`'s keys, then starts its core in it
-/// (`start_webview_core`); if it can't be made, the core starts plainly and the keys fail.
+/// Keeps what starts `object`'s core (`action`) in its initialization.
+fn keep_webview_start(
+    initializations: &Rc<RefCell<HashMap<ObjectId, WebViewInitialization>>>,
+    object: ObjectId,
+    action: IInspectable,
+) {
+    if let Some(initialization) = initializations.borrow_mut().get_mut(&object) {
+        initialization._action = Some(action);
+    }
+}
+
+/// Starts `object`'s core in a proxy of `environment` whose controllers connect its keys, kept as
+/// the keys' environment for later starts. Plainly in `environment` if the keys are gone (they
+/// failed meanwhile) or the proxy can't be made (the keys then fail).
+fn start_in_proxy(
+    control: &native::WebView2,
+    object: ObjectId,
+    environment: &windows_core::IUnknown,
+    initializations: &Rc<RefCell<HashMap<ObjectId, WebViewInitialization>>>,
+    keys: &Rc<RefCell<HashMap<ObjectId, WebViewKeys>>>,
+) {
+    if !keys.borrow().contains_key(&object) {
+        ensure_webview_core(control, object, Some(environment), initializations);
+        return;
+    }
+    // Weak: the keys keep the proxy, which keeps its observer.
+    let observer: webview_keys::ControllerObserver = {
+        let keys = Rc::downgrade(keys);
+        Rc::new(move |controller| {
+            if let Some(keys) = keys.upgrade() {
+                connect_webview_keys(&keys, object, controller);
+            }
+        })
+    };
+    match webview_keys::proxy_environment(environment, observer) {
+        Ok(proxy) => {
+            // What this replaces is `Unmade` or `Creating`: nothing to drop.
+            if let Some(entry) = keys.borrow_mut().get_mut(&object) {
+                entry.environment = WebViewKeysEnvironment::Made(proxy.clone());
+            }
+            ensure_webview_core(control, object, Some(&proxy), initializations);
+        }
+        Err(error) => {
+            fail_webview_keys(keys, object, integration_error(error));
+            ensure_webview_core(control, object, Some(environment), initializations);
+        }
+    }
+}
+
+/// Creates the default environment for `object`'s keys, then starts its core in a proxy of it
+/// (`start_in_proxy`); if it can't be made, the keys fail and the core starts plainly.
 fn start_default_environment(
     control: &native::WebView2,
     object: ObjectId,
@@ -2250,7 +2343,9 @@ fn start_default_environment(
     keys: &Rc<RefCell<HashMap<ObjectId, WebViewKeys>>>,
 ) -> windows_core::Result<windows_future::IAsyncOperation<native::CoreWebView2Environment>> {
     let operation = webview_keys::create_default_environment()?;
-    // WebView2 completes on the UI thread, which made these; elsewhere nothing starts.
+    // WebView2 completes its operations on the thread that started them, this UI thread, which
+    // made these `Rc`s. A completion on any other thread can reach none of them, so it starts
+    // nothing.
     let on_thread = webview_keys::ThreadBound::new((
         control.clone(),
         Rc::clone(initializations),
@@ -2262,9 +2357,13 @@ fn start_default_environment(
             let Some((control, initializations, keys)) = on_thread.get() else {
                 return Ok(());
             };
+            // A view released meanwhile (its initialization dropped with it) starts nothing.
+            if !initializations.borrow().contains_key(&object) {
+                return Ok(());
+            }
             let made = match (made.as_ref(), status) {
                 (Some(made), windows_future::AsyncStatus::Completed) => {
-                    made.GetResults().map(Into::into)
+                    made.GetResults().map(windows_core::IUnknown::from)
                 }
                 (Some(made), _) => Err(made
                     .ErrorCode()
@@ -2273,11 +2372,11 @@ fn start_default_environment(
             };
             match made {
                 Ok(environment) => {
-                    start_webview_core(control, object, Some(&environment), initializations, keys);
+                    start_in_proxy(control, object, &environment, initializations, keys);
                 }
                 Err(error) => {
-                    fail_webview_keys(keys, object, &error);
-                    start_webview_core(control, object, None, initializations, keys);
+                    fail_webview_keys(keys, object, integration_error(error));
+                    ensure_webview_core(control, object, None, initializations);
                 }
             }
             Ok(())
@@ -2288,7 +2387,8 @@ fn start_default_environment(
 }
 
 /// Subscribes `controller`'s `AcceleratorKeyPressed` for `object`'s keys (replacing an earlier
-/// controller's, after its browser process failed) and completes their requests.
+/// controller's, after its browser process failed) and completes their requests. Nothing for a
+/// view whose keys are gone (released, or failed).
 fn connect_webview_keys(
     keys: &Rc<RefCell<HashMap<ObjectId, WebViewKeys>>>,
     object: ObjectId,
@@ -2312,13 +2412,19 @@ fn connect_webview_keys(
         });
     match pressed {
         Ok(pressed) => {
-            let mut keys = keys.borrow_mut();
-            if let Some(entry) = keys.get_mut(&object) {
-                entry.pressed = Some(pressed);
-                entry.complete(&Ok(()));
-            }
+            // Taken out, so the earlier subscription is revoked and the requests complete with
+            // the map released.
+            let (earlier, completions) = match keys.borrow_mut().get_mut(&object) {
+                Some(entry) => (
+                    entry.pressed.replace(pressed),
+                    std::mem::take(&mut entry.completions),
+                ),
+                None => (Some(pressed), Vec::new()),
+            };
+            drop(earlier);
+            complete_webview_keys(completions, &Ok(()));
         }
-        Err(error) => fail_webview_keys(keys, object, &error),
+        Err(error) => fail_webview_keys(keys, object, integration_error(error)),
     }
 }
 
@@ -2327,11 +2433,11 @@ fn connect_webview_keys(
 fn fail_webview_keys(
     keys: &Rc<RefCell<HashMap<ObjectId, WebViewKeys>>>,
     object: ObjectId,
-    error: &windows_core::Error,
+    error: IntegrationError,
 ) {
     let removed = keys.borrow_mut().remove(&object);
-    if let Some(mut entry) = removed {
-        entry.complete(&Err(integration_error(error.clone())));
+    if let Some(entry) = removed {
+        complete_webview_keys(entry.completions, &Err(error));
     }
 }
 
@@ -2340,7 +2446,9 @@ fn complete_webview_initialization(
     object: ObjectId,
     result: Result<windows_core::IUnknown, IntegrationError>,
 ) {
-    if let Some(initialization) = initializations.borrow_mut().remove(&object) {
+    // Taken out first: a completion is the app's code.
+    let removed = initializations.borrow_mut().remove(&object);
+    if let Some(initialization) = removed {
         for completion in initialization.completions {
             completion.call(result.clone());
         }
@@ -2662,15 +2770,16 @@ impl Drop for WinUiAdapter {
             }
         }
         self.flyout_owners.clear();
-        for initialization in
-            std::mem::take(&mut *self.webview_initializations.borrow_mut()).into_values()
-        {
+        // Taken out first: a completion is the app's code.
+        let initializations = std::mem::take(&mut *self.webview_initializations.borrow_mut());
+        for initialization in initializations.into_values() {
             for completion in initialization.completions {
                 completion.call(Err(IntegrationError::Unavailable));
             }
         }
-        for mut keys in std::mem::take(&mut *self.webview_keys.borrow_mut()).into_values() {
-            keys.complete(&Err(IntegrationError::Unavailable));
+        let keys = std::mem::take(&mut *self.webview_keys.borrow_mut());
+        for keys in keys.into_values() {
+            complete_webview_keys(keys.completions, &Err(IntegrationError::Unavailable));
         }
     }
 }

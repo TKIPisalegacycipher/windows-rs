@@ -342,6 +342,7 @@ impl Adapter for WinUiAdapter {
                 }
                 let setup = (|| {
                     let initializations = Rc::clone(&self.webview_initializations);
+                    let keys = Rc::clone(&self.webview_keys);
                     let initialized = control.CoreWebView2Initialized(move |sender, _| {
                         let result = sender
                             .as_ref()
@@ -349,6 +350,17 @@ impl Adapter for WinUiAdapter {
                             .and_then(|control| control.CoreWebView2())
                             .map(Into::into)
                             .map_err(integration_error);
+                        // The proxy's observer connects the keys before WinUI goes on to raise
+                        // this, so keys not connected by now never will be: their controller
+                        // never reached the reactor. They fail, rather than leave their requests
+                        // waiting.
+                        let unconnected = keys
+                            .borrow()
+                            .get(&object)
+                            .is_some_and(|entry| entry.pressed.is_none());
+                        if unconnected {
+                            fail_webview_keys(&keys, object, IntegrationError::Unavailable);
+                        }
                         complete_webview_initialization(&initializations, object, result);
                     })?;
                     let framework = control.cast::<native::IFrameworkElement>()?;
@@ -416,29 +428,42 @@ impl Adapter for WinUiAdapter {
                     completion.call(Err(IntegrationError::Unavailable));
                     return Ok(());
                 };
-                let mut keys = self.webview_keys.borrow_mut();
-                if let Some(entry) = keys.get_mut(&object) {
-                    *entry.on_key.borrow_mut() = on_key;
-                    if entry.pressed.is_some() {
+                let connected = self
+                    .webview_keys
+                    .borrow()
+                    .get(&object)
+                    .map(|entry| entry.pressed.is_some());
+                if let Some(connected) = connected {
+                    // The earlier callback is dropped, and the completion runs, with the map
+                    // released: both are the app's code.
+                    let earlier = self
+                        .webview_keys
+                        .borrow_mut()
+                        .get_mut(&object)
+                        .map(|entry| entry.on_key.replace(on_key));
+                    drop(earlier);
+                    if connected {
                         completion.call(Ok(()));
-                    } else {
+                    } else if let Some(entry) = self.webview_keys.borrow_mut().get_mut(&object) {
                         entry.completions.push(completion);
                     }
                     return Ok(());
                 }
-                // A core made, or being made, without the proxy can't be reached.
+                // A core made, or being made, without the proxy can't be reached. Such a request
+                // completes at once and leaves nothing behind.
                 if control.CoreWebView2().is_ok()
                     || self.webview_initializations.borrow().contains_key(&object)
                 {
                     completion.call(Err(IntegrationError::Unavailable));
                     return Ok(());
                 }
-                keys.insert(
+                self.webview_keys.borrow_mut().insert(
                     object,
                     WebViewKeys {
                         on_key: Rc::new(RefCell::new(on_key)),
                         completions: vec![completion],
                         pressed: None,
+                        environment: WebViewKeysEnvironment::Unmade,
                     },
                 );
             }

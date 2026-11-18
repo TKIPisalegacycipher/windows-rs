@@ -363,13 +363,21 @@ struct Observation {
 /// so a handler may be called, and released, on any thread.
 struct AnyThreadHandler(AsyncOperationCompletedHandler<Controller>);
 
-// SAFETY: see above; the handler is only called and cloned, never otherwise used.
+// SAFETY: WinRT's completion handlers are agile by contract: an operation invokes its handler on
+// whatever thread completes it, and may release it there, so a handler is made to be called and
+// released on any thread. (windows-future's binding doesn't say so: it isn't `Send`.) The handler
+// is only called and cloned here, never otherwise used.
 unsafe impl Send for AnyThreadHandler {}
 
 #[derive(Default)]
 struct ObservedState {
     /// The caller's handler, until it is called.
     handler: Option<AnyThreadHandler>,
+    /// The observed operation itself, from the caller setting its handler until that handler is
+    /// called: a running operation keeps itself alive (WinRT's contract), so a caller may let go
+    /// of it and still hear it end. The one strong reference to it from the wrapped operation's
+    /// side (`inner` → its handler → the observation), taken, and dropped, at completion.
+    observed: Option<ControllerOperation>,
     /// The caller set a handler (`SetCompleted` takes only one).
     handler_set: bool,
     /// How the wrapped operation ended, once it has.
@@ -399,11 +407,9 @@ fn observe(operation: ControllerOperation, observer: ControllerObserver) -> Cont
         observation: Arc::clone(&observation),
     })
     .into_interface();
-    let Ok(weak) = observed.downgrade() else {
-        return operation;
-    };
-    // The handler holds the observation and a weak reference to the observed operation, so the
-    // wrapped operation (which keeps its handler) doesn't keep the observed one alive.
+    // The handler holds the observation, which holds the observed operation only while a
+    // caller's handler waits (`ObservedState::observed`), so the wrapped operation (which keeps
+    // its handler) keeps the observed one alive only until it completes.
     let handler = AsyncOperationCompletedHandler::new(
         move |inner: Ref<ControllerOperation>, status: AsyncStatus| {
             let outcome = match (inner.as_ref(), status) {
@@ -416,12 +422,14 @@ fn observe(operation: ControllerOperation, observer: ControllerObserver) -> Cont
             if let (Ok(controller), Some(observer)) = (&outcome, observation.observer.get()) {
                 observer(controller);
             }
-            let handler = {
+            let (handler, observed) = {
                 let mut state = observation.state.lock().unwrap();
                 state.outcome = Some((status, outcome));
-                state.handler.take()
+                let handler = state.handler.take();
+                (handler, state.observed.take())
             };
-            if let (Some(AnyThreadHandler(handler)), Some(observed)) = (handler, weak.upgrade()) {
+            // Called with the lock released; the observed operation's own reference goes after.
+            if let (Some(AnyThreadHandler(handler)), Some(observed)) = (handler, observed) {
                 handler.Invoke(&observed, status)?;
             }
             Ok(())
@@ -477,6 +485,7 @@ impl IAsyncOperation_Impl<Controller> for ObservedOperation_Impl {
                 Some((status, _)) => *status,
                 None => {
                     state.handler = Some(AnyThreadHandler(handler));
+                    state.observed = Some(self.to_interface::<ControllerOperation>());
                     return Ok(());
                 }
             }
@@ -879,6 +888,100 @@ mod tests {
         ComObject::new(Ready(result)).into_interface()
     }
 
+    /// An operation that completes later, as WebView2's do: after its caller set the handler,
+    /// when the test ends it ([`end`]).
+    struct Pending(Rc<RefCell<PendingState>>);
+
+    #[derive(Default)]
+    struct PendingState {
+        handler: Option<AsyncOperationCompletedHandler<Controller>>,
+        result: Option<windows_core::Result<Controller>>,
+    }
+
+    implement_decl! {
+        impl Pending as Pending_Impl: [ControllerOperation, IAsyncInfo]
+    }
+
+    impl Pending_Impl {
+        fn status(&self) -> AsyncStatus {
+            match &self.0.borrow().result {
+                None => AsyncStatus::Started,
+                Some(Ok(_)) => AsyncStatus::Completed,
+                Some(Err(_)) => AsyncStatus::Error,
+            }
+        }
+    }
+
+    impl IAsyncInfo_Impl for Pending_Impl {
+        fn Id(&self) -> windows_core::Result<u32> {
+            Ok(2)
+        }
+        fn Status(&self) -> windows_core::Result<AsyncStatus> {
+            Ok(self.status())
+        }
+        fn ErrorCode(&self) -> windows_core::Result<HRESULT> {
+            Ok(match &self.0.borrow().result {
+                Some(Err(error)) => error.code(),
+                _ => HRESULT(0),
+            })
+        }
+        fn Cancel(&self) -> windows_core::Result<()> {
+            Ok(())
+        }
+        fn Close(&self) -> windows_core::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl IAsyncOperation_Impl<Controller> for Pending_Impl {
+        fn SetCompleted(
+            &self,
+            handler: Ref<AsyncOperationCompletedHandler<Controller>>,
+        ) -> windows_core::Result<()> {
+            self.0.borrow_mut().handler = Some(handler.ok()?.clone());
+            Ok(())
+        }
+        fn Completed(&self) -> windows_core::Result<AsyncOperationCompletedHandler<Controller>> {
+            Err(windows_core::Error::empty())
+        }
+        fn GetResults(&self) -> windows_core::Result<Controller> {
+            self.0
+                .borrow()
+                .result
+                .clone()
+                .unwrap_or_else(|| Err(E_ILLEGAL_METHOD_CALL.into()))
+        }
+    }
+
+    /// A pending operation, and the state the test ends it through.
+    fn pending() -> (ControllerOperation, Rc<RefCell<PendingState>>) {
+        let state = Rc::new(RefCell::new(PendingState::default()));
+        let operation = ComObject::new(Pending(Rc::clone(&state))).into_interface();
+        (operation, state)
+    }
+
+    /// Ends a [`pending`] `operation` with `result`, calling the handler set on it.
+    fn end(
+        operation: &ControllerOperation,
+        state: &RefCell<PendingState>,
+        result: windows_core::Result<Controller>,
+    ) {
+        let status = if result.is_ok() {
+            AsyncStatus::Completed
+        } else {
+            AsyncStatus::Error
+        };
+        let handler = {
+            let mut state = state.borrow_mut();
+            state.result = Some(result);
+            state.handler.take()
+        };
+        handler
+            .expect("the observed operation set its handler")
+            .Invoke(operation, status)
+            .unwrap();
+    }
+
     /// Any COM object, typed as a controller: the operations only pass it along.
     fn stand_in_controller() -> Controller {
         let object: IInspectable = windows_reference::IReference::from(42).into();
@@ -938,14 +1041,8 @@ mod tests {
         assert_eq!(*calls.lock().unwrap(), ["freed"]);
     }
 
-    /// Creates a controller through `proxy` as WinUI's control does, and records the status its
-    /// handler gets and the controller it then reads.
-    fn create_through(
-        proxy: &IUnknown,
-    ) -> (
-        windows_core::Result<ControllerOperation>,
-        Arc<Mutex<Vec<(AsyncStatus, Option<usize>)>>>,
-    ) {
+    /// Calls `proxy`'s `CreateCoreWebView2CompositionControllerAsync`, as WinUI's control does.
+    fn create_operation(proxy: &IUnknown) -> windows_core::Result<ControllerOperation> {
         let face3 = proxy.cast::<native::ICoreWebView2Environment3>().unwrap();
         let mut raw = std::ptr::null_mut();
         let result = unsafe {
@@ -955,25 +1052,45 @@ mod tests {
                 &mut raw,
             )
         };
+        result.ok()?;
+        Ok(unsafe { ControllerOperation::from_raw(raw) })
+    }
+
+    /// The status, and the controller read then, each call of a [`recording`] handler got.
+    type Completions = Arc<Mutex<Vec<(AsyncStatus, Option<usize>)>>>;
+
+    /// A handler, as WinUI's control sets one, that records the status it gets and the
+    /// controller it then reads; `then` runs after, in the handler.
+    fn recording(
+        then: impl Fn() + Send + 'static,
+    ) -> (AsyncOperationCompletedHandler<Controller>, Completions) {
         let completions = Arc::new(Mutex::new(Vec::new()));
-        if result.is_err() {
-            return (Err(result.into()), completions);
-        }
-        let operation = unsafe { ControllerOperation::from_raw(raw) };
         let recorded = Arc::clone(&completions);
-        operation
-            .SetCompleted(&AsyncOperationCompletedHandler::new(
-                move |operation: Ref<ControllerOperation>, status| {
-                    let controller = operation
-                        .as_ref()
-                        .and_then(|operation| operation.GetResults().ok())
-                        .map(|controller| controller.as_raw() as usize);
-                    recorded.lock().unwrap().push((status, controller));
-                    Ok(())
-                },
-            ))
-            .unwrap();
-        (Ok(operation), completions)
+        let handler = AsyncOperationCompletedHandler::new(
+            move |operation: Ref<ControllerOperation>, status| {
+                let controller = operation
+                    .as_ref()
+                    .and_then(|operation| operation.GetResults().ok())
+                    .map(|controller| controller.as_raw() as usize);
+                recorded.lock().unwrap().push((status, controller));
+                then();
+                Ok(())
+            },
+        );
+        (handler, completions)
+    }
+
+    /// Creates a controller through `proxy` as WinUI's control does, and records the status its
+    /// handler gets and the controller it then reads.
+    fn create_through(
+        proxy: &IUnknown,
+    ) -> (windows_core::Result<ControllerOperation>, Completions) {
+        let (handler, completions) = recording(|| {});
+        let operation = create_operation(proxy);
+        if let Ok(operation) = &operation {
+            operation.SetCompleted(&handler).unwrap();
+        }
+        (operation, completions)
     }
 
     #[test]
@@ -1002,6 +1119,62 @@ mod tests {
         assert_eq!(
             operation.SetCompleted(&again).unwrap_err().code(),
             E_ILLEGAL_DELEGATE_ASSIGNMENT
+        );
+    }
+
+    #[test]
+    fn a_pending_creation_reaches_the_observer_then_the_caller_when_it_ends() {
+        let controller = stand_in_controller();
+        let (inner, state) = pending();
+        let (environment, _, _) = fake_environment(Some(inner.clone()));
+        let order = Arc::new(Mutex::new(Vec::new()));
+        let observer: ControllerObserver = {
+            let order = Arc::clone(&order);
+            Rc::new(move |_: &Controller| order.lock().unwrap().push("observer"))
+        };
+        let proxy = proxy_environment(&environment, observer).unwrap();
+        // WinUI's order: it sets its handler first, and the operation ends later.
+        let (handler, completions) = {
+            let order = Arc::clone(&order);
+            recording(move || order.lock().unwrap().push("caller"))
+        };
+        let operation = create_operation(&proxy).unwrap();
+        operation.SetCompleted(&handler).unwrap();
+        assert_eq!(operation.Status().unwrap(), AsyncStatus::Started);
+        assert_eq!(
+            operation.GetResults().unwrap_err().code(),
+            E_ILLEGAL_METHOD_CALL
+        );
+        assert!(order.lock().unwrap().is_empty());
+
+        end(&inner, &state, Ok(controller.clone()));
+        assert_eq!(*order.lock().unwrap(), ["observer", "caller"]);
+        let raw = controller.as_raw() as usize;
+        assert_eq!(
+            *completions.lock().unwrap(),
+            [(AsyncStatus::Completed, Some(raw))]
+        );
+        assert_eq!(operation.Status().unwrap(), AsyncStatus::Completed);
+        assert_eq!(operation.GetResults().unwrap(), controller);
+    }
+
+    #[test]
+    fn a_caller_that_lets_go_of_a_pending_creation_still_hears_it_end() {
+        let controller = stand_in_controller();
+        let (inner, state) = pending();
+        let (environment, _, _) = fake_environment(Some(inner.clone()));
+        let proxy = proxy_environment(&environment, no_observer()).unwrap();
+        let (handler, completions) = recording(|| {});
+        let operation = create_operation(&proxy).unwrap();
+        operation.SetCompleted(&handler).unwrap();
+        // The running operation keeps itself alive.
+        drop((operation, handler, proxy, environment));
+
+        end(&inner, &state, Ok(controller.clone()));
+        let raw = controller.as_raw() as usize;
+        assert_eq!(
+            *completions.lock().unwrap(),
+            [(AsyncStatus::Completed, Some(raw))]
         );
     }
 

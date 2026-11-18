@@ -256,8 +256,10 @@ impl ElementRef<WebView2> {
     /// core already exists, or is being created without it, completes `Unavailable`.
     ///
     /// `completion` gets `Ok` once the keys are connected, after the core is created; or the
-    /// error, and the view then works as before without them. A later request replaces `on_key`
-    /// (and completes at once if the keys are connected).
+    /// error (`Unavailable` when the core came up without its controller reaching the reactor),
+    /// and the view then works as before without them. A later request replaces `on_key` (and
+    /// completes at once if the keys are connected). The core's environment (the proxy, and the
+    /// default environment) is made once for the view, and kept while it lives.
     #[must_use]
     pub fn request_accelerator_keys(
         &self,
