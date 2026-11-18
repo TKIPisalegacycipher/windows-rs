@@ -444,8 +444,20 @@ impl Adapter for WinUiAdapter {
                     drop(earlier);
                     if connected {
                         completion.call(Ok(()));
-                    } else if let Some(entry) = self.webview_keys.borrow_mut().get_mut(&object) {
-                        entry.completions.push(completion);
+                        return Ok(());
+                    }
+                    // The entry can be gone by now (dropping the earlier callback ran the app's
+                    // code): the completion then runs, with the map released, rather than drop
+                    // uncalled.
+                    let unqueued = match self.webview_keys.borrow_mut().get_mut(&object) {
+                        Some(entry) => {
+                            entry.completions.push(completion);
+                            None
+                        }
+                        None => Some(completion),
+                    };
+                    if let Some(completion) = unqueued {
+                        completion.call(Err(IntegrationError::Unavailable));
                     }
                     return Ok(());
                 }

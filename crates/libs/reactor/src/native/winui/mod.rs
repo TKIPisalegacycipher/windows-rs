@@ -2203,11 +2203,14 @@ fn ensure_core_web_view2(
 /// Starts `object`'s core (`control`) in `environment`: plainly (`ensure_core_web_view2`), or,
 /// when its accelerator keys were requested (`keys` has it), in their proxy of `environment`, or
 /// of the default environment made here when there is none (`webview_keys`). The proxy, and the
-/// default environment, are made once for the view: a later start (`Loaded` again, a request
-/// after a failed start) reuses them, and one that finds the default environment still being
-/// created leaves the start to its completion. What starts the core is kept in its
-/// initialization; an error completes it. If the keys can't be routed, their requests complete
-/// with the error and the core starts plainly.
+/// default environment, are made once for the view's keys: a later start while their entry lasts
+/// (`Loaded` again before the core started) reuses them, and one that finds the default
+/// environment still being created leaves the start to its completion. A failed start fails keys
+/// not yet connected (`ensure_webview_core` for a synchronous failure, `CoreWebView2Initialized`
+/// for a later one), which drops their entry with its proxy, so the next request's start makes a
+/// new environment and proxy. What starts the core is kept in its initialization; an error
+/// completes it. If the keys can't be routed, their requests complete with the error and the
+/// core starts plainly.
 fn start_webview_core(
     control: &native::WebView2,
     object: ObjectId,
@@ -2247,9 +2250,9 @@ fn start_webview_core(
         }
     };
     match start {
-        Start::Plain => ensure_webview_core(control, object, environment, initializations),
+        Start::Plain => ensure_webview_core(control, object, environment, initializations, keys),
         Start::Proxied(proxy) => {
-            ensure_webview_core(control, object, Some(&proxy), initializations)
+            ensure_webview_core(control, object, Some(&proxy), initializations, keys)
         }
         Start::Proxy(environment) => {
             start_in_proxy(control, object, environment, initializations, keys);
@@ -2262,7 +2265,7 @@ fn start_webview_core(
             }
             Err(error) => {
                 fail_webview_keys(keys, object, integration_error(error));
-                ensure_webview_core(control, object, None, initializations);
+                ensure_webview_core(control, object, None, initializations, keys);
             }
         },
         Start::Waiting => {}
@@ -2270,17 +2273,28 @@ fn start_webview_core(
 }
 
 /// `EnsureCoreWebView2Async` (`ensure_core_web_view2`) for `object`, its action kept in the
-/// initialization; an error completes the initialization.
+/// initialization. An error completes the initialization, and fails `object`'s keys if they
+/// aren't connected: no controller reaches them from a start that failed, and no
+/// `CoreWebView2Initialized` may come to fail them, so their requests would wait.
 fn ensure_webview_core(
     control: &native::WebView2,
     object: ObjectId,
     environment: Option<&windows_core::IUnknown>,
     initializations: &Rc<RefCell<HashMap<ObjectId, WebViewInitialization>>>,
+    keys: &Rc<RefCell<HashMap<ObjectId, WebViewKeys>>>,
 ) {
     match ensure_core_web_view2(control, environment) {
         Ok(action) => keep_webview_start(initializations, object, action.into()),
         Err(error) => {
-            complete_webview_initialization(initializations, object, Err(integration_error(error)));
+            let error = integration_error(error);
+            let unconnected = keys
+                .borrow()
+                .get(&object)
+                .is_some_and(|entry| entry.pressed.is_none());
+            if unconnected {
+                fail_webview_keys(keys, object, error);
+            }
+            complete_webview_initialization(initializations, object, Err(error));
         }
     }
 }
@@ -2307,7 +2321,7 @@ fn start_in_proxy(
     keys: &Rc<RefCell<HashMap<ObjectId, WebViewKeys>>>,
 ) {
     if !keys.borrow().contains_key(&object) {
-        ensure_webview_core(control, object, Some(environment), initializations);
+        ensure_webview_core(control, object, Some(environment), initializations, keys);
         return;
     }
     // Weak: the keys keep the proxy, which keeps its observer.
@@ -2325,11 +2339,11 @@ fn start_in_proxy(
             if let Some(entry) = keys.borrow_mut().get_mut(&object) {
                 entry.environment = WebViewKeysEnvironment::Made(proxy.clone());
             }
-            ensure_webview_core(control, object, Some(&proxy), initializations);
+            ensure_webview_core(control, object, Some(&proxy), initializations, keys);
         }
         Err(error) => {
             fail_webview_keys(keys, object, integration_error(error));
-            ensure_webview_core(control, object, Some(environment), initializations);
+            ensure_webview_core(control, object, Some(environment), initializations, keys);
         }
     }
 }
@@ -2345,7 +2359,9 @@ fn start_default_environment(
     let operation = webview_keys::create_default_environment()?;
     // WebView2 completes its operations on the thread that started them, this UI thread, which
     // made these `Rc`s. A completion on any other thread can reach none of them, so it starts
-    // nothing.
+    // nothing and reports nothing: the view's initialization, and its keys, then wait until the
+    // view is released, which completes their requests with `Unavailable`. (Nothing safer is in
+    // reach from there: the state it would fail is this thread's.)
     let on_thread = webview_keys::ThreadBound::new((
         control.clone(),
         Rc::clone(initializations),
@@ -2376,7 +2392,7 @@ fn start_default_environment(
                 }
                 Err(error) => {
                     fail_webview_keys(keys, object, integration_error(error));
-                    ensure_webview_core(control, object, None, initializations);
+                    ensure_webview_core(control, object, None, initializations, keys);
                 }
             }
             Ok(())
