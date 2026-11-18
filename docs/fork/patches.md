@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-87 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-88 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 57 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 58 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -138,6 +138,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 73 | `5dea1b36f` | `PointerEventInfo::timestamp_us`: the input's own time (`PointerPoint.Timestamp`, microseconds since boot), 0 if unavailable; binds `IPointerPoint::get_Timestamp` | none | New | Bug-adjacent: Okojo timed a double click by when each press was handled, so a second press that waited on a busy UI thread (the reading pane's first web view being created) missed it (Okojo#1612). Evidence: unit (the field is carried); app (Okojo's popout-margins scenario) |
 | 78 | `97b4b9c9` | A queued pointer event keeps the callback installed when the input happened, and is delivered to it even after a render replaced that callback. The adapter holds the callback for the seven pointer event ids (capture lost and canceled included, so keyed on the event id; `QueuedEvent::held`, resolved by `QueuedEvent::callback`) and marks the dispatch (`EventDispatch::held`), and `validate_event_dispatch` takes a marked pointer dispatch while the object still has a handler for that event. A removed handler or a gone object still drops it; every other event keeps the revision rule | none | New | Bug, and a deliberate departure from upstream: upstream drops every event queued for a replaced callback, and its test `stale_pointer_event_does_not_reach_replacement_callback` pins that; here it is inverted (`stale_held_pointer_event_reaches_the_callback_it_was_raised_under`, with `stale_unheld_event_does_not_reach_replacement_callback` keeping upstream's rule for an unheld dispatch). A callback whose closure captures data is new on every render, and a drag re-renders on each move, so dropping lost the moves or the release that waited in the queue (Okojo#2173). The old callback rather than the new one, as the element may stand for something else by now (a recycled row). Evidence: unit (adapter, runtime, and the dispatch that joins them) |
 | 80 | `a4453a4d` | A render that meets a queued native event waits for it instead of failing the host: when the render after a dispatch gets `PendingNativeEvent` from `update_subtree`'s `prepare_update` (nothing has reached the native tree), the host records the render's scopes (`deferred_renders`), and `drain` renders them again from their current state once the native work is done, ahead of later messages. An expansion or a row's realization renders a deferred scope even when its input is unchanged, a commit or retirement clears it, and `has_pending_input` counts it | none | New | Bug, still present upstream: `drain` checks the native queue before it takes a message, but the handler's own code runs before the render reaches the runtime. A handler that pumps on the UI thread (Okojo's synchronous toast show) lets WinUI queue an event in between, and `run_component_operation` poisoned the host on the error, which ended the UI thread (Okojo#2570). Evidence: unit (`tests/component/pending_native.rs`, a backend the handler fills: a pumped event, a pumped realization, a child's effect, a retired child) |
+| 88 | `11411d22` | `ElementRef<WebView2>::request_accelerator_keys(on_key, completion)`, requested before the view's core: the keys WebView2 reports as accelerator keys (`CoreWebView2Controller.AcceleratorKeyPressed`: Ctrl or Alt held, Esc, a key that types nothing) go to `on_key` (a `RoutedCallback<KeyEventInfo>`, key-downs only, modifiers from the keyboard state as `on_key_down`'s); `true` marks the key handled, so the page never sees it. WinUI's `WebView2` keeps its `CoreWebView2CompositionController` private and never subscribes that event, so the core starts in a proxy of its environment (`native::winui::webview_keys`): a COM object with the environment's default face and its `ICoreWebView2Environment3` face, forwarding every call, any other interface answered by the environment itself; it wraps the `CreateCoreWebView2CompositionControllerAsync` operation the control awaits (`ObservedOperation`), so the controller reaches the adapter, which subscribes the event, before the control resumes. Without an app environment it wraps the default one, made as WinUI makes it (`CreateWithOptionsAsync`, no folders, `Language` the first of `ApplicationLanguages.Languages`). Anything that can't be set up completes the request with the error and the core starts as before. Binds the WebView2 Core members it needs (`bindings.txt`) | none | New | A message body (a WebView2) keeps the keys pressed in it from the XAML tree, so the mail shortcuts did nothing with the focus there (Okojo#2763). Shaped by WinUI's control rather than by Okojo, but reaching a private controller through a proxied environment is a design question for upstream: a `WebView2` host of the reactor's own, or WinUI exposing the controller, would be cleaner. The proxy bends COM identity for interfaces it doesn't answer itself (they are the environment's). Evidence: unit (`native/winui/webview_keys.rs`: the proxy's faces, forwarding, fall-through, lifetime, the observed operation's success and failure, against a fake environment; `tests/reference.rs`); app (Okojo's `mail-shortcuts` scenario, run 44289182503: Ctrl+R from the body of the reading pane and of a message window opens the reply; Ctrl+A and Ctrl+C stay the page's) |
 
 ## 6. Drag and drop
 
@@ -308,7 +309,7 @@ Commits 46-87 came after the rebuild and have no original.
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77, 83, 84 and 86 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77, 83, 84, 86 and 88 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_font`,
 `Border::use_system_focus_visuals`, `Border::focus_visual_margin`, `automation_accessibility_view`,
@@ -316,7 +317,7 @@ requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_fo
 `NavigationViewItem::on_got_focus`, `on_lost_focus` and `element_ref`, `Menu::on_closed`,
 `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`,
 `ElementRef<ListView>::request_focus_key`, `ElementRef<ListView>::request_selected_keys_into_view`,
-`TextBlock::font_family`), 78-82 and 87 change behaviour (above, no public item), and 85 removes the one 57 added
+`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`), 78-82 and 87 change behaviour (above, no public item), and 85 removes the one 57 added
 (`Border::handles_plain_presses`); none changes an existing item. `register_resource_fonts` is
 missing from `public-api.txt`, which commit 60 did not update. These are source-breaking for code
 that names them:
