@@ -1411,3 +1411,57 @@ fn list_view_out_of_step_selected_keys_do_not_ring() {
     );
     assert_eq!(host.drain(64).unwrap().dispatched, 0);
 }
+
+/// The ids `mutations` sets on `object`, in order.
+fn set_ids(mutations: UpdateStats, object: ObjectId) -> Vec<PropertyId> {
+    mutations
+        .iter()
+        .filter_map(|mutation| match mutation {
+            Mutation::SetProperties { object: o, set, .. } if *o == object => {
+                Some(set.iter().map(|property| property.id).collect::<Vec<_>>())
+            }
+            _ => None,
+        })
+        .flatten()
+        .collect()
+}
+
+#[test]
+fn combo_box_selected_index_is_written_again_after_its_items_source() {
+    // WinUI drops a ComboBox's selection when its ItemsSource is replaced (Okojo#2662).
+    let combo = |items: &[&str]| {
+        ComboBox::new().selected_index(Some(0)).items_source(
+            items
+                .iter()
+                .map(|item| item.to_string())
+                .collect::<Vec<_>>(),
+        )
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(combo(&["Mark as read", "Complete flag"]))
+        .unwrap();
+    let object = runtime.graph().root().unwrap();
+    // On mount the items come first by property order, and the index follows them.
+    assert_eq!(
+        set_ids(mutations, object),
+        [PropertyId::ItemsSource, PropertyId::SelectedIndex]
+    );
+
+    // The items change and the index doesn't: it is written again, after them.
+    let mutations = runtime.update(combo(&["Mark as read"])).unwrap();
+    assert_eq!(
+        set_ids(mutations, object),
+        [PropertyId::ItemsSource, PropertyId::SelectedIndex]
+    );
+
+    // Nothing changes: nothing is written.
+    let mutations = runtime.update(combo(&["Mark as read"])).unwrap();
+    assert!(set_ids(mutations, object).is_empty());
+
+    // Without a declared index, new items write only the items.
+    let mutations = runtime
+        .update(ComboBox::new().items_source(vec!["Delete".to_string()]))
+        .unwrap();
+    assert_eq!(set_ids(mutations, object), [PropertyId::ItemsSource]);
+}
