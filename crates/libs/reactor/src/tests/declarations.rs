@@ -575,19 +575,19 @@ fn shared_values_record_set_update_clear_and_unchanged_updates() {
 
 #[test]
 fn a_double_resource_override_is_recorded_and_diffed_like_the_others() {
-    let wide = ResourceOverrides::new().set("ContentDialogMaxWidth", 720.0);
+    let wide = ResourceOverrides::new().set("ExampleDoubleResource", 720.0);
     assert_eq!(
         wide.values().collect::<Vec<_>>(),
-        [("ContentDialogMaxWidth", &ResourceValue::Double(720.0))]
+        [("ExampleDoubleResource", &ResourceValue::Double(720.0))]
     );
     assert_eq!(ResourceValue::from(720.0), ResourceValue::Double(720.0));
     assert_eq!(
         wide,
-        ResourceOverrides::new().set("ContentDialogMaxWidth", ResourceValue::Double(720.0))
+        ResourceOverrides::new().set("ExampleDoubleResource", ResourceValue::Double(720.0))
     );
     assert_ne!(
         wide,
-        ResourceOverrides::new().set("ContentDialogMaxWidth", 640.0)
+        ResourceOverrides::new().set("ExampleDoubleResource", 640.0)
     );
 
     let mut runtime = Runtime::new(RecordingAdapter::default());
@@ -609,7 +609,7 @@ fn a_double_resource_override_is_recorded_and_diffed_like_the_others() {
             .is_empty()
     );
 
-    let narrow = ResourceOverrides::new().set("ContentDialogMaxWidth", 640.0);
+    let narrow = ResourceOverrides::new().set("ExampleDoubleResource", 640.0);
     let mutations = runtime
         .update(Button::new().resource_overrides(narrow.clone()))
         .unwrap();

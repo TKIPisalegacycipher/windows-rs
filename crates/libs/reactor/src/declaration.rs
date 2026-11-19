@@ -471,7 +471,12 @@ pub enum ResourceValue {
     Color(Color),
     Thickness(Thickness),
     CornerRadius(CornerRadius),
-    /// A `Double` resource, such as `ContentDialogMaxWidth`.
+    /// A non-negative `Double` resource, such as `ContentDialogMaxWidth`; `ResourceOverrides::set`
+    /// panics on a negative or non-finite one.
+    ///
+    /// `Thickness` and `CornerRadius` also take `From<f64>`, so a bare number passed to `set` is
+    /// a `Double`: a uniform thickness or radius needs `Thickness::from(..)` or
+    /// `CornerRadius::from(..)`.
     Double(f64),
 }
 
@@ -493,6 +498,9 @@ impl From<CornerRadius> for ResourceValue {
     }
 }
 
+/// A bare number is a [`ResourceValue::Double`], not a uniform `Thickness` or `CornerRadius`
+/// (convert those with `Thickness::from(..)` or `CornerRadius::from(..)`). It must be finite and
+/// non-negative, which `ResourceOverrides::set` checks.
 impl From<f64> for ResourceValue {
     fn from(value: f64) -> Self {
         Self::Double(value)
