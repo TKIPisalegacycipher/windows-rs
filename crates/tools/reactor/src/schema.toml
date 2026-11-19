@@ -1975,6 +1975,10 @@ name = "DefaultButton"
 name = "AutomationId"
 adapter = "automation_id"
 
+[[objects.properties]]
+name = "Resources"
+adapter = "resource_overrides"
+
 [[objects.relations]]
 name = "Content"
 

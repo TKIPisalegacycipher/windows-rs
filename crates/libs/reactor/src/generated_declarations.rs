@@ -7024,6 +7024,13 @@ impl ContentDialog {
         );
         self
     }
+    pub fn resource_overrides(mut self, resource_overrides: ResourceOverrides) -> Self {
+        self.0 = self.0.property(
+            PropertyId::Resources,
+            PropertyValue::ResourceOverrides(resource_overrides),
+        );
+        self
+    }
     /// Rejects values outside this relation's generated type contract.
     ///
     /// ```compile_fail

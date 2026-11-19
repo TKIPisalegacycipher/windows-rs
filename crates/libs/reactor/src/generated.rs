@@ -2524,6 +2524,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::String,
         }),
+        (ObjectType::ContentDialog, PropertyId::Resources) => Some(PropertyContract {
+            id,
+            value: ValueType::ResourceOverrides,
+        }),
         (ObjectType::CalendarView, PropertyId::IsTodayHighlighted) => Some(PropertyContract {
             id,
             value: ValueType::Bool,
@@ -2894,6 +2898,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::ContentDialog, PropertyId::Title) => 36,
         (ObjectType::ContentDialog, PropertyId::DefaultButton) => 37,
         (ObjectType::ContentDialog, PropertyId::AutomationId) => 38,
+        (ObjectType::ContentDialog, PropertyId::Resources) => 39,
         (ObjectType::CalendarView, PropertyId::IsTodayHighlighted) => 31,
         (ObjectType::CalendarView, PropertyId::IsGroupLabelVisible) => 32,
         (ObjectType::CalendarView, PropertyId::IsEnabled) => 33,

@@ -471,6 +471,13 @@ pub enum ResourceValue {
     Color(Color),
     Thickness(Thickness),
     CornerRadius(CornerRadius),
+    /// A non-negative `Double` resource, such as `ContentDialogMaxWidth`; `ResourceOverrides::set`
+    /// panics on a negative or non-finite one.
+    ///
+    /// `Thickness` and `CornerRadius` also take `From<f64>`, so a bare number passed to `set` is
+    /// a `Double`: a uniform thickness or radius needs `Thickness::from(..)` or
+    /// `CornerRadius::from(..)`.
+    Double(f64),
 }
 
 impl From<Color> for ResourceValue {
@@ -491,6 +498,15 @@ impl From<CornerRadius> for ResourceValue {
     }
 }
 
+/// A bare number is a [`ResourceValue::Double`], not a uniform `Thickness` or `CornerRadius`
+/// (convert those with `Thickness::from(..)` or `CornerRadius::from(..)`). It must be finite and
+/// non-negative, which `ResourceOverrides::set` checks.
+impl From<f64> for ResourceValue {
+    fn from(value: f64) -> Self {
+        Self::Double(value)
+    }
+}
+
 /// Theme resource values applied to a control subtree.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ResourceOverrides(Rc<BTreeMap<String, ResourceValue>>);
@@ -504,7 +520,7 @@ impl ResourceOverrides {
     ///
     /// # Panics
     ///
-    /// Panics if the key is empty, or if a thickness or radius is negative or non-finite.
+    /// Panics if the key is empty, or if a thickness, radius or double is negative or non-finite.
     pub fn set(mut self, key: impl Into<String>, value: impl Into<ResourceValue>) -> Self {
         let key = key.into();
         assert!(!key.is_empty(), "resource override key must not be empty");
@@ -518,6 +534,10 @@ impl ResourceOverrides {
             ResourceValue::CornerRadius(value) => assert!(
                 value.is_finite_non_negative(),
                 "resource override corner radius must be finite and non-negative"
+            ),
+            ResourceValue::Double(value) => assert!(
+                value.is_finite() && *value >= 0.0,
+                "resource override double must be finite and non-negative"
             ),
         }
         Rc::make_mut(&mut self.0).insert(key, value);

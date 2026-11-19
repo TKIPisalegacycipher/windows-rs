@@ -3627,6 +3627,7 @@ fn resource_value(value: &ResourceValue) -> windows_core::Result<IInspectable> {
             })
             .into()
         }
+        ResourceValue::Double(value) => windows_reference::IReference::from(*value).into(),
     })
 }
 
