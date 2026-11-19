@@ -320,7 +320,7 @@ requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_fo
 `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`,
 `ElementRef<ListView>::request_focus_key`, `ElementRef<ListView>::request_selected_keys_into_view`,
 `TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`), 78-82 and 87 change behaviour (above, no public item), and 85 removes the one 57 added
-(`Border::handles_plain_presses`); none changes an existing item. `register_resource_fonts` is
+(`Border::handles_plain_presses`); none changes an existing item, except that 90 adds a variant to an enum (the table below). `register_resource_fonts` is
 missing from `public-api.txt`, which commit 60 did not update. These are source-breaking for code
 that names them:
 
