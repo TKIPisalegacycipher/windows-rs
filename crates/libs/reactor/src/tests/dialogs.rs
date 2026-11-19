@@ -416,3 +416,75 @@ fn content_dialog_automation_id_updates_and_clears() {
         .unwrap();
     assert_eq!(&**clear, [PropertyId::AutomationId]);
 }
+
+#[test]
+fn content_dialog_resource_overrides_apply_before_it_opens_update_and_clear() {
+    let wide = ResourceOverrides::new()
+        .set("ContentDialogMaxWidth", 720.0)
+        .set("ContentDialogMaxHeight", 800.0);
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    let mutations = runtime
+        .update(Button::new().content_dialog(content_dialog(true).resource_overrides(wide.clone())))
+        .unwrap();
+    let owner = runtime.graph().root().unwrap();
+    let dialog = runtime.graph().content_dialog(owner).unwrap().0;
+    let (set_at, set) = mutations
+        .iter()
+        .enumerate()
+        .find_map(|(index, mutation)| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == dialog => Some((index, set)),
+            _ => None,
+        })
+        .unwrap();
+    assert!(set.contains(&Property {
+        id: PropertyId::Resources,
+        value: PropertyValue::ResourceOverrides(wide),
+    }));
+    let open_at = mutations
+        .iter()
+        .position(|mutation| {
+            matches!(
+                mutation,
+                Mutation::SetContentDialogOpen { dialog: current, open: true } if *current == dialog
+            )
+        })
+        .unwrap();
+    assert!(
+        set_at < open_at,
+        "the overrides must reach the dialog before it shows"
+    );
+
+    let narrow = ResourceOverrides::new().set("ContentDialogMaxWidth", 640.0);
+    let mutations = runtime
+        .update(
+            Button::new().content_dialog(content_dialog(true).resource_overrides(narrow.clone())),
+        )
+        .unwrap();
+    let set = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, set, .. } if *object == dialog => Some(set),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(
+        &**set,
+        [Property {
+            id: PropertyId::Resources,
+            value: PropertyValue::ResourceOverrides(narrow),
+        }]
+    );
+    assert_eq!(runtime.graph().content_dialog(owner).unwrap().0, dialog);
+
+    let mutations = runtime
+        .update(Button::new().content_dialog(content_dialog(true)))
+        .unwrap();
+    let clear = mutations
+        .iter()
+        .find_map(|mutation| match mutation {
+            Mutation::SetProperties { object, clear, .. } if *object == dialog => Some(clear),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(&**clear, [PropertyId::Resources]);
+}

@@ -1494,3 +1494,16 @@ fn list_rows_in_the_recycle_queue_are_not_live_until_prepared_again() {
     rows.prepared(1, &"c1", &item);
     assert_eq!(rows.live().count(), 2);
 }
+
+#[test]
+fn a_double_resource_override_is_boxed_as_a_double() {
+    let value = resource_value(&ResourceValue::Double(720.0)).unwrap();
+    assert_eq!(
+        value
+            .cast::<windows_reference::IReference<f64>>()
+            .unwrap()
+            .Value()
+            .unwrap(),
+        720.0
+    );
+}

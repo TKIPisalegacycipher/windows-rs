@@ -259,7 +259,10 @@ pub windows_reactor::PasswordRevealMode::Visible
 pub enum windows_reactor::ResourceValue
 pub windows_reactor::ResourceValue::Color(windows_reactor::Color)
 pub windows_reactor::ResourceValue::CornerRadius(windows_reactor::CornerRadius)
+pub windows_reactor::ResourceValue::Double(f64)
 pub windows_reactor::ResourceValue::Thickness(windows_reactor::Thickness)
+impl core::convert::From<f64> for windows_reactor::ResourceValue
+pub fn windows_reactor::ResourceValue::from(f64) -> Self
 impl core::convert::From<windows_reactor::Color> for windows_reactor::ResourceValue
 pub fn windows_reactor::ResourceValue::from(windows_reactor::Color) -> Self
 impl core::convert::From<windows_reactor::CornerRadius> for windows_reactor::ResourceValue
@@ -1399,6 +1402,7 @@ pub fn windows_reactor::ContentDialog::is_secondary_button_enabled(self, bool) -
 pub fn windows_reactor::ContentDialog::new() -> Self
 pub fn windows_reactor::ContentDialog::on_closed(self, impl windows_reactor::IntoPayloadCallback<windows_reactor::ContentDialogResult>) -> Self
 pub fn windows_reactor::ContentDialog::primary_button_text(self, impl core::convert::AsRef<str>) -> Self
+pub fn windows_reactor::ContentDialog::resource_overrides(self, windows_reactor::ResourceOverrides) -> Self
 pub fn windows_reactor::ContentDialog::secondary_button_text(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::ContentDialog::title(self, impl core::convert::AsRef<str>) -> Self
 impl core::default::Default for windows_reactor::ContentDialog

@@ -574,6 +574,77 @@ fn shared_values_record_set_update_clear_and_unchanged_updates() {
 }
 
 #[test]
+fn a_double_resource_override_is_recorded_and_diffed_like_the_others() {
+    let wide = ResourceOverrides::new().set("ContentDialogMaxWidth", 720.0);
+    assert_eq!(
+        wide.values().collect::<Vec<_>>(),
+        [("ContentDialogMaxWidth", &ResourceValue::Double(720.0))]
+    );
+    assert_eq!(ResourceValue::from(720.0), ResourceValue::Double(720.0));
+    assert_eq!(
+        wide,
+        ResourceOverrides::new().set("ContentDialogMaxWidth", ResourceValue::Double(720.0))
+    );
+    assert_ne!(
+        wide,
+        ResourceOverrides::new().set("ContentDialogMaxWidth", 640.0)
+    );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(Button::new().resource_overrides(wide.clone()))
+        .unwrap();
+    let button = runtime.graph().root().unwrap();
+    assert_eq!(
+        runtime.graph().properties(button).unwrap(),
+        [Property {
+            id: PropertyId::Resources,
+            value: PropertyValue::ResourceOverrides(wide.clone()),
+        }]
+    );
+    assert!(
+        runtime
+            .update(Button::new().resource_overrides(wide))
+            .unwrap()
+            .is_empty()
+    );
+
+    let narrow = ResourceOverrides::new().set("ContentDialogMaxWidth", 640.0);
+    let mutations = runtime
+        .update(Button::new().resource_overrides(narrow.clone()))
+        .unwrap();
+    let Mutation::SetProperties { set, clear, .. } = &mutations[0] else {
+        panic!("expected property mutation");
+    };
+    assert_eq!(
+        set.as_ref(),
+        [Property {
+            id: PropertyId::Resources,
+            value: PropertyValue::ResourceOverrides(narrow),
+        }]
+    );
+    assert!(clear.is_empty());
+
+    let mutations = runtime.update(Button::new()).unwrap();
+    let Mutation::SetProperties { set, clear, .. } = &mutations[0] else {
+        panic!("expected property mutation");
+    };
+    assert!(set.is_empty());
+    assert_eq!(clear.as_ref(), [PropertyId::Resources]);
+}
+
+#[test]
+fn a_double_resource_override_must_be_finite_and_non_negative() {
+    let _ = ResourceOverrides::new().set("Zero", 0.0);
+    for value in [f64::NAN, -1.0, f64::INFINITY, f64::NEG_INFINITY] {
+        assert!(
+            std::panic::catch_unwind(|| ResourceOverrides::new().set("Bad", value)).is_err(),
+            "{value} was accepted"
+        );
+    }
+}
+
+#[test]
 fn icon_slots_record_set_update_clear_and_unchanged_updates() {
     let initial_icon = Icon::font("\u{E721}");
     let initial = NavigationViewItem::new()
