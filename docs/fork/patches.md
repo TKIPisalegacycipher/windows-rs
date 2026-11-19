@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-89 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-90 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 59 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 60 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -108,6 +108,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 76 | `481174e04` | `Button::on_double_tapped` (`UIElement.DoubleTapped`, a unit event; binds `IUIElement::{add_DoubleTapped, remove_DoubleTapped}`) | none | A month-view day cell (a button, whose click carries no input time) opens a new all-day event on a double click paired by WinUI's gesture recognizer from the input's own timing, not by when Okojo handled each click (Okojo#1650) | unit |
 | 86 | `60b4a204` | `TextBlock::font_family`, which sets `TextBlock.FontFamily` as a local value (above the implicit style `register_text_block_font` installs; a comma-separated fallback list as XAML takes it; undeclared, the value is cleared). tool-reactor gains a `font_family` property adapter; binds `ITextBlock::put_FontFamily`, `ITextBlockStatics::get_FontFamilyProperty` and `FontFamily::CreateInstanceWithName`, set through the generator's `Uri` property arm, which picks the constructor by adapter (`37a479ac`, a review fix on the same branch) | none | A verification code in a monospace face, so it reads digit by digit with every digit the same width, as codes are set elsewhere (Okojo#1227) | unit (`tests/declarations.rs`; reactor tests pass, Okojo worker check 44195767363); app (Okojo GUI runs 44195508128 before / 44195507871 after: codes and sign-in links in light, dark, high contrast and 175 % scale) |
 | 89 | `1eef83ce` | `TextBlock::text_highlighters(impl IntoIterator<Item = TextHighlighter>)`, which sets `TextBlock.TextHighlighters`: each `TextHighlighter` is a set of `TextRange`s (`start` and `length` in UTF-16 code units, as WinUI's `TextRange` counts them) with an optional background and foreground colour; the collection is replaced as a whole when the declared highlighters change and cleared when none are declared, each highlighter filled before it is added; declared after `Text`, so a render that changes both sets the ranges on the new text. `AutoSuggestBox::is_suggestion_list_open(bool)` (`IsSuggestionListOpen`, cleared when undeclared; after `ItemsSource` and `Text`, so the list opens over its new items). tool-reactor gains a `text_highlighters` property adapter (a native collection, replaced as `GridRows` is) and the `TextHighlighters` value type; binds `ITextBlock::get_TextHighlighters`, `ITextHighlighter::{get_Ranges, put_Background, put_Foreground}`, `TextHighlighter::CreateInstance`, `TextRange`, `IAutoSuggestBox::put_IsSuggestionListOpen` and `IAutoSuggestBoxStatics::get_IsSuggestionListOpenProperty` | none | A search's hits marked in the message list's subjects and previews and the reading pane's subject, and the search box's drop-down opened on the recent searches when the empty box gets the focus (Okojo#2603) | unit |
+| 90 | `282932d5` | `ContentDialog::resource_overrides(ResourceOverrides)` (`FrameworkElement.Resources` on the dialog, the `resource_overrides` adapter as on `Button` and `ListView`; undeclared, the keys it set are removed), and `ResourceValue::Double(f64)` (`From<f64>`; `ResourceOverrides::set` panics on a NaN, infinite or negative one), boxed as an `IReference<f64>` (`PropertyType::Double`). A dialog's properties are written when it is mounted or reconciled, before the `SetContentDialogOpen` that calls `ShowAsync`, so overrides declared with the dialog are in its `Resources` when the template reads them. The template resolves `ContentDialogMaxWidth` and `ContentDialogMaxHeight` when it is applied, so a value changed while the dialog is shown reaches its `Resources` at once but the open dialog keeps its size; it applies when WinUI next reads the resource, at the next showing at the earliest (not verified on a desktop: declare the overrides with the dialog) | none | The add-account dialog 640-720 px wide, past `ContentDialogMaxWidth` (548), by overriding the theme resource on the dialog itself, the supported way (Okojo#2861) | unit (`tests/declarations.rs`, `tests/dialogs.rs`, `tests/native/winui.rs` for the boxing) |
 
 ## 4. Theming, icons and menus
 
@@ -305,12 +306,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-89 came after the rebuild and have no original.
+Commits 46-90 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77, 83, 84, 86, 88 and 89 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77, 83, 84, 86, 88, 89 and 90 only add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_font`,
 `Border::use_system_focus_visuals`, `Border::focus_visual_margin`, `automation_accessibility_view`,
@@ -318,8 +319,8 @@ requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_fo
 `NavigationViewItem::on_got_focus`, `on_lost_focus` and `element_ref`, `Menu::on_closed`,
 `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`,
 `ElementRef<ListView>::request_focus_key`, `ElementRef<ListView>::request_selected_keys_into_view`,
-`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`), 78-82 and 87 change behaviour (above, no public item), and 85 removes the one 57 added
-(`Border::handles_plain_presses`); none changes an existing item. `register_resource_fonts` is
+`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`), 78-82 and 87 change behaviour (above, no public item), and 85 removes the one 57 added
+(`Border::handles_plain_presses`); none changes an existing item, except that 90's variant joins `ResourceValue`, which is not `#[non_exhaustive]`, so an exhaustive `match` on it outside the crate stops compiling (Okojo has none). `register_resource_fonts` is
 missing from `public-api.txt`, which commit 60 did not update. These are source-breaking for code
 that names them:
 
