@@ -1380,6 +1380,50 @@ const fn assert_grid_length(value: f64) {
     assert!(value.is_finite() && value >= 0.0);
 }
 
+/// A run of a `TextBlock`'s text, as WinUI's `TextRange` gives it: `start` and `length` count
+/// UTF-16 code units (not bytes, not chars). A range past the end of the text is cut there by
+/// WinUI.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct TextRange {
+    pub start: u32,
+    pub length: u32,
+}
+
+impl TextRange {
+    pub const fn new(start: u32, length: u32) -> Self {
+        Self { start, length }
+    }
+}
+
+/// One of a `TextBlock`'s `TextHighlighters`: `ranges` of its text drawn over `background` and
+/// in `foreground`. A colour left unset is WinUI's default for a highlighter.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TextHighlighter {
+    pub(crate) ranges: Rc<[TextRange]>,
+    pub(crate) background: Option<Color>,
+    pub(crate) foreground: Option<Color>,
+}
+
+impl TextHighlighter {
+    pub fn new(ranges: impl IntoIterator<Item = TextRange>) -> Self {
+        Self {
+            ranges: ranges.into_iter().collect(),
+            background: None,
+            foreground: None,
+        }
+    }
+
+    pub fn background(mut self, value: Color) -> Self {
+        self.background = Some(value);
+        self
+    }
+
+    pub fn foreground(mut self, value: Color) -> Self {
+        self.foreground = Some(value);
+        self
+    }
+}
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Key(KeyKind);
 
@@ -1480,6 +1524,7 @@ pub enum PropertyValue {
     RichText(RichText),
     SelectionIndex(Option<usize>),
     StringList(Rc<[Rc<str>]>),
+    TextHighlighters(Rc<[TextHighlighter]>),
     ThemeTransitions(Rc<[ThemeTransition]>),
     Thickness(Thickness),
     Vector2([f64; 2]),

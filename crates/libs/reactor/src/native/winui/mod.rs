@@ -3968,6 +3968,35 @@ fn set_grid_definitions(
     Ok(())
 }
 
+/// Replaces `text`'s `TextHighlighters` with `values` (none clears them). Each highlighter is
+/// filled before it is added: WinUI draws a highlighter's ranges as they are when it joins the
+/// collection.
+fn set_text_highlighters(
+    text: &native::TextBlock,
+    values: &[TextHighlighter],
+) -> Result<(), WinUiError> {
+    let highlighters = text.TextHighlighters()?;
+    highlighters.Clear()?;
+    for value in values {
+        let highlighter = native::TextHighlighter::new()?;
+        let ranges = highlighter.Ranges()?;
+        for range in value.ranges.iter() {
+            ranges.Append(native::TextRange {
+                start_index: i32::try_from(range.start).unwrap_or(i32::MAX),
+                length: i32::try_from(range.length).unwrap_or(i32::MAX),
+            })?;
+        }
+        if let Some(color) = value.background {
+            highlighter.SetBackground(&solid_color_brush(color)?)?;
+        }
+        if let Some(color) = value.foreground {
+            highlighter.SetForeground(&solid_color_brush(color)?)?;
+        }
+        highlighters.Append(&highlighter)?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 #[path = "../../tests/native/winui.rs"]
 mod tests;

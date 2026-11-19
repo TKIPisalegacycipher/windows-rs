@@ -400,6 +400,7 @@ pub(crate) fn validate_property(kind: ObjectType, property: &Property) -> Result
         | (ValueType::RichText, PropertyValue::RichText(_))
         | (ValueType::SelectionIndex, PropertyValue::SelectionIndex(_))
         | (ValueType::StringList, PropertyValue::StringList(_))
+        | (ValueType::TextHighlighters, PropertyValue::TextHighlighters(_))
         | (ValueType::ThemeTransitions, PropertyValue::ThemeTransitions(_))
         | (ValueType::Thickness, PropertyValue::Thickness(_)) => true,
         (ValueType::Vector2, PropertyValue::Vector2(value)) => {

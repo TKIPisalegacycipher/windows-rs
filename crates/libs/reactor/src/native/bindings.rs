@@ -556,6 +556,16 @@ impl AutoSuggestBox {
         > = windows_core::imp::FactoryCache::new();
         SHARED.call(callback)
     }
+    pub(crate) fn IsSuggestionListOpenProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IAutoSuggestBoxStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).IsSuggestionListOpenProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
     pub(crate) fn TextProperty() -> windows_core::Result<DependencyProperty> {
         Self::IAutoSuggestBoxStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
@@ -6652,6 +6662,15 @@ impl windows_core::RuntimeType for IAutoSuggestBox {
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
 impl IAutoSuggestBox {
+    pub(crate) fn SetIsSuggestionListOpen(&self, value: bool) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetIsSuggestionListOpen)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn Text(&self) -> windows_core::Result<String> {
         unsafe {
             let mut result__ = core::mem::zeroed();
@@ -6812,7 +6831,8 @@ pub struct IAutoSuggestBox_Vtbl {
     MaxSuggestionListHeight: usize,
     SetMaxSuggestionListHeight: usize,
     IsSuggestionListOpen: usize,
-    SetIsSuggestionListOpen: usize,
+    pub SetIsSuggestionListOpen:
+        unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     TextMemberPath: usize,
     SetTextMemberPath: usize,
     pub Text: unsafe extern "system" fn(
@@ -6915,7 +6935,10 @@ impl windows_core::RuntimeType for IAutoSuggestBoxStatics {
 pub struct IAutoSuggestBoxStatics_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
     MaxSuggestionListHeightProperty: usize,
-    IsSuggestionListOpenProperty: usize,
+    pub IsSuggestionListOpenProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     TextMemberPathProperty: usize,
     pub TextProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
@@ -22918,6 +22941,18 @@ impl ITextBlock {
             .ok()
         }
     }
+    pub(crate) fn TextHighlighters(
+        &self,
+    ) -> windows_core::Result<windows_collections::IVector<TextHighlighter>> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).TextHighlighters)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
 }
 #[repr(C)]
 pub struct ITextBlock_Vtbl {
@@ -22993,6 +23028,25 @@ pub struct ITextBlock_Vtbl {
     MaxLines: usize,
     pub SetMaxLines:
         unsafe extern "system" fn(*mut core::ffi::c_void, i32) -> windows_core::HRESULT,
+    TextLineBounds: usize,
+    SetTextLineBounds: usize,
+    OpticalMarginAlignment: usize,
+    SetOpticalMarginAlignment: usize,
+    IsColorFontEnabled: usize,
+    SetIsColorFontEnabled: usize,
+    TextReadingOrder: usize,
+    SetTextReadingOrder: usize,
+    IsTextScaleFactorEnabled: usize,
+    SetIsTextScaleFactorEnabled: usize,
+    TextDecorations: usize,
+    SetTextDecorations: usize,
+    IsTextTrimmed: usize,
+    HorizontalTextAlignment: usize,
+    SetHorizontalTextAlignment: usize,
+    pub TextHighlighters: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     ITextBlockStatics,
@@ -23604,6 +23658,88 @@ pub struct ITextElement_Vtbl {
     FontStyle: usize,
     pub SetFontStyle:
         unsafe extern "system" fn(*mut core::ffi::c_void, FontStyle) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ITextHighlighter,
+    ITextHighlighter_Vtbl,
+    0xb756e861_1d2b_5f6f_81fd_c51a5bc068ff
+);
+impl windows_core::RuntimeType for ITextHighlighter {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl ITextHighlighter {
+    pub(crate) fn Ranges(&self) -> windows_core::Result<windows_collections::IVector<TextRange>> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Ranges)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+    pub(crate) fn SetForeground<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<Brush>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetForeground)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
+    pub(crate) fn SetBackground<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<Brush>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetBackground)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
+}
+#[repr(C)]
+pub struct ITextHighlighter_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub Ranges: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    Foreground: usize,
+    pub SetForeground: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    Background: usize,
+    pub SetBackground: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ITextHighlighterFactory,
+    ITextHighlighterFactory_Vtbl,
+    0x69c7311f_c019_5b93_b511_81418543bab7
+);
+impl windows_core::RuntimeType for ITextHighlighterFactory {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ITextHighlighterFactory_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub CreateInstance: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     ITextPointer,
@@ -35055,6 +35191,57 @@ impl core::ops::Not for TextGetOptions {
 }
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TextHighlighter(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    TextHighlighter,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+impl TextHighlighter {
+    pub(crate) fn new() -> windows_core::Result<Self> {
+        Self::ITextHighlighterFactory(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).CreateInstance)(
+                windows_core::Interface::as_raw(this),
+                core::ptr::null_mut(),
+                core::ptr::null_mut(),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    fn ITextHighlighterFactory<
+        R,
+        F: FnOnce(&ITextHighlighterFactory) -> windows_core::Result<R>,
+    >(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<TextHighlighter, ITextHighlighterFactory> =
+            windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
+impl windows_core::RuntimeType for TextHighlighter {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ITextHighlighter>();
+}
+unsafe impl windows_core::Interface for TextHighlighter {
+    type Vtable = <ITextHighlighter as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <ITextHighlighter as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for TextHighlighter {
+    type Target = ITextHighlighter;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for TextHighlighter {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Documents.TextHighlighter";
+}
+unsafe impl Send for TextHighlighter {}
+unsafe impl Sync for TextHighlighter {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TextPointer(windows_core::IUnknown);
 windows_core::imp::interface_hierarchy!(
     TextPointer,
@@ -35080,6 +35267,20 @@ impl windows_core::RuntimeName for TextPointer {
 }
 unsafe impl Send for TextPointer {}
 unsafe impl Sync for TextPointer {}
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct TextRange {
+    pub start_index: i32,
+    pub length: i32,
+}
+impl windows_core::imp::TypeKind for TextRange {
+    type TypeKind = windows_core::imp::CopyType;
+}
+impl windows_core::RuntimeType for TextRange {
+    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
+        b"struct(Microsoft.UI.Xaml.Documents.TextRange;i4;i4)",
+    );
+}
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct TextSetOptions(pub u32);

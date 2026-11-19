@@ -206,6 +206,7 @@ enum PropertyAdapter {
     RichTextBlocks,
     SelectionIndex,
     SystemCursor,
+    TextHighlighters,
     ThemeBrush,
     ThemeTransitions,
     Uri,
@@ -242,6 +243,7 @@ impl PropertyAdapter {
             Self::RichTextBlocks => "RichText",
             Self::SelectionIndex => "SelectionIndex",
             Self::SystemCursor => "InputSystemCursorShape",
+            Self::TextHighlighters => "TextHighlighters",
             Self::ThemeBrush => "Brush",
             Self::ItemContainerTransitions | Self::ThemeTransitions => "ThemeTransitions",
         }
@@ -276,7 +278,11 @@ impl PropertyAdapter {
     fn mutates_native_collection(self) -> bool {
         matches!(
             self,
-            Self::RichEditText | Self::RichTextBlocks | Self::GridRows | Self::GridColumns
+            Self::RichEditText
+                | Self::RichTextBlocks
+                | Self::GridRows
+                | Self::GridColumns
+                | Self::TextHighlighters
         )
     }
 
@@ -2758,6 +2764,14 @@ fn emit_native_property_arms(
         ));
         return;
     }
+    if adapter == Some(PropertyAdapter::TextHighlighters) {
+        output.push_str(&format!(
+            "{pattern}None) => Some(set_text_highlighters({target}, &[])),\n\
+             {pattern}Some(PropertyValue::TextHighlighters(value))) => \
+             Some(set_text_highlighters({target}, value)),\n"
+        ));
+        return;
+    }
     let clear = default.map(|default| property_default_parts(value, default));
     if let Some(clear) = &clear {
         let set = native_interface_call(target, target_class, interface, metadata, |object| {
@@ -3045,6 +3059,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
              ResourceOverrides,\n\
              RichText,\n\
              Selection,\n\
+             TextHighlighters,\n\
              ThemeTransitions,\n\
              Thickness,\n\
              Vector2,\n\
@@ -3998,6 +4013,7 @@ fn property_argument_parts(name: &str, value: &str) -> String {
         "ResourceOverrides" => format!("{name}: ResourceOverrides"),
         "SelectionIndex" => format!("{name}: impl Into<Option<usize>>"),
         "StringList" => format!("{name}: impl IntoIterator<Item = impl Into<Rc<str>>>"),
+        "TextHighlighters" => format!("{name}: impl IntoIterator<Item = TextHighlighter>"),
         "ThemeTransitions" => format!("{name}: impl IntoIterator<Item = ThemeTransition>"),
         "Thickness" => format!("{name}: impl Into<Thickness>"),
         "Vector2" => "x: f64, y: f64".to_string(),
@@ -4038,6 +4054,9 @@ fn property_value_parts(value: &str, name: &str) -> String {
         "RichText" => format!("PropertyValue::RichText({name})"),
         "StringList" => {
             format!("PropertyValue::StringList({name}.into_iter().map(Into::into).collect())")
+        }
+        "TextHighlighters" => {
+            format!("PropertyValue::TextHighlighters({name}.into_iter().collect())")
         }
         "ThemeTransitions" => {
             format!("PropertyValue::ThemeTransitions({name}.into_iter().collect())")
@@ -4278,6 +4297,10 @@ fn live_property_sample(
             .to_string(),
         "SelectionIndex" => "Some(0)".to_string(),
         "StringList" => "[\"coverage\"]".to_string(),
+        "TextHighlighters" => {
+            "[TextHighlighter::new([TextRange::new(0, 1)]).background(Color::rgb(1, 2, 3))]"
+                .to_string()
+        }
         "ThemeTransitions" => "[ThemeTransition::Reposition]".to_string(),
         "Thickness" => "Thickness::uniform(1.0)".to_string(),
         "Vector2" => "1.0, -1.0".to_string(),
@@ -4374,6 +4397,7 @@ fn is_builtin_value(value: &str) -> bool {
             | "ResourceOverrides"
             | "RichText"
             | "StringList"
+            | "TextHighlighters"
             | "ThemeTransitions"
             | "Thickness"
             | "Vector2"

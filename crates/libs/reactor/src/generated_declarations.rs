@@ -2155,6 +2155,16 @@ impl TextBlock {
             .property(PropertyId::TextAlignment, text_alignment.property_value());
         self
     }
+    pub fn text_highlighters(
+        mut self,
+        text_highlighters: impl IntoIterator<Item = TextHighlighter>,
+    ) -> Self {
+        self.0 = self.0.property(
+            PropertyId::TextHighlighters,
+            PropertyValue::TextHighlighters(text_highlighters.into_iter().collect()),
+        );
+        self
+    }
     visual_methods!();
 }
 impl Default for TextBlock {
@@ -3793,6 +3803,13 @@ impl AutoSuggestBox {
         self.0 = self.0.property(
             PropertyId::QueryIcon,
             PropertyValue::Icon(query_icon.into()),
+        );
+        self
+    }
+    pub fn is_suggestion_list_open(mut self, is_suggestion_list_open: bool) -> Self {
+        self.0 = self.0.property(
+            PropertyId::IsSuggestionListOpen,
+            PropertyValue::Bool(is_suggestion_list_open),
         );
         self
     }
