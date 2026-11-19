@@ -4282,6 +4282,14 @@ impl GeneratedHandle {
                     })
                     .map_err(Into::into),
             ),
+            (Self::TextBlock(object), PropertyId::TextHighlighters, None) => {
+                Some(set_text_highlighters(object, &[]))
+            }
+            (
+                Self::TextBlock(object),
+                PropertyId::TextHighlighters,
+                Some(PropertyValue::TextHighlighters(value)),
+            ) => Some(set_text_highlighters(object, value)),
             (Self::Button(object), PropertyId::Background, None) => Some(
                 object
                     .value
@@ -5433,6 +5441,27 @@ impl GeneratedHandle {
             ) => Some(
                 icon_element(value, image_source)
                     .and_then(|icon| object.value.SetQueryIcon(&icon).map_err(Into::into)),
+            ),
+            (Self::AutoSuggestBox(object), PropertyId::IsSuggestionListOpen, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::AutoSuggestBox::IsSuggestionListOpenProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::AutoSuggestBox(object),
+                PropertyId::IsSuggestionListOpen,
+                Some(PropertyValue::Bool(value)),
+            ) => Some(
+                object
+                    .value
+                    .SetIsSuggestionListOpen(*value)
+                    .map_err(Into::into),
             ),
             (Self::PasswordBox(object), PropertyId::PlaceholderText, None) => Some(
                 object

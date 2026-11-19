@@ -1517,6 +1517,93 @@ fn a_text_block_records_its_own_font_family_and_drops_it_when_undeclared() {
 }
 
 #[test]
+fn a_text_blocks_highlighters_are_replaced_when_they_change_and_cleared_when_undeclared() {
+    let yellow = Color::rgb(0xFF, 0xF1, 0x00);
+    let black = Color::rgb(0, 0, 0);
+    let first = TextHighlighter::new([TextRange::new(0, 4)])
+        .background(yellow)
+        .foreground(black);
+    let second = TextHighlighter::new([TextRange::new(0, 4), TextRange::new(9, 3)])
+        .background(yellow)
+        .foreground(black);
+    let view = |highlighters: Vec<TextHighlighter>| {
+        TextBlock::new()
+            .text("Okojo or Rus")
+            .text_highlighters(highlighters)
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(view(vec![first.clone()])).unwrap();
+    let root = runtime.graph().root().unwrap();
+    assert!(runtime.update(view(vec![first])).unwrap().is_empty());
+
+    // New ranges replace the highlighters as a whole.
+    let mutations = runtime.update(view(vec![second.clone()])).unwrap();
+    assert!(matches!(
+        mutations.as_slice(),
+        [Mutation::SetProperties { object, set, clear }]
+            if *object == root && clear.is_empty()
+                && set.as_ref() == [Property {
+                    id: PropertyId::TextHighlighters,
+                    value: PropertyValue::TextHighlighters(Rc::from([second.clone()])),
+                }]
+    ));
+
+    // None declared, or the property left out, clears them.
+    let mutations = runtime.update(view(Vec::new())).unwrap();
+    assert!(matches!(
+        mutations.as_slice(),
+        [Mutation::SetProperties { set, .. }]
+            if set.as_ref() == [Property {
+                id: PropertyId::TextHighlighters,
+                value: PropertyValue::TextHighlighters(Rc::from([])),
+            }]
+    ));
+    runtime.update(view(vec![second])).unwrap();
+    let mutations = runtime
+        .update(TextBlock::new().text("Okojo or Rus"))
+        .unwrap();
+    assert!(matches!(
+        mutations.as_slice(),
+        [Mutation::SetProperties { object, set, clear }]
+            if *object == root && set.is_empty()
+                && clear.as_ref() == [PropertyId::TextHighlighters]
+    ));
+}
+
+#[test]
+fn the_suggestion_list_opens_and_closes_as_declared() {
+    let open = Property {
+        id: PropertyId::IsSuggestionListOpen,
+        value: PropertyValue::Bool(true),
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(AutoSuggestBox::new()).unwrap();
+    let root = runtime.graph().root().unwrap();
+    let mutations = runtime
+        .update(
+            AutoSuggestBox::new()
+                .items_source(["recent"])
+                .is_suggestion_list_open(true),
+        )
+        .unwrap();
+    // After the items, so the list opens over them.
+    assert!(matches!(
+        mutations.as_slice(),
+        [Mutation::SetProperties { object, set, clear }]
+            if *object == root && clear.is_empty()
+                && set.len() == 2
+                && set[0].id == PropertyId::ItemsSource
+                && set[1] == open
+    ));
+    let mutations = runtime.update(AutoSuggestBox::new()).unwrap();
+    assert!(matches!(
+        mutations.as_slice(),
+        [Mutation::SetProperties { clear, .. }]
+            if clear.contains(&PropertyId::IsSuggestionListOpen)
+    ));
+}
+
+#[test]
 fn theme_brush_resource_keys_must_be_xaml_names() {
     assert_eq!(
         Brush::from(ThemeBrush::Resource("App.Folder_Brush1")),

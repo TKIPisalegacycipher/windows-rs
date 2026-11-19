@@ -198,6 +198,11 @@ validation = "non_negative"
 [[objects.properties]]
 name = "TextAlignment"
 
+# After Text, so a render that changes both applies the ranges to the new text.
+[[objects.properties]]
+name = "TextHighlighters"
+adapter = "text_highlighters"
+
 [[objects]]
 name = "TextBox"
 enabled = true
@@ -842,6 +847,10 @@ feedback = "exact"
 [[objects.properties]]
 name = "QueryIcon"
 adapter = "icon_element"
+
+# After ItemsSource and Text, so the list opens over the items declared with it.
+[[objects.properties]]
+name = "IsSuggestionListOpen"
 
 [[objects.relations]]
 name = "Header"

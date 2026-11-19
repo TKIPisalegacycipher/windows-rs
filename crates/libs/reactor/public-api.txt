@@ -720,6 +720,7 @@ pub fn windows_reactor::AutoSuggestBox::height(self, f64) -> Self
 pub fn windows_reactor::AutoSuggestBox::horizontal_alignment(self, windows_reactor::HorizontalAlignment) -> Self
 pub fn windows_reactor::AutoSuggestBox::is_enabled(self, bool) -> Self
 pub fn windows_reactor::AutoSuggestBox::is_hit_test_visible(self, bool) -> Self
+pub fn windows_reactor::AutoSuggestBox::is_suggestion_list_open(self, bool) -> Self
 pub fn windows_reactor::AutoSuggestBox::items_source(self, impl core::iter::traits::collect::IntoIterator<Item = impl core::convert::Into<alloc::rcs::rc::Rc<str>>>) -> Self
 pub fn windows_reactor::AutoSuggestBox::margin(self, impl core::convert::Into<windows_reactor::Thickness>) -> Self
 pub fn windows_reactor::AutoSuggestBox::max_height(self, f64) -> Self
@@ -4209,6 +4210,7 @@ pub fn windows_reactor::TextBlock::relative_align_top(self) -> Self
 pub fn windows_reactor::TextBlock::relative_align_vertical_center(self) -> Self
 pub fn windows_reactor::TextBlock::text(self, impl core::convert::AsRef<str>) -> Self
 pub fn windows_reactor::TextBlock::text_alignment(self, windows_reactor::TextAlignment) -> Self
+pub fn windows_reactor::TextBlock::text_highlighters(self, impl core::iter::traits::collect::IntoIterator<Item = windows_reactor::TextHighlighter>) -> Self
 pub fn windows_reactor::TextBlock::text_trimming(self, windows_reactor::TextTrimming) -> Self
 pub fn windows_reactor::TextBlock::text_wrapping(self, windows_reactor::TextWrapping) -> Self
 pub fn windows_reactor::TextBlock::transitions<T>(self, T) -> Self where T: core::iter::traits::collect::IntoIterator<Item = windows_reactor::ThemeTransition>
@@ -4274,6 +4276,16 @@ pub fn windows_reactor::View::from(windows_reactor::TextBox) -> Self
 impl core::default::Default for windows_reactor::TextBox
 pub fn windows_reactor::TextBox::default() -> Self
 impl windows_reactor::ReferenceElement for windows_reactor::TextBox
+pub struct windows_reactor::TextHighlighter
+impl windows_reactor::TextHighlighter
+pub fn windows_reactor::TextHighlighter::background(self, windows_reactor::Color) -> Self
+pub fn windows_reactor::TextHighlighter::foreground(self, windows_reactor::Color) -> Self
+pub fn windows_reactor::TextHighlighter::new(impl core::iter::traits::collect::IntoIterator<Item = windows_reactor::TextRange>) -> Self
+pub struct windows_reactor::TextRange
+pub windows_reactor::TextRange::length: u32
+pub windows_reactor::TextRange::start: u32
+impl windows_reactor::TextRange
+pub const fn windows_reactor::TextRange::new(u32, u32) -> Self
 pub struct windows_reactor::ThemeColorResource
 pub windows_reactor::ThemeColorResource::dark: windows_reactor::Color
 pub windows_reactor::ThemeColorResource::key: &'static str
