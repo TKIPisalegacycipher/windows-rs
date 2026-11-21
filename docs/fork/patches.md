@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-90 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-91 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -30,7 +30,7 @@ Status is measured against upstream `master` at `ffe56ded6`:
 | --- | --- | --- |
 | Prep | Groundwork the other commits depend on | 4 |
 | Requested | Absent upstream, and the maintainer listed the gap in issue #5087 | 8 |
-| New | Absent upstream and not requested. Needs an issue before a pull request | 60 |
+| New | Absent upstream and not requested. Needs an issue before a pull request | 61 |
 | Dependent | Part of the `ListView` row-content rework; cannot be proposed one commit at a time | 8 |
 
 Issue #5087 ("native UI contract and runtime deployment gaps") is the maintainer's own list of
@@ -129,6 +129,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 13 | `b7e6f5e8a` | Button and `DropDownButton` menus open below the button | 2 | New | Bug. Upstream still leaves the flyout placement at its default |
 | 79 | `7b75eb55` | A ComboBox's drop-down is kept inside the window: when the adapter creates a ComboBox it registers `Loaded` and `SizeChanged` (the box held weakly), which set `ShouldConstrainToRootBounds` on the first `Popup` in its template, retrying until the template is there; a failure to set it is ignored; binds `IPopup::put_ShouldConstrainToRootBounds` | none | New | Bug, an issue for WinUI rather than Reactor to fix: once a UI Automation client has read a ComboBox's drop-down in its own window (`PopupWindowSiteBridge`, WinUI's default), the ComboBox leaving the tree leaves a dead element in the window root's automation children and navigation ends there, so screen readers lose every later element (Okojo#2474). Evidence: the desktop test `combo_box_drop_downs_open_inside_the_window`; Okojo's GUI scenarios |
 | 82 | `0977bbb9` | A title bar WinAppSDK draws (content extended into it) keeps `AppWindowTitleBar.PreferredTheme` `Legacy`: `title_bar_theme` answers `Legacy` once content is extended into the title bar (set before `SetExtendsContentIntoTitleBar(true)`, and kept), and the window's theme otherwise; every `PreferredTheme` goes through `set_title_bar_theme` | none | New | Bug, a Reactor workaround for a WinAppSDK bug (also an issue for WinAppSDK): with any other value WinAppSDK redraws that title bar (`CTitleBar::UpdateColors`) on the thread-pool thread that raises `UISettings.ColorValuesChanged` (an agile callback), while the UI thread redraws it for the `WM_SYSCOLORCHANGE` a high contrast switch sends; the two race on one composition surface and `CCompositionSurface::EndDraw` faults in dcomp.dll, so turning high contrast on or off crashed the app now and then (Okojo#2649). For the system theme `Legacy` draws the same caption colours as `UseDefaultAppMode`; a forced Light or Dark theme's caption buttons follow the app mode instead. Evidence: unit (`tests/native/winui.rs`, the mapping); app (Okojo's `theme-switch` scenario: main's code crashed at the 15th switch, this commit's passed 96; crash dumps symbolised against Microsoft's public PDBs) |
+| 91 | `478de456` | A `ContentDialog` takes its owner's theme: when the owner is set, the dialog's `RequestedTheme` is set to the owner's `ActualTheme`, set again as the dialog is shown (an owner not yet in the tree reports the application's theme), and kept in step through the owner's `ActualThemeChanged` while the dialog has that owner (`NativeDialogTheme`, dropped with the owner or the dialog); no new bindings | none | New | Bug: WinUI shows a dialog in its `XamlRoot`'s popup layer, outside the owner's subtree, so a theme the window's content requests (`WindowTheme::Light` or `Dark`) never reaches it, and every dialog drew in the application's theme, the system's, while the window drew in the other (Okojo#3035). Upstream has the same gap. Under high contrast WinUI ignores `RequestedTheme`, as before. Evidence: unit (`tests/native/ownership.rs`, `content_dialog_takes_its_owners_theme`, desktop); app (Okojo GUI on #3035) |
 
 ## 5. Input fixes
 
@@ -306,7 +307,7 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-90 came after the rebuild and have no original.
+Commits 46-91 came after the rebuild and have no original.
 
 ## Public API impact
 
@@ -319,7 +320,7 @@ requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_fo
 `NavigationViewItem::on_got_focus`, `on_lost_focus` and `element_ref`, `Menu::on_closed`,
 `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`,
 `ElementRef<ListView>::request_focus_key`, `ElementRef<ListView>::request_selected_keys_into_view`,
-`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`), 78-82 and 87 change behaviour (above, no public item), and 85 removes the one 57 added
+`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`), 78-82, 87 and 91 change behaviour (above, no public item), and 85 removes the one 57 added
 (`Border::handles_plain_presses`); none changes an existing item, except that 90 adds a variant to an enum (the table below). `register_resource_fonts` is
 missing from `public-api.txt`, which commit 60 did not update. These are source-breaking for code
 that names them:
