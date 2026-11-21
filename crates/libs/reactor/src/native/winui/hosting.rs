@@ -922,8 +922,9 @@ impl WinUiAdapter {
                     .dialogs
                     .get_mut(&dialog)
                     .ok_or(WinUiError::MissingObject(dialog))?;
+                let theme = NativeDialogTheme::follow(&state.value, &owner_element)?;
                 state.owner = Some(owner);
-                state.theme = Some(NativeDialogTheme::follow(&state.value, &owner_element)?);
+                state.theme = Some(theme);
             }
             match owner_element.XamlRoot() {
                 Ok(root) => {

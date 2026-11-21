@@ -237,9 +237,13 @@ struct NativeContentDialogState {
 /// A dialog's theme, taken from its owner (Okojo#3035). WinUI shows a `ContentDialog` in its
 /// `XamlRoot`'s popup layer, outside the owner's subtree, so a theme the window's content requests
 /// never reaches it and it drew in the application's (the system's) theme. The dialog takes the
-/// owner's `ActualTheme` when its owner is set and again as it is shown (an owner not yet in the
-/// tree reports the application's), and follows the owner's `ActualThemeChanged` while it has
-/// that owner, so a dialog that is open follows a theme change.
+/// owner's `ActualTheme` when its owner is set and again as it is shown, and follows the owner's
+/// `ActualThemeChanged` while it has that owner, so a dialog that is open follows a theme change.
+///
+/// An owner outside the live tree reports the application's theme and raises no
+/// `ActualThemeChanged` when it enters the tree or its window's theme changes. So the apply at
+/// show is what gives the right theme to a dialog whose owner was set before it was loaded (the
+/// `Loaded` path in `set_content_dialog`, with no `XamlRoot` yet).
 struct NativeDialogTheme {
     owner: native::IFrameworkElement,
     _changed: windows_core::EventRevoker,
@@ -843,8 +847,10 @@ impl NativeContentDialogScheduler {
                     .value
                     .cast::<native::IUIElement>()?
                     .SetXamlRoot(root)?;
+                // Best-effort: a theme that can't be read leaves the dialog in the one it has, and
+                // must not keep it from showing (or leave it pending forever).
                 if let Some(theme) = &state.theme {
-                    theme.apply(&state.value)?;
+                    _ = theme.apply(&state.value);
                 }
                 state.value.clone()
             };

@@ -25,6 +25,9 @@ mod transitions;
 #[path = "combo_box_drop_down.rs"]
 mod combo_box_drop_down;
 
+#[path = "dialog_theme.rs"]
+mod dialog_theme;
+
 #[path = "button_menu.rs"]
 mod button_menu;
 
