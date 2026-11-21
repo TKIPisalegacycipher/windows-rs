@@ -922,7 +922,9 @@ impl WinUiAdapter {
                     .dialogs
                     .get_mut(&dialog)
                     .ok_or(WinUiError::MissingObject(dialog))?;
+                let theme = NativeDialogTheme::follow(&state.value, &owner_element)?;
                 state.owner = Some(owner);
+                state.theme = Some(theme);
             }
             match owner_element.XamlRoot() {
                 Ok(root) => {
@@ -981,6 +983,7 @@ impl WinUiAdapter {
             if let Some(state) = scheduler.dialogs.get_mut(&previous) {
                 state.owner = None;
                 state.loaded = None;
+                state.theme = None;
                 if state.pending_generation.is_none() {
                     state.root = None;
                 }
