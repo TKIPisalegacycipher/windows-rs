@@ -174,6 +174,43 @@ fn content_dialog_default_button_preserves_ownership() {
     );
 }
 
+/// A dialog takes its owner's theme, which WinUI does not pass on to its popup (Okojo#3035), and
+/// follows the owner's theme changes.
+fn content_dialog_takes_its_owners_theme() {
+    let mut runtime = Runtime::new(WinUiAdapter::default());
+    runtime
+        .update(Border::new().content_dialog(ContentDialog::new().title("Theme")))
+        .unwrap();
+    let root = runtime.graph().root().unwrap();
+    let object = runtime.graph().content_dialog(root).unwrap().0;
+    let owner = runtime
+        .adapter()
+        .ui_element(root)
+        .unwrap()
+        .cast::<native::IFrameworkElement>()
+        .unwrap();
+    let Some(Handle::Generated(GeneratedHandle::ContentDialog(handle))) =
+        runtime.adapter().handles.get(&object)
+    else {
+        panic!()
+    };
+    let dialog = handle.value.cast::<native::IFrameworkElement>().unwrap();
+    assert_eq!(
+        dialog.ActualTheme().unwrap(),
+        owner.ActualTheme().unwrap(),
+        "taken when the owner is set"
+    );
+    for theme in [
+        native::ElementTheme::Dark,
+        native::ElementTheme::Light,
+        native::ElementTheme::Dark,
+    ] {
+        owner.SetRequestedTheme(theme).unwrap();
+        assert_eq!(owner.ActualTheme().unwrap(), theme);
+        assert_eq!(dialog.ActualTheme().unwrap(), theme, "follows the owner");
+    }
+}
+
 fn nullable_checked_values_preserve_ownership() {
     let values = Rc::new(RefCell::new(Vec::new()));
     let received = Rc::clone(&values);
@@ -278,6 +315,7 @@ fn native_edits_and_coercion_do_not_claim_undeclared_values() {
     App::run_with(move |app| {
         number_box_options_preserve_ownership();
         content_dialog_default_button_preserves_ownership();
+        content_dialog_takes_its_owners_theme();
         nullable_checked_values_preserve_ownership();
         let calls = Rc::new(Cell::new(0));
         let toggle_calls = Rc::clone(&calls);

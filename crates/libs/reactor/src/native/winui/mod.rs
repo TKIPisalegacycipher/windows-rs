@@ -225,11 +225,58 @@ struct NativeContentDialogState {
     desired_open: bool,
     root: Option<native::XamlRoot>,
     loaded: Option<windows_core::EventRevoker>,
+    /// The owner's theme, which the dialog takes while it has one ([`NativeDialogTheme`]).
+    theme: Option<NativeDialogTheme>,
     pending_generation: Option<u64>,
     suppress_generation: Option<u64>,
     queued: bool,
     retired: bool,
     retained_handle: Option<GeneratedContentDialog>,
+}
+
+/// A dialog's theme, taken from its owner (Okojo#3035). WinUI shows a `ContentDialog` in its
+/// `XamlRoot`'s popup layer, outside the owner's subtree, so a theme the window's content requests
+/// never reaches it and it drew in the application's (the system's) theme. The dialog takes the
+/// owner's `ActualTheme` when its owner is set and again as it is shown (an owner not yet in the
+/// tree reports the application's), and follows the owner's `ActualThemeChanged` while it has
+/// that owner, so a dialog that is open follows a theme change.
+struct NativeDialogTheme {
+    owner: native::IFrameworkElement,
+    _changed: windows_core::EventRevoker,
+}
+
+impl NativeDialogTheme {
+    fn follow(
+        dialog: &native::ContentDialog,
+        owner: &native::UIElement,
+    ) -> Result<Self, WinUiError> {
+        let owner = owner.cast::<native::IFrameworkElement>()?;
+        let target = dialog.cast::<native::IFrameworkElement>()?;
+        target.SetRequestedTheme(owner.ActualTheme()?)?;
+        let changed = owner.ActualThemeChanged(move |sender, _| {
+            let Some(sender) = sender.as_ref() else {
+                return;
+            };
+            if let Err(error) = sender
+                .ActualTheme()
+                .and_then(|theme| target.SetRequestedTheme(theme))
+            {
+                report_error(error);
+            }
+        })?;
+        Ok(Self {
+            owner,
+            _changed: changed,
+        })
+    }
+
+    /// Gives `dialog` the owner's theme now.
+    fn apply(&self, dialog: &native::ContentDialog) -> Result<(), WinUiError> {
+        dialog
+            .cast::<native::IFrameworkElement>()?
+            .SetRequestedTheme(self.owner.ActualTheme()?)?;
+        Ok(())
+    }
 }
 
 /// What a new declaration of a menu does to the one its element holds ([`NativeMenu::update`]).
@@ -653,6 +700,7 @@ impl NativeContentDialogScheduler {
                 desired_open: false,
                 root: None,
                 loaded: None,
+                theme: None,
                 pending_generation: None,
                 suppress_generation: None,
                 queued: false,
@@ -795,6 +843,9 @@ impl NativeContentDialogScheduler {
                     .value
                     .cast::<native::IUIElement>()?
                     .SetXamlRoot(root)?;
+                if let Some(theme) = &state.theme {
+                    theme.apply(&state.value)?;
+                }
                 state.value.clone()
             };
             self.roots[index].schedule.begin(dialog, generation);
@@ -863,6 +914,7 @@ impl NativeContentDialogScheduler {
         state.retired = true;
         state.owner = None;
         state.loaded = None;
+        state.theme = None;
         state.desired_open = false;
         let pending = state.pending_generation.is_some();
         let _ = state;
