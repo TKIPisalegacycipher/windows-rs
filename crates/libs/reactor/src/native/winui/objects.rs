@@ -819,10 +819,14 @@ impl WinUiAdapter {
         let weak = element.cast::<native::DependencyObject>()?.downgrade()?;
         let popup = Rc::new(RefCell::new(None));
         let hook = Rc::new(move || {
-            if popup.borrow().is_none()
+            // Read and released before hooking: showing or collapsing the popup's content may
+            // raise this again.
+            let hooked = popup.borrow().is_some();
+            if !hooked
                 && let Some(root) = weak.upgrade()
+                && let Some(handlers) = hook_suggestion_popup(&root)
             {
-                popup.replace(hook_suggestion_popup(&root));
+                popup.replace(Some(handlers));
             }
         });
         let framework = element.cast::<native::IFrameworkElement>()?;
