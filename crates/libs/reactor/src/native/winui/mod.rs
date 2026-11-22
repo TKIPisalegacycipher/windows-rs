@@ -2739,6 +2739,10 @@ pub struct WinUiAdapter {
     /// window (`keep_drop_down_in_window`).
     combo_box_drop_downs:
         HashMap<ObjectId, (windows_core::EventRevoker, windows_core::EventRevoker)>,
+    /// Each AutoSuggestBox's `Loaded` and `SizeChanged` handlers, which hook its suggestion popup
+    /// so the box's bounds stay its text field's while the list is closed
+    /// (`keep_closed_suggestions_out_of_bounds`).
+    suggestion_popups: HashMap<ObjectId, (windows_core::EventRevoker, windows_core::EventRevoker)>,
     style_cache: HashMap<NativeStyleKey, native::Style>,
     pending_focus_states: Rc<RefCell<HashMap<ObjectId, ElementFocusState>>>,
     tree_node_texts: Rc<RefCell<HashMap<usize, Rc<str>>>>,
@@ -2803,6 +2807,7 @@ impl Default for WinUiAdapter {
             resource_override_keys: HashMap::new(),
             style_states: HashMap::new(),
             combo_box_drop_downs: HashMap::new(),
+            suggestion_popups: HashMap::new(),
             style_cache: HashMap::new(),
             pending_focus_states: Rc::new(RefCell::new(HashMap::new())),
             tree_node_texts: Rc::new(RefCell::new(HashMap::new())),
