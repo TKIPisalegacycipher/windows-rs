@@ -324,6 +324,9 @@ impl WinUiAdapter {
         if kind == ObjectType::ComboBox {
             self.keep_drop_down_in_window(object)?;
         }
+        if kind == ObjectType::AutoSuggestBox {
+            self.keep_closed_suggestions_out_of_bounds(object)?;
+        }
         if kind == ObjectType::ContentDialog {
             let Some(Handle::Generated(GeneratedHandle::ContentDialog(value))) =
                 self.handles.get(&object)
@@ -800,6 +803,41 @@ impl WinUiAdapter {
         Ok(())
     }
 
+    /// Keeps AutoSuggestBox `object`'s UI Automation bounds to its text field while its suggestion
+    /// list is closed. WinUI takes the box's bounds from its whole template, the suggestion popup's
+    /// content included, and that content keeps its last size after the popup closes: once the list
+    /// had shown, the box's bounds took in the list's area for good (Okojo#2851: 460x117, then
+    /// 461x86, around a 460x32 text field), so voice control and UI Automation clicks aimed at the
+    /// box landed below it. The popup's content is collapsed while the popup is closed, and shown
+    /// while it is open.
+    ///
+    /// Hooked once the template has applied, on `Loaded` or the next `SizeChanged`
+    /// (`keep_drop_down_in_window`'s reason); then both do nothing. Once hooked it never re-hooks:
+    /// the reactor sets no Template on an AutoSuggestBox, so the template's Popup doesn't change.
+    /// The handlers hold the box weakly, and their revokers go with the object (`release_object`).
+    fn keep_closed_suggestions_out_of_bounds(&mut self, object: ObjectId) -> Result<(), WinUiError> {
+        let element = self.ui_element(object)?;
+        let weak = element.cast::<native::DependencyObject>()?.downgrade()?;
+        let popup = Rc::new(RefCell::new(None));
+        let hook = Rc::new(move || {
+            // Read and released before hooking: showing or collapsing the popup's content may
+            // raise this again.
+            let hooked = popup.borrow().is_some();
+            if !hooked
+                && let Some(root) = weak.upgrade()
+                && let Some(handlers) = hook_suggestion_popup(&root)
+            {
+                popup.replace(Some(handlers));
+            }
+        });
+        let framework = element.cast::<native::IFrameworkElement>()?;
+        let on_loaded = Rc::clone(&hook);
+        let loaded = framework.Loaded(move |_, _| on_loaded())?;
+        let size = framework.SizeChanged(move |_, _| hook())?;
+        self.suggestion_popups.insert(object, (loaded, size));
+        Ok(())
+    }
+
     /// Drops all adapter state for an object whose handle was just removed. Destroy, retirement
     /// completion, and replacement all end an object's native lifetime through this path.
     fn release_object(&mut self, object: ObjectId, handle: Handle) -> Result<(), WinUiError> {
@@ -809,6 +847,7 @@ impl WinUiAdapter {
         self.controlled_index_selectors.remove(&object);
         self.style_states.remove(&object);
         self.combo_box_drop_downs.remove(&object);
+        self.suggestion_popups.remove(&object);
         self.virtual_items.remove(&object);
         self.observations
             .retain(|(observed, _), _| *observed != object);
@@ -1022,20 +1061,69 @@ impl WinUiAdapter {
 /// once it has been shown in a window, and that drop-down then stays as WinUI made it, which is
 /// no reason to end the app.
 fn constrain_popup_to_root_bounds(root: &native::DependencyObject) -> bool {
-    let Ok(count) = native::VisualTreeHelper::GetChildrenCount(root) else {
+    let Some(popup) = first_popup(root) else {
         return false;
     };
+    let _ = popup.SetShouldConstrainToRootBounds(true);
+    true
+}
+
+/// The first `Popup` in `root`'s visual tree (a template's drop-down), if it has one yet.
+fn first_popup(root: &native::DependencyObject) -> Option<native::IPopup> {
+    let count = native::VisualTreeHelper::GetChildrenCount(root).ok()?;
     for index in 0..count {
         let Ok(child) = native::VisualTreeHelper::GetChild(root, index) else {
             continue;
         };
         if let Ok(popup) = child.cast::<native::IPopup>() {
-            let _ = popup.SetShouldConstrainToRootBounds(true);
-            return true;
+            return Some(popup);
         }
-        if constrain_popup_to_root_bounds(&child) {
-            return true;
+        if let Some(popup) = first_popup(&child) {
+            return Some(popup);
         }
     }
-    false
+    None
+}
+
+/// Shows or collapses `popup`'s content (`keep_closed_suggestions_out_of_bounds`), only once both
+/// of its handlers are registered (`hook_suggestion_popup`). Ignored when it has none or WinUI
+/// refuses: the bounds then stay as WinUI keeps them.
+fn show_popup_content(popup: &native::IPopup, shown: bool) {
+    if let Ok(child) = popup.Child().and_then(|child| child.cast::<native::IUIElement>()) {
+        let _ = child.SetVisibility(if shown {
+            native::Visibility::Visible
+        } else {
+            native::Visibility::Collapsed
+        });
+    }
+}
+
+/// Hooks AutoSuggestBox `root`'s suggestion popup (`keep_closed_suggestions_out_of_bounds`), once
+/// its template has applied: as it opens or closes, its content is shown or collapsed to match
+/// whether it is open then, so an event out of step with the popup can't leave an open list
+/// collapsed. Both handlers are registered first, then the content set to match the popup now. If
+/// a registration fails, the content stays as WinUI had it (an `Opened` already registered is
+/// revoked as its revoker drops), and this is None, as it is while the template has no popup yet.
+fn hook_suggestion_popup(
+    root: &native::DependencyObject,
+) -> Option<(windows_core::EventRevoker, windows_core::EventRevoker)> {
+    let popup = first_popup(root)?;
+    let opened = popup
+        .Opened(|sender, _| {
+            // The sender, not a clone: a handler holding its own popup would keep both alive.
+            if let Some(popup) = sender.as_ref().and_then(|sender| sender.cast::<native::IPopup>().ok()) {
+                show_popup_content(&popup, popup.IsOpen().unwrap_or(true));
+            }
+        })
+        .ok()?;
+    let closed = popup
+        .Closed(|sender, _| {
+            // The sender, not a clone: a handler holding its own popup would keep both alive.
+            if let Some(popup) = sender.as_ref().and_then(|sender| sender.cast::<native::IPopup>().ok()) {
+                show_popup_content(&popup, popup.IsOpen().unwrap_or(true));
+            }
+        })
+        .ok()?;
+    show_popup_content(&popup, popup.IsOpen().unwrap_or(false));
+    Some((opened, closed))
 }

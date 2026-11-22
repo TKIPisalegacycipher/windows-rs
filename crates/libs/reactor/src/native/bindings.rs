@@ -18319,6 +18319,26 @@ impl windows_core::RuntimeType for IPopup {
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
 impl IPopup {
+    pub(crate) fn Child(&self) -> windows_core::Result<UIElement> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Child)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+    pub(crate) fn IsOpen(&self) -> windows_core::Result<bool> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).IsOpen)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
     pub(crate) fn SetShouldConstrainToRootBounds(&self, value: bool) -> windows_core::Result<()> {
         unsafe {
             (windows_core::Interface::vtable(self).SetShouldConstrainToRootBounds)(
@@ -18328,13 +18348,77 @@ impl IPopup {
             .ok()
         }
     }
+    pub(crate) fn Opened<F>(&self, handler: F) -> windows_core::Result<windows_core::EventRevoker>
+    where
+        F: Fn(
+                windows_core::Ref<windows_core::IInspectable>,
+                windows_core::Ref<windows_core::IInspectable>,
+            ) + 'static,
+    {
+        let handler: EventHandler<windows_core::IInspectable> = {
+            let com =
+                windows_core::imp::DelegateBox::<EventHandler<windows_core::IInspectable>, F>::new(
+                    &EventHandlerBox::<windows_core::IInspectable, F>::VTABLE,
+                    handler,
+                );
+            unsafe { core::mem::transmute(windows_core::imp::box_new(com)) }
+        };
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            let token__ = (windows_core::Interface::vtable(self).Opened)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Interface::as_raw(&handler),
+                &mut result__,
+            )
+            .map(|| result__)?;
+            Ok(windows_core::EventRevoker::new(
+                self.clone(),
+                token__,
+                windows_core::Interface::vtable(self).RemoveOpened,
+            ))
+        }
+    }
+    pub(crate) fn Closed<F>(&self, handler: F) -> windows_core::Result<windows_core::EventRevoker>
+    where
+        F: Fn(
+                windows_core::Ref<windows_core::IInspectable>,
+                windows_core::Ref<windows_core::IInspectable>,
+            ) + 'static,
+    {
+        let handler: EventHandler<windows_core::IInspectable> = {
+            let com =
+                windows_core::imp::DelegateBox::<EventHandler<windows_core::IInspectable>, F>::new(
+                    &EventHandlerBox::<windows_core::IInspectable, F>::VTABLE,
+                    handler,
+                );
+            unsafe { core::mem::transmute(windows_core::imp::box_new(com)) }
+        };
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            let token__ = (windows_core::Interface::vtable(self).Closed)(
+                windows_core::Interface::as_raw(self),
+                windows_core::Interface::as_raw(&handler),
+                &mut result__,
+            )
+            .map(|| result__)?;
+            Ok(windows_core::EventRevoker::new(
+                self.clone(),
+                token__,
+                windows_core::Interface::vtable(self).RemoveClosed,
+            ))
+        }
+    }
 }
 #[repr(C)]
 pub struct IPopup_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
-    Child: usize,
+    pub Child: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     SetChild: usize,
-    IsOpen: usize,
+    pub IsOpen:
+        unsafe extern "system" fn(*mut core::ffi::c_void, *mut bool) -> windows_core::HRESULT,
     SetIsOpen: usize,
     HorizontalOffset: usize,
     SetHorizontalOffset: usize,
@@ -18349,6 +18433,21 @@ pub struct IPopup_Vtbl {
     ShouldConstrainToRootBounds: usize,
     pub SetShouldConstrainToRootBounds:
         unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
+    IsConstrainedToRootBounds: usize,
+    pub Opened: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut i64,
+    ) -> windows_core::HRESULT,
+    pub RemoveOpened:
+        unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
+    pub Closed: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut i64,
+    ) -> windows_core::HRESULT,
+    pub RemoveClosed:
+        unsafe extern "system" fn(*mut core::ffi::c_void, i64) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     IProgressBar,
@@ -24943,6 +25042,15 @@ impl IUIElement {
             .ok()
         }
     }
+    pub(crate) fn SetVisibility(&self, value: Visibility) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetVisibility)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetTransitions<P0>(&self, value: P0) -> windows_core::Result<()>
     where
         P0: windows_core::Param<TransitionCollection>,
@@ -25766,7 +25874,8 @@ pub struct IUIElement_Vtbl {
     pub SetIsHitTestVisible:
         unsafe extern "system" fn(*mut core::ffi::c_void, bool) -> windows_core::HRESULT,
     Visibility: usize,
-    SetVisibility: usize,
+    pub SetVisibility:
+        unsafe extern "system" fn(*mut core::ffi::c_void, Visibility) -> windows_core::HRESULT,
     RenderSize: usize,
     UseLayoutRounding: usize,
     SetUseLayoutRounding: usize,
@@ -36916,6 +37025,20 @@ impl core::ops::Not for VirtualKeyModifiers {
     fn not(self) -> Self {
         Self(self.0.not())
     }
+}
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct Visibility(pub i32);
+impl Visibility {
+    pub const Visible: Self = Self(0);
+    pub const Collapsed: Self = Self(1);
+}
+impl windows_core::imp::TypeKind for Visibility {
+    type TypeKind = windows_core::imp::CopyType;
+}
+impl windows_core::RuntimeType for Visibility {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::from_slice(b"enum(Microsoft.UI.Xaml.Visibility;i4)");
 }
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
