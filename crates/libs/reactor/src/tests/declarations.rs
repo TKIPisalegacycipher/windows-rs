@@ -1554,6 +1554,35 @@ fn icon_foregrounds_record_the_same_theme_brush_as_text() {
             .unwrap()
             .contains(&expected)
     );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            PathIcon::new()
+                .data("M 0,0 L 8,8")
+                .foreground(ThemeBrush::PrimaryText),
+        )
+        .unwrap();
+    let path = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(path)
+            .unwrap()
+            .contains(&expected)
+    );
+
+    // Undeclared again, the path goes back to the inherited foreground.
+    runtime.update(PathIcon::new().data("M 0,0 L 8,8")).unwrap();
+    let path = runtime.graph().root().unwrap();
+    assert!(
+        !runtime
+            .graph()
+            .properties(path)
+            .unwrap()
+            .iter()
+            .any(|property| property.id == PropertyId::Foreground)
+    );
 }
 
 #[test]

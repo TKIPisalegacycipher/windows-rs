@@ -508,6 +508,7 @@ fn theme_style_info(
         ObjectType::Line => Some(("Line", &[(PropertyId::Stroke, "Stroke")])),
         ObjectType::SymbolIcon => Some(("SymbolIcon", &[(PropertyId::Foreground, "Foreground")])),
         ObjectType::FontIcon => Some(("FontIcon", &[(PropertyId::Foreground, "Foreground")])),
+        ObjectType::PathIcon => Some(("PathIcon", &[(PropertyId::Foreground, "Foreground")])),
         ObjectType::RichTextBlock => {
             Some(("RichTextBlock", &[(PropertyId::Foreground, "Foreground")]))
         }
@@ -7369,6 +7370,29 @@ impl GeneratedHandle {
             ),
             (Self::PathIcon(object), PropertyId::Data, Some(PropertyValue::String(value))) => Some(
                 parse_path_data(value).and_then(|value| object.SetData(&value).map_err(Into::into)),
+            ),
+            (Self::PathIcon(object), PropertyId::Foreground, None) => Some(
+                object
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::IconElement::ForegroundProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::PathIcon(object),
+                PropertyId::Foreground,
+                Some(PropertyValue::Brush(Brush::Solid(value))),
+            ) => Some(
+                object
+                    .cast::<native::IIconElement>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        solid_color_brush(*value)
+                            .and_then(|brush| object.SetForeground(&brush).map_err(Into::into))
+                    }),
             ),
             (Self::ListBoxItem(object), PropertyId::IsSelected, None) => Some(
                 object

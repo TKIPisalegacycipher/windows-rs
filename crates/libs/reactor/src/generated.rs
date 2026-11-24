@@ -2254,6 +2254,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::String,
         }),
+        (ObjectType::PathIcon, PropertyId::Foreground) => Some(PropertyContract {
+            id,
+            value: ValueType::Brush,
+        }),
         (ObjectType::ListBoxItem, PropertyId::IsSelected) => Some(PropertyContract {
             id,
             value: ValueType::Bool,
@@ -2830,6 +2834,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::BitmapIcon, PropertyId::ShowAsMonochrome) => 31,
         (ObjectType::BitmapIcon, PropertyId::UriSource) => 32,
         (ObjectType::PathIcon, PropertyId::Data) => 31,
+        (ObjectType::PathIcon, PropertyId::Foreground) => 32,
         (ObjectType::ListBoxItem, PropertyId::IsSelected) => 31,
         (ObjectType::ListBoxItem, PropertyId::Tag) => 32,
         (ObjectType::RatingControl, PropertyId::Caption) => 31,
