@@ -22613,6 +22613,18 @@ impl ITeachingTip {
             .ok()
         }
     }
+    pub(crate) fn SetActionButtonStyle<P0>(&self, value: P0) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<Style>,
+    {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetActionButtonStyle)(
+                windows_core::Interface::as_raw(self),
+                value.param().abi(),
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetCloseButtonContent<P0>(&self, value: P0) -> windows_core::Result<()>
     where
         P0: windows_core::Param<windows_core::IInspectable>,
@@ -22735,7 +22747,10 @@ pub struct ITeachingTip_Vtbl {
         *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
     ActionButtonStyle: usize,
-    SetActionButtonStyle: usize,
+    pub SetActionButtonStyle: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     ActionButtonCommand: usize,
     SetActionButtonCommand: usize,
     ActionButtonCommandParameter: usize,
@@ -22798,9 +22813,25 @@ impl windows_core::RuntimeType for ITeachingTipClosedEventArgs {
     const SIGNATURE: windows_core::imp::ConstBuffer =
         windows_core::imp::ConstBuffer::for_interface::<Self>();
 }
+impl ITeachingTipClosedEventArgs {
+    pub(crate) fn Reason(&self) -> windows_core::Result<TeachingTipCloseReason> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Reason)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
+}
 #[repr(C)]
 pub struct ITeachingTipClosedEventArgs_Vtbl {
     pub base__: windows_core::IInspectable_Vtbl,
+    pub Reason: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut TeachingTipCloseReason,
+    ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     ITeachingTipFactory,
@@ -22851,7 +22882,10 @@ pub struct ITeachingTipStatics_Vtbl {
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
-    ActionButtonStyleProperty: usize,
+    pub ActionButtonStyleProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     ActionButtonCommandProperty: usize,
     ActionButtonCommandParameterProperty: usize,
     pub CloseButtonContentProperty: unsafe extern "system" fn(
@@ -34755,6 +34789,16 @@ impl TeachingTip {
             .and_then(|| windows_core::imp::Type::from_abi(result__))
         })
     }
+    pub(crate) fn ActionButtonStyleProperty() -> windows_core::Result<DependencyProperty> {
+        Self::ITeachingTipStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).ActionButtonStyleProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
     pub(crate) fn CloseButtonContentProperty() -> windows_core::Result<DependencyProperty> {
         Self::ITeachingTipStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
@@ -34819,6 +34863,22 @@ impl windows_core::RuntimeName for TeachingTip {
 }
 unsafe impl Send for TeachingTip {}
 unsafe impl Sync for TeachingTip {}
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct TeachingTipCloseReason(pub i32);
+impl TeachingTipCloseReason {
+    pub const CloseButton: Self = Self(0);
+    pub const LightDismiss: Self = Self(1);
+    pub const Programmatic: Self = Self(2);
+}
+impl windows_core::imp::TypeKind for TeachingTipCloseReason {
+    type TypeKind = windows_core::imp::CopyType;
+}
+impl windows_core::RuntimeType for TeachingTipCloseReason {
+    const SIGNATURE: windows_core::imp::ConstBuffer = windows_core::imp::ConstBuffer::from_slice(
+        b"enum(Microsoft.UI.Xaml.Controls.TeachingTipCloseReason;i4)",
+    );
+}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TeachingTipClosedEventArgs(windows_core::IUnknown);

@@ -43,6 +43,7 @@ into_event_payload! {
     Option<TimeSpan> => OptionalTimeSpan,
     Option<usize> => SelectionIndex,
     Rc<str> => String,
+    TeachingTipCloseReason => TeachingTipCloseReason,
     Vec<String> => StringList,
 }
 

@@ -500,6 +500,10 @@ pub windows_reactor::Symbol::ZoomIn
 pub windows_reactor::Symbol::ZoomOut
 impl core::convert::From<windows_reactor::Symbol> for windows_reactor::Icon
 pub fn windows_reactor::Icon::from(windows_reactor::Symbol) -> Self
+pub enum windows_reactor::TeachingTipCloseReason
+pub windows_reactor::TeachingTipCloseReason::CloseButton
+pub windows_reactor::TeachingTipCloseReason::LightDismiss
+pub windows_reactor::TeachingTipCloseReason::Programmatic
 #[non_exhaustive] pub enum windows_reactor::TeachingTipPlacementMode
 pub windows_reactor::TeachingTipPlacementMode::Auto
 pub windows_reactor::TeachingTipPlacementMode::Bottom
@@ -4126,6 +4130,7 @@ pub fn windows_reactor::TabViewItem::default() -> Self
 pub struct windows_reactor::TeachingTip(_)
 impl windows_reactor::TeachingTip
 pub fn windows_reactor::TeachingTip::action_button_content(self, impl core::convert::AsRef<str>) -> Self
+pub fn windows_reactor::TeachingTip::action_button_style(self, windows_reactor::ButtonStyle) -> Self
 pub fn windows_reactor::TeachingTip::automation_accessibility_view(self, windows_reactor::AccessibilityView) -> Self
 pub fn windows_reactor::TeachingTip::automation_heading_level(self, windows_reactor::AutomationHeadingLevel) -> Self
 pub fn windows_reactor::TeachingTip::automation_id(self, impl core::convert::AsRef<str>) -> Self
@@ -4154,7 +4159,7 @@ pub fn windows_reactor::TeachingTip::min_height(self, f64) -> Self
 pub fn windows_reactor::TeachingTip::min_width(self, f64) -> Self
 pub fn windows_reactor::TeachingTip::new() -> Self
 pub fn windows_reactor::TeachingTip::on_action_button_click(self, impl windows_reactor::IntoUnitCallback) -> Self
-pub fn windows_reactor::TeachingTip::on_closed(self, impl windows_reactor::IntoUnitCallback) -> Self
+pub fn windows_reactor::TeachingTip::on_closed(self, impl windows_reactor::IntoPayloadCallback<windows_reactor::TeachingTipCloseReason>) -> Self
 pub fn windows_reactor::TeachingTip::opacity(self, f64) -> Self
 pub fn windows_reactor::TeachingTip::preferred_placement(self, windows_reactor::TeachingTipPlacementMode) -> Self
 pub fn windows_reactor::TeachingTip::relative_align_bottom(self) -> Self

@@ -483,6 +483,10 @@ impl EventDispatch {
                 EventValue::NavigationViewDisplayMode(callback),
                 EventPayload::NavigationViewDisplayMode(value),
             ) => callback.call(value),
+            (
+                EventValue::TeachingTipCloseReason(callback),
+                EventPayload::TeachingTipCloseReason(value),
+            ) => callback.call(value),
             (EventValue::Selection(callback), EventPayload::Selection(value)) => {
                 callback.call(value.value);
             }
@@ -1068,6 +1072,11 @@ impl RetainedGraph {
                 ValueType::NavigationViewDisplayMode,
                 EventValue::NavigationViewDisplayMode(_),
                 EventPayload::NavigationViewDisplayMode(_),
+            )
+            | (
+                ValueType::TeachingTipCloseReason,
+                EventValue::TeachingTipCloseReason(_),
+                EventPayload::TeachingTipCloseReason(_),
             )
             | (ValueType::Selection, EventValue::Selection(_), EventPayload::Selection(_))
             | (

@@ -1553,294 +1553,299 @@ pub fn cases() -> Vec<CoverageCase> {
             clear: coverage_308_clear,
         },
         CoverageCase {
-            contract: "TeachingTip.CloseButtonContent",
+            contract: "TeachingTip.ActionButtonStyle",
             set: coverage_309_set,
             clear: coverage_309_clear,
         },
         CoverageCase {
-            contract: "TeachingTip.Closed",
+            contract: "TeachingTip.CloseButtonContent",
             set: coverage_310_set,
             clear: coverage_310_clear,
         },
         CoverageCase {
-            contract: "TeachingTip.ActionButtonClick",
+            contract: "TeachingTip.Closed",
             set: coverage_311_set,
             clear: coverage_311_clear,
         },
         CoverageCase {
-            contract: "DropDownButton.IsEnabled",
+            contract: "TeachingTip.ActionButtonClick",
             set: coverage_312_set,
             clear: coverage_312_clear,
         },
         CoverageCase {
-            contract: "DropDownButton.Click",
+            contract: "DropDownButton.IsEnabled",
             set: coverage_313_set,
             clear: coverage_313_clear,
         },
         CoverageCase {
-            contract: "AppBarButton.Label",
+            contract: "DropDownButton.Click",
             set: coverage_314_set,
             clear: coverage_314_clear,
         },
         CoverageCase {
-            contract: "AppBarButton.IsEnabled",
+            contract: "AppBarButton.Label",
             set: coverage_315_set,
             clear: coverage_315_clear,
         },
         CoverageCase {
-            contract: "AppBarButton.Icon",
+            contract: "AppBarButton.IsEnabled",
             set: coverage_316_set,
             clear: coverage_316_clear,
         },
         CoverageCase {
-            contract: "AppBarButton.Click",
+            contract: "AppBarButton.Icon",
             set: coverage_317_set,
             clear: coverage_317_clear,
         },
         CoverageCase {
-            contract: "MenuBarItem.Title",
+            contract: "AppBarButton.Click",
             set: coverage_318_set,
             clear: coverage_318_clear,
         },
         CoverageCase {
-            contract: "SplitButton.IsEnabled",
+            contract: "MenuBarItem.Title",
             set: coverage_319_set,
             clear: coverage_319_clear,
         },
         CoverageCase {
-            contract: "SplitButton.Click",
+            contract: "SplitButton.IsEnabled",
             set: coverage_320_set,
             clear: coverage_320_clear,
         },
         CoverageCase {
-            contract: "ColorPicker.Color",
+            contract: "SplitButton.Click",
             set: coverage_321_set,
             clear: coverage_321_clear,
         },
         CoverageCase {
-            contract: "ColorPicker.IsAlphaEnabled",
+            contract: "ColorPicker.Color",
             set: coverage_322_set,
             clear: coverage_322_clear,
         },
         CoverageCase {
-            contract: "ColorPicker.IsHexInputVisible",
+            contract: "ColorPicker.IsAlphaEnabled",
             set: coverage_323_set,
             clear: coverage_323_clear,
         },
         CoverageCase {
-            contract: "ColorPicker.IsColorSliderVisible",
+            contract: "ColorPicker.IsHexInputVisible",
             set: coverage_324_set,
             clear: coverage_324_clear,
         },
         CoverageCase {
-            contract: "ColorPicker.IsColorChannelTextInputVisible",
+            contract: "ColorPicker.IsColorSliderVisible",
             set: coverage_325_set,
             clear: coverage_325_clear,
         },
         CoverageCase {
-            contract: "ColorPicker.IsEnabled",
+            contract: "ColorPicker.IsColorChannelTextInputVisible",
             set: coverage_326_set,
             clear: coverage_326_clear,
         },
         CoverageCase {
-            contract: "ColorPicker.ColorChanged",
+            contract: "ColorPicker.IsEnabled",
             set: coverage_327_set,
             clear: coverage_327_clear,
         },
         CoverageCase {
-            contract: "DatePicker.DayVisible",
+            contract: "ColorPicker.ColorChanged",
             set: coverage_328_set,
             clear: coverage_328_clear,
         },
         CoverageCase {
-            contract: "DatePicker.MonthVisible",
+            contract: "DatePicker.DayVisible",
             set: coverage_329_set,
             clear: coverage_329_clear,
         },
         CoverageCase {
-            contract: "DatePicker.YearVisible",
+            contract: "DatePicker.MonthVisible",
             set: coverage_330_set,
             clear: coverage_330_clear,
         },
         CoverageCase {
-            contract: "DatePicker.IsEnabled",
+            contract: "DatePicker.YearVisible",
             set: coverage_331_set,
             clear: coverage_331_clear,
         },
         CoverageCase {
-            contract: "DatePicker.SelectedDateChanged",
+            contract: "DatePicker.IsEnabled",
             set: coverage_332_set,
             clear: coverage_332_clear,
         },
         CoverageCase {
-            contract: "TimePicker.IsEnabled",
+            contract: "DatePicker.SelectedDateChanged",
             set: coverage_333_set,
             clear: coverage_333_clear,
         },
         CoverageCase {
-            contract: "TimePicker.MinuteIncrement",
+            contract: "TimePicker.IsEnabled",
             set: coverage_334_set,
             clear: coverage_334_clear,
         },
         CoverageCase {
-            contract: "TimePicker.ClockIdentifier",
+            contract: "TimePicker.MinuteIncrement",
             set: coverage_335_set,
             clear: coverage_335_clear,
         },
         CoverageCase {
-            contract: "TimePicker.SelectedTimeChanged",
+            contract: "TimePicker.ClockIdentifier",
             set: coverage_336_set,
             clear: coverage_336_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.MinDate",
+            contract: "TimePicker.SelectedTimeChanged",
             set: coverage_337_set,
             clear: coverage_337_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.MaxDate",
+            contract: "CalendarDatePicker.MinDate",
             set: coverage_338_set,
             clear: coverage_338_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.Date",
+            contract: "CalendarDatePicker.MaxDate",
             set: coverage_339_set,
             clear: coverage_339_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.PlaceholderText",
+            contract: "CalendarDatePicker.Date",
             set: coverage_340_set,
             clear: coverage_340_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.IsTodayHighlighted",
+            contract: "CalendarDatePicker.PlaceholderText",
             set: coverage_341_set,
             clear: coverage_341_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.IsCalendarOpen",
+            contract: "CalendarDatePicker.IsTodayHighlighted",
             set: coverage_342_set,
             clear: coverage_342_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.IsEnabled",
+            contract: "CalendarDatePicker.IsCalendarOpen",
             set: coverage_343_set,
             clear: coverage_343_clear,
         },
         CoverageCase {
-            contract: "CalendarDatePicker.DateChanged",
+            contract: "CalendarDatePicker.IsEnabled",
             set: coverage_344_set,
             clear: coverage_344_clear,
         },
         CoverageCase {
-            contract: "CalendarView.IsTodayHighlighted",
+            contract: "CalendarDatePicker.DateChanged",
             set: coverage_345_set,
             clear: coverage_345_clear,
         },
         CoverageCase {
-            contract: "CalendarView.IsGroupLabelVisible",
+            contract: "CalendarView.IsTodayHighlighted",
             set: coverage_346_set,
             clear: coverage_346_clear,
         },
         CoverageCase {
-            contract: "CalendarView.IsEnabled",
+            contract: "CalendarView.IsGroupLabelVisible",
             set: coverage_347_set,
             clear: coverage_347_clear,
         },
         CoverageCase {
-            contract: "CalendarView.SelectedDatesChanged",
+            contract: "CalendarView.IsEnabled",
             set: coverage_348_set,
             clear: coverage_348_clear,
         },
         CoverageCase {
-            contract: "ListViewItem.Tag",
+            contract: "CalendarView.SelectedDatesChanged",
             set: coverage_349_set,
             clear: coverage_349_clear,
         },
         CoverageCase {
-            contract: "GridView.CanDragItems",
+            contract: "ListViewItem.Tag",
             set: coverage_350_set,
             clear: coverage_350_clear,
         },
         CoverageCase {
-            contract: "GridView.CanReorderItems",
+            contract: "GridView.CanDragItems",
             set: coverage_351_set,
             clear: coverage_351_clear,
         },
         CoverageCase {
-            contract: "GridView.AllowDrop",
+            contract: "GridView.CanReorderItems",
             set: coverage_352_set,
             clear: coverage_352_clear,
         },
         CoverageCase {
-            contract: "GridView.SelectedIndex",
+            contract: "GridView.AllowDrop",
             set: coverage_353_set,
             clear: coverage_353_clear,
         },
         CoverageCase {
-            contract: "GridView.SelectionChanged",
+            contract: "GridView.SelectedIndex",
             set: coverage_354_set,
             clear: coverage_354_clear,
         },
         CoverageCase {
-            contract: "GridView.DragItemsCompleted",
+            contract: "GridView.SelectionChanged",
             set: coverage_355_set,
             clear: coverage_355_clear,
         },
         CoverageCase {
-            contract: "GridViewItem.Tag",
+            contract: "GridView.DragItemsCompleted",
             set: coverage_356_set,
             clear: coverage_356_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.Document",
+            contract: "GridViewItem.Tag",
             set: coverage_357_set,
             clear: coverage_357_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.PlaceholderText",
+            contract: "RichEditBox.Document",
             set: coverage_358_set,
             clear: coverage_358_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.IsReadOnly",
+            contract: "RichEditBox.PlaceholderText",
             set: coverage_359_set,
             clear: coverage_359_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.IsEnabled",
+            contract: "RichEditBox.IsReadOnly",
             set: coverage_360_set,
             clear: coverage_360_clear,
         },
         CoverageCase {
-            contract: "RichEditBox.TextChanged",
+            contract: "RichEditBox.IsEnabled",
             set: coverage_361_set,
             clear: coverage_361_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.Blocks",
+            contract: "RichEditBox.TextChanged",
             set: coverage_362_set,
             clear: coverage_362_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.IsTextSelectionEnabled",
+            contract: "RichTextBlock.Blocks",
             set: coverage_363_set,
             clear: coverage_363_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.TextWrapping",
+            contract: "RichTextBlock.IsTextSelectionEnabled",
             set: coverage_364_set,
             clear: coverage_364_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.FontSize",
+            contract: "RichTextBlock.TextWrapping",
             set: coverage_365_set,
             clear: coverage_365_clear,
         },
         CoverageCase {
-            contract: "RichTextBlock.Foreground",
+            contract: "RichTextBlock.FontSize",
             set: coverage_366_set,
             clear: coverage_366_clear,
+        },
+        CoverageCase {
+            contract: "RichTextBlock.Foreground",
+            set: coverage_367_set,
+            clear: coverage_367_clear,
         },
     ]
 }
@@ -3802,360 +3807,368 @@ fn coverage_308_clear() -> View {
     TeachingTip::new().into()
 }
 fn coverage_309_set() -> View {
-    TeachingTip::new().close_button_content("coverage").into()
+    TeachingTip::new()
+        .action_button_style(ButtonStyle::Default)
+        .into()
 }
 fn coverage_309_clear() -> View {
     TeachingTip::new().into()
 }
 fn coverage_310_set() -> View {
-    TeachingTip::new().on_closed(|| {}).into()
+    TeachingTip::new().close_button_content("coverage").into()
 }
 fn coverage_310_clear() -> View {
     TeachingTip::new().into()
 }
 fn coverage_311_set() -> View {
-    TeachingTip::new().on_action_button_click(|| {}).into()
+    TeachingTip::new().on_closed(|_| {}).into()
 }
 fn coverage_311_clear() -> View {
     TeachingTip::new().into()
 }
 fn coverage_312_set() -> View {
-    DropDownButton::new().is_enabled(true).into()
+    TeachingTip::new().on_action_button_click(|| {}).into()
 }
 fn coverage_312_clear() -> View {
-    DropDownButton::new().into()
+    TeachingTip::new().into()
 }
 fn coverage_313_set() -> View {
-    DropDownButton::new().on_click(|| {}).into()
+    DropDownButton::new().is_enabled(true).into()
 }
 fn coverage_313_clear() -> View {
     DropDownButton::new().into()
 }
 fn coverage_314_set() -> View {
-    AppBarButton::new().label("coverage").into()
+    DropDownButton::new().on_click(|| {}).into()
 }
 fn coverage_314_clear() -> View {
-    AppBarButton::new().into()
+    DropDownButton::new().into()
 }
 fn coverage_315_set() -> View {
-    AppBarButton::new().is_enabled(true).into()
+    AppBarButton::new().label("coverage").into()
 }
 fn coverage_315_clear() -> View {
     AppBarButton::new().into()
 }
 fn coverage_316_set() -> View {
-    AppBarButton::new().icon(Symbol::Previous).into()
+    AppBarButton::new().is_enabled(true).into()
 }
 fn coverage_316_clear() -> View {
     AppBarButton::new().into()
 }
 fn coverage_317_set() -> View {
-    AppBarButton::new().on_click(|| {}).into()
+    AppBarButton::new().icon(Symbol::Previous).into()
 }
 fn coverage_317_clear() -> View {
     AppBarButton::new().into()
 }
 fn coverage_318_set() -> View {
-    MenuBarItem::new().title("coverage").into()
+    AppBarButton::new().on_click(|| {}).into()
 }
 fn coverage_318_clear() -> View {
-    MenuBarItem::new().into()
+    AppBarButton::new().into()
 }
 fn coverage_319_set() -> View {
-    SplitButton::new().is_enabled(true).into()
+    MenuBarItem::new().title("coverage").into()
 }
 fn coverage_319_clear() -> View {
-    SplitButton::new().into()
+    MenuBarItem::new().into()
 }
 fn coverage_320_set() -> View {
-    SplitButton::new().on_click(|| {}).into()
+    SplitButton::new().is_enabled(true).into()
 }
 fn coverage_320_clear() -> View {
     SplitButton::new().into()
 }
 fn coverage_321_set() -> View {
-    ColorPicker::new().color(Color::rgb(1, 2, 3)).into()
+    SplitButton::new().on_click(|| {}).into()
 }
 fn coverage_321_clear() -> View {
-    ColorPicker::new().into()
+    SplitButton::new().into()
 }
 fn coverage_322_set() -> View {
-    ColorPicker::new().is_alpha_enabled(true).into()
+    ColorPicker::new().color(Color::rgb(1, 2, 3)).into()
 }
 fn coverage_322_clear() -> View {
     ColorPicker::new().into()
 }
 fn coverage_323_set() -> View {
-    ColorPicker::new().is_hex_input_visible(true).into()
+    ColorPicker::new().is_alpha_enabled(true).into()
 }
 fn coverage_323_clear() -> View {
     ColorPicker::new().into()
 }
 fn coverage_324_set() -> View {
-    ColorPicker::new().is_color_slider_visible(true).into()
+    ColorPicker::new().is_hex_input_visible(true).into()
 }
 fn coverage_324_clear() -> View {
     ColorPicker::new().into()
 }
 fn coverage_325_set() -> View {
-    ColorPicker::new()
-        .is_color_channel_text_input_visible(true)
-        .into()
+    ColorPicker::new().is_color_slider_visible(true).into()
 }
 fn coverage_325_clear() -> View {
     ColorPicker::new().into()
 }
 fn coverage_326_set() -> View {
-    ColorPicker::new().is_enabled(true).into()
+    ColorPicker::new()
+        .is_color_channel_text_input_visible(true)
+        .into()
 }
 fn coverage_326_clear() -> View {
     ColorPicker::new().into()
 }
 fn coverage_327_set() -> View {
-    ColorPicker::new().on_color_changed(|_| {}).into()
+    ColorPicker::new().is_enabled(true).into()
 }
 fn coverage_327_clear() -> View {
     ColorPicker::new().into()
 }
 fn coverage_328_set() -> View {
-    DatePicker::new().day_visible(true).into()
+    ColorPicker::new().on_color_changed(|_| {}).into()
 }
 fn coverage_328_clear() -> View {
-    DatePicker::new().into()
+    ColorPicker::new().into()
 }
 fn coverage_329_set() -> View {
-    DatePicker::new().month_visible(true).into()
+    DatePicker::new().day_visible(true).into()
 }
 fn coverage_329_clear() -> View {
     DatePicker::new().into()
 }
 fn coverage_330_set() -> View {
-    DatePicker::new().year_visible(true).into()
+    DatePicker::new().month_visible(true).into()
 }
 fn coverage_330_clear() -> View {
     DatePicker::new().into()
 }
 fn coverage_331_set() -> View {
-    DatePicker::new().is_enabled(true).into()
+    DatePicker::new().year_visible(true).into()
 }
 fn coverage_331_clear() -> View {
     DatePicker::new().into()
 }
 fn coverage_332_set() -> View {
-    DatePicker::new().on_date_changed(|_| {}).into()
+    DatePicker::new().is_enabled(true).into()
 }
 fn coverage_332_clear() -> View {
     DatePicker::new().into()
 }
 fn coverage_333_set() -> View {
-    TimePicker::new().is_enabled(true).into()
+    DatePicker::new().on_date_changed(|_| {}).into()
 }
 fn coverage_333_clear() -> View {
-    TimePicker::new().into()
+    DatePicker::new().into()
 }
 fn coverage_334_set() -> View {
-    TimePicker::new().minute_increment(1).into()
+    TimePicker::new().is_enabled(true).into()
 }
 fn coverage_334_clear() -> View {
     TimePicker::new().into()
 }
 fn coverage_335_set() -> View {
-    TimePicker::new().clock_identifier("24HourClock").into()
+    TimePicker::new().minute_increment(1).into()
 }
 fn coverage_335_clear() -> View {
     TimePicker::new().into()
 }
 fn coverage_336_set() -> View {
-    TimePicker::new().on_time_changed(|_| {}).into()
+    TimePicker::new().clock_identifier("24HourClock").into()
 }
 fn coverage_336_clear() -> View {
     TimePicker::new().into()
 }
 fn coverage_337_set() -> View {
-    CalendarDatePicker::new().min_date(DateTime::now()).into()
+    TimePicker::new().on_time_changed(|_| {}).into()
 }
 fn coverage_337_clear() -> View {
-    CalendarDatePicker::new().into()
+    TimePicker::new().into()
 }
 fn coverage_338_set() -> View {
-    CalendarDatePicker::new().max_date(DateTime::now()).into()
+    CalendarDatePicker::new().min_date(DateTime::now()).into()
 }
 fn coverage_338_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_339_set() -> View {
-    CalendarDatePicker::new().date(DateTime::now()).into()
+    CalendarDatePicker::new().max_date(DateTime::now()).into()
 }
 fn coverage_339_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_340_set() -> View {
-    CalendarDatePicker::new()
-        .placeholder_text("coverage")
-        .into()
+    CalendarDatePicker::new().date(DateTime::now()).into()
 }
 fn coverage_340_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_341_set() -> View {
-    CalendarDatePicker::new().is_today_highlighted(true).into()
+    CalendarDatePicker::new()
+        .placeholder_text("coverage")
+        .into()
 }
 fn coverage_341_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_342_set() -> View {
-    CalendarDatePicker::new().is_calendar_open(false).into()
+    CalendarDatePicker::new().is_today_highlighted(true).into()
 }
 fn coverage_342_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_343_set() -> View {
-    CalendarDatePicker::new().is_enabled(true).into()
+    CalendarDatePicker::new().is_calendar_open(false).into()
 }
 fn coverage_343_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_344_set() -> View {
-    CalendarDatePicker::new().on_date_changed(|_| {}).into()
+    CalendarDatePicker::new().is_enabled(true).into()
 }
 fn coverage_344_clear() -> View {
     CalendarDatePicker::new().into()
 }
 fn coverage_345_set() -> View {
-    CalendarView::new().is_today_highlighted(true).into()
+    CalendarDatePicker::new().on_date_changed(|_| {}).into()
 }
 fn coverage_345_clear() -> View {
-    CalendarView::new().into()
+    CalendarDatePicker::new().into()
 }
 fn coverage_346_set() -> View {
-    CalendarView::new().is_group_label_visible(true).into()
+    CalendarView::new().is_today_highlighted(true).into()
 }
 fn coverage_346_clear() -> View {
     CalendarView::new().into()
 }
 fn coverage_347_set() -> View {
-    CalendarView::new().is_enabled(true).into()
+    CalendarView::new().is_group_label_visible(true).into()
 }
 fn coverage_347_clear() -> View {
     CalendarView::new().into()
 }
 fn coverage_348_set() -> View {
-    CalendarView::new().on_selected_dates_changed(|| {}).into()
+    CalendarView::new().is_enabled(true).into()
 }
 fn coverage_348_clear() -> View {
     CalendarView::new().into()
 }
 fn coverage_349_set() -> View {
-    ListViewItem::new().tag("coverage").into()
+    CalendarView::new().on_selected_dates_changed(|| {}).into()
 }
 fn coverage_349_clear() -> View {
-    ListViewItem::new().into()
+    CalendarView::new().into()
 }
 fn coverage_350_set() -> View {
-    GridView::new().can_drag_items(true).into()
+    ListViewItem::new().tag("coverage").into()
 }
 fn coverage_350_clear() -> View {
-    GridView::new().into()
+    ListViewItem::new().into()
 }
 fn coverage_351_set() -> View {
-    GridView::new().can_reorder_items(true).into()
+    GridView::new().can_drag_items(true).into()
 }
 fn coverage_351_clear() -> View {
     GridView::new().into()
 }
 fn coverage_352_set() -> View {
-    GridView::new().allow_drop(true).into()
+    GridView::new().can_reorder_items(true).into()
 }
 fn coverage_352_clear() -> View {
     GridView::new().into()
 }
 fn coverage_353_set() -> View {
-    GridView::new().selected_index(Some(0)).into()
+    GridView::new().allow_drop(true).into()
 }
 fn coverage_353_clear() -> View {
     GridView::new().into()
 }
 fn coverage_354_set() -> View {
-    GridView::new().on_selection_changed(|_| {}).into()
+    GridView::new().selected_index(Some(0)).into()
 }
 fn coverage_354_clear() -> View {
     GridView::new().into()
 }
 fn coverage_355_set() -> View {
-    GridView::new().on_reordered(|_| {}).into()
+    GridView::new().on_selection_changed(|_| {}).into()
 }
 fn coverage_355_clear() -> View {
     GridView::new().into()
 }
 fn coverage_356_set() -> View {
-    GridViewItem::new().tag("coverage").into()
+    GridView::new().on_reordered(|_| {}).into()
 }
 fn coverage_356_clear() -> View {
-    GridViewItem::new().into()
+    GridView::new().into()
 }
 fn coverage_357_set() -> View {
-    RichEditBox::new().text("coverage").into()
+    GridViewItem::new().tag("coverage").into()
 }
 fn coverage_357_clear() -> View {
-    RichEditBox::new().into()
+    GridViewItem::new().into()
 }
 fn coverage_358_set() -> View {
-    RichEditBox::new().placeholder_text("coverage").into()
+    RichEditBox::new().text("coverage").into()
 }
 fn coverage_358_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_359_set() -> View {
-    RichEditBox::new().is_read_only(true).into()
+    RichEditBox::new().placeholder_text("coverage").into()
 }
 fn coverage_359_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_360_set() -> View {
-    RichEditBox::new().is_enabled(true).into()
+    RichEditBox::new().is_read_only(true).into()
 }
 fn coverage_360_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_361_set() -> View {
-    RichEditBox::new().on_text_changed(|_| {}).into()
+    RichEditBox::new().is_enabled(true).into()
 }
 fn coverage_361_clear() -> View {
     RichEditBox::new().into()
 }
 fn coverage_362_set() -> View {
+    RichEditBox::new().on_text_changed(|_| {}).into()
+}
+fn coverage_362_clear() -> View {
+    RichEditBox::new().into()
+}
+fn coverage_363_set() -> View {
     RichTextBlock::new()
         .paragraphs(RichText::new([RichTextParagraph::new([
             RichTextInline::Run(RichTextRun::plain("coverage")),
         ])]))
         .into()
 }
-fn coverage_362_clear() -> View {
-    RichTextBlock::new().into()
-}
-fn coverage_363_set() -> View {
-    RichTextBlock::new().is_text_selection_enabled(true).into()
-}
 fn coverage_363_clear() -> View {
     RichTextBlock::new().into()
 }
 fn coverage_364_set() -> View {
-    RichTextBlock::new()
-        .text_wrapping(TextWrapping::Wrap)
-        .into()
+    RichTextBlock::new().is_text_selection_enabled(true).into()
 }
 fn coverage_364_clear() -> View {
     RichTextBlock::new().into()
 }
 fn coverage_365_set() -> View {
-    RichTextBlock::new().font_size(1.0).into()
+    RichTextBlock::new()
+        .text_wrapping(TextWrapping::Wrap)
+        .into()
 }
 fn coverage_365_clear() -> View {
     RichTextBlock::new().into()
 }
 fn coverage_366_set() -> View {
-    RichTextBlock::new().foreground(Color::rgb(1, 2, 3)).into()
+    RichTextBlock::new().font_size(1.0).into()
 }
 fn coverage_366_clear() -> View {
+    RichTextBlock::new().into()
+}
+fn coverage_367_set() -> View {
+    RichTextBlock::new().foreground(Color::rgb(1, 2, 3)).into()
+}
+fn coverage_367_clear() -> View {
     RichTextBlock::new().into()
 }

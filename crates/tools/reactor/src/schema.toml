@@ -1741,11 +1741,17 @@ name = "ActionButtonContent"
 adapter = "inspectable_string"
 
 [[objects.properties]]
+name = "ActionButtonStyle"
+adapter = "resource_style"
+
+[[objects.properties]]
 name = "CloseButtonContent"
 adapter = "inspectable_string"
 
 [[objects.events]]
 name = "Closed"
+payload = "Reason"
+payload_adapter = "teaching_tip_close_reason"
 
 [[objects.events]]
 name = "ActionButtonClick"

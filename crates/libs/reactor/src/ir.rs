@@ -274,6 +274,10 @@ fn validate_object(
                 | (ValueType::Selection, EventValue::Selection(_))
                 | (ValueType::SelectionIndex, EventValue::SelectionIndex(_))
                 | (ValueType::StringList, EventValue::StringList(_))
+                | (
+                    ValueType::TeachingTipCloseReason,
+                    EventValue::TeachingTipCloseReason(_)
+                )
                 | (ValueType::Unit, EventValue::Unit(_))
         );
         if !valid {

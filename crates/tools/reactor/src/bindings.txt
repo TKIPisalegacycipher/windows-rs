@@ -222,8 +222,9 @@ Microsoft::UI::Xaml::Controls::ITabViewItem::{put_Header, put_IsClosable}
 Microsoft::UI::Xaml::Controls::ITabViewItemStatics::{get_HeaderProperty, get_IsClosableProperty}
 Microsoft::UI::Xaml::Controls::ITabViewStatics::{get_CanReorderTabsProperty, get_IsAddTabButtonVisibleProperty, get_SelectedIndexProperty}
 Microsoft::UI::Xaml::Controls::ITabViewTabCloseRequestedEventArgs::get_Tab
-Microsoft::UI::Xaml::Controls::ITeachingTip::{add_ActionButtonClick, add_Closed, put_ActionButtonContent, put_CloseButtonContent, put_IsLightDismissEnabled, put_IsOpen, put_PreferredPlacement, put_Subtitle, put_Title, remove_ActionButtonClick, remove_Closed}
-Microsoft::UI::Xaml::Controls::ITeachingTipStatics::{get_ActionButtonContentProperty, get_CloseButtonContentProperty, get_IsLightDismissEnabledProperty, get_IsOpenProperty, get_PreferredPlacementProperty, get_SubtitleProperty, get_TitleProperty}
+Microsoft::UI::Xaml::Controls::ITeachingTip::{add_ActionButtonClick, add_Closed, put_ActionButtonContent, put_ActionButtonStyle, put_CloseButtonContent, put_IsLightDismissEnabled, put_IsOpen, put_PreferredPlacement, put_Subtitle, put_Title, remove_ActionButtonClick, remove_Closed}
+Microsoft::UI::Xaml::Controls::ITeachingTipClosedEventArgs::get_Reason
+Microsoft::UI::Xaml::Controls::ITeachingTipStatics::{get_ActionButtonContentProperty, get_ActionButtonStyleProperty, get_CloseButtonContentProperty, get_IsLightDismissEnabledProperty, get_IsOpenProperty, get_PreferredPlacementProperty, get_SubtitleProperty, get_TitleProperty}
 Microsoft::UI::Xaml::Controls::ItemCollection::{}
 Microsoft::UI::Xaml::Controls::ItemsRepeater::CreateInstance
 Microsoft::UI::Xaml::Controls::ITextBlock::{get_ContentEnd, get_ContentStart, get_FontWeight, get_Text, get_TextAlignment, get_TextHighlighters, put_FontFamily, put_FontSize, put_FontWeight, put_Foreground, put_IsTextSelectionEnabled, put_MaxLines, put_Padding, put_Text, put_TextAlignment, put_TextTrimming, put_TextWrapping}
@@ -320,6 +321,7 @@ Microsoft::UI::Xaml::Controls::SymbolIconSource::CreateInstance
 Microsoft::UI::Xaml::Controls::TabView::CreateInstance
 Microsoft::UI::Xaml::Controls::TabViewItem::CreateInstance
 Microsoft::UI::Xaml::Controls::TeachingTip::CreateInstance
+Microsoft::UI::Xaml::Controls::TeachingTipCloseReason::{CloseButton, LightDismiss, Programmatic}
 Microsoft::UI::Xaml::Controls::TeachingTipPlacementMode
 Microsoft::UI::Xaml::Controls::TextBlock::CreateInstance
 Microsoft::UI::Xaml::Controls::TextBox::CreateInstance

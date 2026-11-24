@@ -121,6 +121,7 @@ type NativeSelectionIndexEvent = NativeValueEvent<Option<usize>>;
 type NativeTextEvent = NativeValueEvent<Rc<str>>;
 type NativeStringEvent = NativeTextEvent;
 type NativeStringListEvent = NativeValueEvent<Vec<String>>;
+type NativeTeachingTipCloseReasonEvent = NativeValueEvent<TeachingTipCloseReason>;
 type NativeUnitEvent = NativeValueEvent<()>;
 
 /// Adapter state that generated native event handlers capture when they subscribe.
@@ -1523,6 +1524,14 @@ fn navigation_view_display_mode(
     }
 }
 
+fn teaching_tip_close_reason(value: native::TeachingTipCloseReason) -> TeachingTipCloseReason {
+    match value {
+        native::TeachingTipCloseReason::CloseButton => TeachingTipCloseReason::CloseButton,
+        native::TeachingTipCloseReason::LightDismiss => TeachingTipCloseReason::LightDismiss,
+        _ => TeachingTipCloseReason::Programmatic,
+    }
+}
+
 pub(crate) fn validate_native_uri(value: &str) -> windows_core::Result<()> {
     native::Uri::CreateUri(value).map(drop)
 }
@@ -2092,7 +2101,11 @@ impl WinUiAdapter {
     /// Sets RichTextBlock `object`'s text (`None`: clears it). With `RichText::on_link_click`,
     /// each hyperlink's `Click` queues a `LinkClick` for the text's callback, kept until the text
     /// is set again or the object goes.
-    fn set_rich_text(&mut self, object: ObjectId, value: Option<&RichText>) -> Result<(), WinUiError> {
+    fn set_rich_text(
+        &mut self,
+        object: ObjectId,
+        value: Option<&RichText>,
+    ) -> Result<(), WinUiError> {
         self.rich_text_links.remove(&object);
         let target: native::RichTextBlock = self.ui_element(object)?.cast()?;
         let links = build_rich_text_blocks(&target, value)?;

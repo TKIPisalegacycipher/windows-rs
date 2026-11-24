@@ -2007,6 +2007,13 @@ pub enum NavigationViewDisplayMode {
     Expanded,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TeachingTipCloseReason {
+    CloseButton,
+    LightDismiss,
+    Programmatic,
+}
+
 /// Pointer state in element-local and window-relative device-independent pixels.
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -2058,6 +2065,7 @@ pub enum EventValue {
     Selection(Callback<Option<Rc<str>>>),
     SelectionIndex(Callback<Option<usize>>),
     StringList(Callback<Vec<String>>),
+    TeachingTipCloseReason(Callback<TeachingTipCloseReason>),
     Unit(Callback<()>),
 }
 
@@ -2078,6 +2086,7 @@ pub enum EventPayload {
     OptionalF64(Option<f64>),
     OptionalTimeSpan(Option<TimeSpan>),
     NavigationViewDisplayMode(NavigationViewDisplayMode),
+    TeachingTipCloseReason(TeachingTipCloseReason),
     PointerEventInfo(PointerEventInfo),
     #[cfg(any(test, feature = "test"))]
     KeyEventInfo(KeyEventInfo),
