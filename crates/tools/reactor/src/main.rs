@@ -309,6 +309,7 @@ enum PayloadAdapter {
     OptionalTimeSpan,
     RatingValue,
     SelectionIndex,
+    TeachingTipCloseReason,
 }
 
 impl PayloadAdapter {
@@ -322,6 +323,7 @@ impl PayloadAdapter {
             Self::OptionalDateTime => "OptionalDateTime",
             Self::OptionalTimeSpan => "OptionalTimeSpan",
             Self::SelectionIndex => "SelectionIndex",
+            Self::TeachingTipCloseReason => "TeachingTipCloseReason",
         }
     }
 }
@@ -1430,6 +1432,9 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                             Some(PayloadAdapter::SelectionIndex) => {
                                 ".map(|value| usize::try_from(value).ok())"
                             }
+                            Some(PayloadAdapter::TeachingTipCloseReason) => {
+                                ".map(teaching_tip_close_reason)"
+                            }
                             None if event.value == "String" => ".map(Rc::<str>::from)",
                             None => "",
                             _ => unreachable!(),
@@ -1464,7 +1469,8 @@ fn generate_native(schema: &Schema, metadata: &tool_reactor_metadata::MetadataRe
                     | "OptionalTimeSpan"
                     | "NavigationViewDisplayMode"
                     | "SelectionIndex"
-                    | "String" => Some(dispatch_value),
+                    | "String"
+                    | "TeachingTipCloseReason" => Some(dispatch_value),
                     "Unit" => Some("()"),
                     "ContentDialogResult" => {
                         code.push_str(&format!(
@@ -3059,6 +3065,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
              ResourceOverrides,\n\
              RichText,\n\
              Selection,\n\
+             TeachingTipCloseReason,\n\
              TextHighlighters,\n\
              ThemeTransitions,\n\
              Thickness,\n\
@@ -3930,6 +3937,7 @@ fn generate_declarations(
                         "Selection" => "Option<Rc<str>>",
                         "PointerEventInfo" => "PointerEventInfo",
                         "SelectionIndex" => "Option<usize>",
+                        "TeachingTipCloseReason" => "TeachingTipCloseReason",
                         _ => unreachable!(),
                     };
                     output.push_str(&format!(

@@ -444,6 +444,9 @@ impl WinUiAdapter {
                     PropertyId::Style if kind == ObjectType::Button => {
                         break 'apply self.set_button_style(object, None);
                     }
+                    PropertyId::ActionButtonStyle if kind == ObjectType::TeachingTip => {
+                        break 'apply self.set_teaching_tip_action_button_style(object, None);
+                    }
                     _ => {}
                 }
                 if theme_style_info(kind).is_some_and(|(_, properties)| {
@@ -563,6 +566,12 @@ impl WinUiAdapter {
                         if kind == ObjectType::Button =>
                     {
                         break 'apply self.set_button_style(object, Some(*value));
+                    }
+                    (PropertyId::ActionButtonStyle, PropertyValue::ButtonStyle(value))
+                        if kind == ObjectType::TeachingTip =>
+                    {
+                        break 'apply self
+                            .set_teaching_tip_action_button_style(object, Some(*value));
                     }
                     (id, PropertyValue::Brush(Brush::Theme(value)))
                         if theme_style_info(kind).is_some_and(|(_, properties)| {

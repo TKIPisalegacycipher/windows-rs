@@ -208,6 +208,30 @@ impl WinUiAdapter {
         self.apply_style_state(object)
     }
 
+    fn set_teaching_tip_action_button_style(
+        &mut self,
+        object: ObjectId,
+        value: Option<ButtonStyle>,
+    ) -> Result<(), WinUiError> {
+        let Some(Handle::Generated(GeneratedHandle::TeachingTip(tip))) = self.handles.get(&object)
+        else {
+            return Err(WinUiError::InvalidObject(object));
+        };
+        let tip = tip.value.clone();
+        match value {
+            None | Some(ButtonStyle::Default) => {
+                let property = native::TeachingTip::ActionButtonStyleProperty()?;
+                tip.cast::<native::IDependencyObject>()?
+                    .ClearValue(&property)?;
+            }
+            Some(style) => {
+                let style = self.lookup_button_style(style)?;
+                tip.SetActionButtonStyle(&style)?;
+            }
+        }
+        Ok(())
+    }
+
     fn set_theme_brush(
         &mut self,
         object: ObjectId,

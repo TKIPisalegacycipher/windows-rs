@@ -1304,6 +1304,58 @@ fn final_value_parity_contracts_are_typed() {
 }
 
 #[test]
+fn teaching_tip_records_action_button_style_and_dispatches_close_reason() {
+    let reasons = Rc::new(RefCell::new(Vec::new()));
+    let reason_callback = {
+        let reasons = Rc::clone(&reasons);
+        Callback::new(move |reason| reasons.borrow_mut().push(reason))
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            TeachingTip::new()
+                .action_button_style(ButtonStyle::Accent)
+                .on_closed(reason_callback.clone()),
+        )
+        .unwrap();
+    let object = runtime.graph().root().unwrap();
+    assert_eq!(
+        runtime.graph().properties(object).unwrap(),
+        [Property {
+            id: PropertyId::ActionButtonStyle,
+            value: PropertyValue::ButtonStyle(ButtonStyle::Accent),
+        }]
+    );
+    for reason in [
+        TeachingTipCloseReason::CloseButton,
+        TeachingTipCloseReason::LightDismiss,
+        TeachingTipCloseReason::Programmatic,
+    ] {
+        runtime.adapter_mut().queue_event(EventDispatch::new(
+            object,
+            EventId::Closed,
+            EventValue::TeachingTipCloseReason(reason_callback.clone()),
+            EventPayload::TeachingTipCloseReason(reason),
+        ));
+    }
+    assert_eq!(runtime.dispatch_native_events().unwrap(), 3);
+    assert_eq!(
+        &*reasons.borrow(),
+        &[
+            TeachingTipCloseReason::CloseButton,
+            TeachingTipCloseReason::LightDismiss,
+            TeachingTipCloseReason::Programmatic,
+        ]
+    );
+
+    let mutations = runtime.update(TeachingTip::new()).unwrap();
+    let Mutation::SetProperties { clear, .. } = &mutations[0] else {
+        panic!("expected property clear mutation");
+    };
+    assert_eq!(clear.as_ref(), [PropertyId::ActionButtonStyle]);
+}
+
+#[test]
 fn generated_controls_cover_distinct_native_value_and_relation_shapes() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime

@@ -6354,6 +6354,13 @@ impl TeachingTip {
         );
         self
     }
+    pub fn action_button_style(mut self, action_button_style: ButtonStyle) -> Self {
+        self.0 = self.0.property(
+            PropertyId::ActionButtonStyle,
+            PropertyValue::ButtonStyle(action_button_style),
+        );
+        self
+    }
     pub fn close_button_content(mut self, close_button_content: impl AsRef<str>) -> Self {
         self.0 = self.0.property(
             PropertyId::CloseButtonContent,
@@ -6362,10 +6369,10 @@ impl TeachingTip {
         self
     }
     visual_methods!();
-    pub fn on_closed(mut self, callback: impl IntoUnitCallback) -> Self {
+    pub fn on_closed(mut self, callback: impl IntoPayloadCallback<TeachingTipCloseReason>) -> Self {
         self.0 = self.0.event(
             EventId::Closed,
-            EventValue::Unit(callback.into_unit_callback()),
+            EventValue::TeachingTipCloseReason(callback.into_payload_callback()),
         );
         self
     }

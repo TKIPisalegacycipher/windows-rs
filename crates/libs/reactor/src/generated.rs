@@ -87,6 +87,7 @@ pub enum ObjectType {
 pub enum PropertyId {
     AcceptsReturn,
     ActionButtonContent,
+    ActionButtonStyle,
     AllowDrop,
     AllowFocusOnInteraction,
     AlwaysShowHeader,
@@ -424,6 +425,7 @@ pub enum ValueType {
     ResourceOverrides,
     RichText,
     Selection,
+    TeachingTipCloseReason,
     TextHighlighters,
     ThemeTransitions,
     Thickness,
@@ -909,7 +911,7 @@ pub fn event_contracts(kind: ObjectType) -> &'static [EventContract] {
         ObjectType::TeachingTip => &[
             EventContract {
                 id: EventId::Closed,
-                value: ValueType::Unit,
+                value: ValueType::TeachingTipCloseReason,
             },
             EventContract {
                 id: EventId::ActionButtonClick,
@@ -2407,6 +2409,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::String,
         }),
+        (ObjectType::TeachingTip, PropertyId::ActionButtonStyle) => Some(PropertyContract {
+            id,
+            value: ValueType::ButtonStyle,
+        }),
         (ObjectType::TeachingTip, PropertyId::CloseButtonContent) => Some(PropertyContract {
             id,
             value: ValueType::String,
@@ -2868,7 +2874,8 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::TeachingTip, PropertyId::IsLightDismissEnabled) => 34,
         (ObjectType::TeachingTip, PropertyId::PreferredPlacement) => 35,
         (ObjectType::TeachingTip, PropertyId::ActionButtonContent) => 36,
-        (ObjectType::TeachingTip, PropertyId::CloseButtonContent) => 37,
+        (ObjectType::TeachingTip, PropertyId::ActionButtonStyle) => 37,
+        (ObjectType::TeachingTip, PropertyId::CloseButtonContent) => 38,
         (ObjectType::DropDownButton, PropertyId::IsEnabled) => 31,
         (ObjectType::AppBarButton, PropertyId::Label) => 31,
         (ObjectType::AppBarButton, PropertyId::IsEnabled) => 32,
@@ -3016,6 +3023,7 @@ pub(crate) const ALL_OBJECT_TYPES: &[ObjectType] = &[
 pub(crate) const ALL_PROPERTY_IDS: &[PropertyId] = &[
     PropertyId::AcceptsReturn,
     PropertyId::ActionButtonContent,
+    PropertyId::ActionButtonStyle,
     PropertyId::AllowDrop,
     PropertyId::AllowFocusOnInteraction,
     PropertyId::AlwaysShowHeader,

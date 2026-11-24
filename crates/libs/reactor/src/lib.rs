@@ -72,10 +72,10 @@ pub use declaration::{
     KeyAccelerators, KeyEventInfo, KeyedView, Menu, MenuExt, MenuItem, NavigationViewDisplayMode,
     PhysicalKeyStatus, PointerEventInfo, ResourceOverrides, ResourceValue, RichText,
     RichTextHyperlink, RichTextInline, RichTextParagraph, RichTextRun, RoutedCallback,
-    TextHighlighter, TextRange, ThemeBrush, ThemeColorResource, ThemeTransition, Thickness,
-    Tooltip, TooltipExt, TooltipPlacement, View, VirtualKey, VirtualSource, keyed,
-    register_resource_doubles, register_resource_fonts, register_text_block_font,
-    register_theme_colors,
+    TeachingTipCloseReason, TextHighlighter, TextRange, ThemeBrush, ThemeColorResource,
+    ThemeTransition, Thickness, Tooltip, TooltipExt, TooltipPlacement, View, VirtualKey,
+    VirtualSource, keyed, register_resource_doubles, register_resource_fonts,
+    register_text_block_font, register_theme_colors,
 };
 #[cfg(not(any(test, feature = "test")))]
 use generated::*;

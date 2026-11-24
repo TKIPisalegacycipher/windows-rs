@@ -132,6 +132,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 91 | `478de456` | A `ContentDialog` takes its owner's theme: when the owner is set, the dialog's `RequestedTheme` is set to the owner's `ActualTheme`, set again as the dialog is shown, best-effort (an owner outside the live tree reports the application's theme and raises no `ActualThemeChanged`, so this apply is what corrects a dialog whose owner was set before it loaded), and kept in step through the owner's `ActualThemeChanged` while the dialog has that owner (`NativeDialogTheme`, dropped with the owner or the dialog); no new bindings (`84f3d495`, a review fix on the same branch) | none | New | Bug: WinUI shows a dialog in its `XamlRoot`'s popup layer, outside the owner's subtree, so a theme the window's content requests (`WindowTheme::Light` or `Dark`) never reaches it, and every dialog drew in the application's theme, the system's, while the window drew in the other (Okojo#3035). Upstream has the same gap. Under high contrast WinUI ignores `RequestedTheme`, as before. Evidence: desktop test (`tests/native/dialog_theme.rs`, `a_content_dialog_takes_its_windows_theme`: a window forced to the theme opposite the application's; the dialog takes it when its owner is set and again as it is shown, follows the window while open, and stops following once its owner lets it go); app (Okojo GUI runs 44951479414 before, on main: the dialogs in the mismatched cases draw in Windows' theme; 44951097642 after: dialogs take Okojo's theme in both Windows modes, and an open dialog follows a Windows switch when Okojo follows the system) |
 | 92 | `4ebbae06` | An AutoSuggestBox's UI Automation bounds stay its text field's while its suggestion list is closed: when the adapter creates an AutoSuggestBox it registers `Loaded` and `SizeChanged` (the box held weakly, as 79's ComboBox), which hook the first `Popup` in its template once it is there: once `Opened` and `Closed` are both registered, the popup's content is collapsed unless the popup is open, and on each of them shown or collapsed to match whether the popup is open (the handlers take the popup from the sender, so they don't hold it); failures are ignored; binds `IPopup::{add_Closed, add_Opened, get_Child, get_IsOpen}` and `IUIElement::put_Visibility`; the hook reads its state and releases it before hooking, since showing the content may raise it again (`3e37436e`, a pre-screen fix, and `c3007c6b`, a review fix, on the same branch) | none | New | Bug, an issue for WinUI rather than Reactor to fix: WinUI takes the box's bounds from its whole template, the popup's content included, and that content keeps its last size after the popup closes, so once the list had shown the box's bounds took in the list's area for the rest of the launch (460x117, then 461x86 around a 460x32 text field), and voice control or a UI Automation click aimed at the box landed below it (Okojo#2851). Constraining the popup to the root's bounds (79's fix) did not change it. Evidence: app (Okojo GUI `search-box-bounds`, runs 45057630462 before, 45058483661 (probe) and 45059254343 with the change; `search-recent` 45059452221) |
 | 93 | `2f405160` | `PathIcon::foreground`: `IconElement.Foreground` on a `PathIcon` element, through the generator (`schema.toml`, the `theme_brush` adapter as on `FontIcon` and `SymbolIcon`, so a theme brush follows theme changes; undeclared, it is cleared and the icon takes its parent's again); no new bindings | none | New | Extends 15 to the last icon element without a foreground: a path icon could only take its parent's, while `Icon::path(..).foreground(..)` (22) already tints one in a menu. Okojo's ribbon Unsubscribe glyph is a `PathIcon` and takes the command's rose brush, as More and the right-click menu do (Okojo#3263). On `okojo-flow-layout` (TKIPisalegacycipher/windows-rs#15, merged as `28d71758`). Evidence: unit (`tests/declarations.rs`, `icon_foregrounds_record_the_same_theme_brush_as_text`) |
+| 94 | `2f48148f` | `TeachingTip::action_button_style(ButtonStyle)` and `TeachingTip::on_closed(TeachingTipCloseReason)`: binds `ITeachingTip::put_ActionButtonStyle`, `ITeachingTipStatics::get_ActionButtonStyleProperty`, `ITeachingTipClosedEventArgs::get_Reason` and `TeachingTipCloseReason::{CloseButton, LightDismiss, Programmatic}` through the generator (`schema.toml` + `bindings.txt`); `ActionButtonStyle` uses `resource_style` (`lookup_button_style` / `ClearValue`), and `Closed` dispatches `TeachingTipCloseReason` | none | New | Lets Okojo's All accounts tip draw "Turn on" as the accent button and distinguish "Not now" (`CloseButton`) from Esc (`LightDismiss`) or window hide (`Programmatic`) (Okojo#3235). Evidence: unit (`tests/declarations.rs`, `teaching_tip_records_action_button_style_and_dispatches_close_reason`; 445 passed, 0 failed) |
 
 ## 5. Input fixes
 
@@ -309,12 +310,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-93 came after the rebuild and have no original.
+Commits 46-94 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77, 83, 84, 86, 88, 89, 90 and 93 only add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77, 83, 84, 86, 88, 89, 90, 93 and 94 add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_font`,
 `Border::use_system_focus_visuals`, `Border::focus_visual_margin`, `automation_accessibility_view`,
@@ -322,8 +323,8 @@ requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_fo
 `NavigationViewItem::on_got_focus`, `on_lost_focus` and `element_ref`, `Menu::on_closed`,
 `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`,
 `ElementRef<ListView>::request_focus_key`, `ElementRef<ListView>::request_selected_keys_into_view`,
-`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`, `PathIcon::foreground`), 78-82, 87 and 91 change behaviour (above, no public item), and 85 removes the one 57 added
-(`Border::handles_plain_presses`); none changes an existing item, except that 90 adds a variant to an enum (the table below). `register_resource_fonts` is
+`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`, `PathIcon::foreground`, `TeachingTipCloseReason`, `TeachingTip::action_button_style`), 78-82, 87 and 91 change behaviour (above, no public item), and 85 removes the one 57 added
+(`Border::handles_plain_presses`); none changes an existing item, except that 90 adds a variant to an enum and 94 changes `TeachingTip::on_closed`'s callback payload (the table below). `register_resource_fonts` is
 missing from `public-api.txt`, which commit 60 did not update. These are source-breaking for code
 that names them:
 
@@ -335,6 +336,7 @@ that names them:
 | `KeyAccelerator::new` | Parameter is `impl Into<InputModifiers>` instead of `AcceleratorModifiers` | 12 |
 | `MenuItem` | Items and submenus gain `icon` (and items `swatch`) fields | 18, 27 |
 | `ResourceValue` | Gains `Double`; not `#[non_exhaustive]`, so an exhaustive match breaks | 90 |
+| `TeachingTip::on_closed` | Callback takes `TeachingTipCloseReason` instead of `()` | 94 |
 
 Types the stack grows are `#[non_exhaustive]` since commit 1, so later additions of variants and
 fields are not breaking. The attribute itself is breaking for code that matches them exhaustively

@@ -410,7 +410,7 @@ struct GeneratedTabView {
 }
 struct GeneratedTeachingTip {
     value: native::TeachingTip,
-    closed: Rc<RefCell<NativeUnitEvent>>,
+    closed: Rc<RefCell<NativeTeachingTipCloseReasonEvent>>,
     _closed: Option<GeneratedRevoker>,
     action_button_click: Rc<RefCell<NativeUnitEvent>>,
     _action_button_click: Option<GeneratedRevoker>,
@@ -1960,7 +1960,7 @@ impl GeneratedHandle {
             ObjectType::TabViewItem => Self::TabViewItem(native::TabViewItem::new()?),
             ObjectType::TeachingTip => {
                 let value = native::TeachingTip::new()?;
-                let closed = Rc::new(RefCell::new(NativeUnitEvent::default()));
+                let closed = Rc::new(RefCell::new(NativeTeachingTipCloseReasonEvent::default()));
                 let _closed = None;
                 let action_button_click = Rc::new(RefCell::new(NativeUnitEvent::default()));
                 let _action_button_click = None;
@@ -9991,7 +9991,7 @@ impl GeneratedHandle {
                 }
                 for event in set {
                     match (event.id, &event.value) {
-                        (EventId::Closed, EventValue::Unit(callback)) => {
+                        (EventId::Closed, EventValue::TeachingTipCloseReason(callback)) => {
                             {
                                 let mut native_event = object.closed.borrow_mut();
                                 native_event.revision = native_event.revision.wrapping_add(1);
@@ -11093,7 +11093,7 @@ impl GeneratedHandle {
                 (event.revision == revision)
                     .then(|| event.callback.clone())
                     .flatten()
-                    .map(EventValue::Unit)
+                    .map(EventValue::TeachingTipCloseReason)
             }
             (Self::TeachingTip(object), EventId::ActionButtonClick) => {
                 let event = object.action_button_click.borrow();
@@ -11212,7 +11212,6 @@ impl GeneratedHandle {
             (Self::TabView(object), EventId::AddTabButtonClick) => {
                 Some(&object.add_tab_button_click)
             }
-            (Self::TeachingTip(object), EventId::Closed) => Some(&object.closed),
             (Self::TeachingTip(object), EventId::ActionButtonClick) => {
                 Some(&object.action_button_click)
             }
@@ -12692,9 +12691,17 @@ impl GeneratedTeachingTip {
         let value = &self.value;
         let event_for_callback = Rc::clone(&self.closed);
         let event_queue_closed = Rc::clone(context.event_queue);
-        let revoker = value.Closed(move |_, _| {
+        let revoker = value.Closed(move |_, args| {
             let dispatch = true;
             let observation = None;
+            let args = args.unwrap();
+            let payload = match args.Reason().map(teaching_tip_close_reason) {
+                Ok(value) => value,
+                Err(error) => {
+                    report_error(error);
+                    return;
+                }
+            };
             if dispatch {
                 WinUiAdapter::dispatch(
                     &event_for_callback,
@@ -12702,7 +12709,7 @@ impl GeneratedTeachingTip {
                     object,
                     EventId::Closed,
                     observation,
-                    (),
+                    payload,
                 );
             }
         })?;
