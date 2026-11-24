@@ -1483,6 +1483,10 @@ name = "PathIcon"
 name = "Data"
 adapter = "path_data"
 
+[[objects.properties]]
+name = "Foreground"
+adapter = "theme_brush"
+
 [[objects]]
 name = "ListBoxItem"
 
