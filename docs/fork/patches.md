@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-93 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-95 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -133,6 +133,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 92 | `4ebbae06` | An AutoSuggestBox's UI Automation bounds stay its text field's while its suggestion list is closed: when the adapter creates an AutoSuggestBox it registers `Loaded` and `SizeChanged` (the box held weakly, as 79's ComboBox), which hook the first `Popup` in its template once it is there: once `Opened` and `Closed` are both registered, the popup's content is collapsed unless the popup is open, and on each of them shown or collapsed to match whether the popup is open (the handlers take the popup from the sender, so they don't hold it); failures are ignored; binds `IPopup::{add_Closed, add_Opened, get_Child, get_IsOpen}` and `IUIElement::put_Visibility`; the hook reads its state and releases it before hooking, since showing the content may raise it again (`3e37436e`, a pre-screen fix, and `c3007c6b`, a review fix, on the same branch) | none | New | Bug, an issue for WinUI rather than Reactor to fix: WinUI takes the box's bounds from its whole template, the popup's content included, and that content keeps its last size after the popup closes, so once the list had shown the box's bounds took in the list's area for the rest of the launch (460x117, then 461x86 around a 460x32 text field), and voice control or a UI Automation click aimed at the box landed below it (Okojo#2851). Constraining the popup to the root's bounds (79's fix) did not change it. Evidence: app (Okojo GUI `search-box-bounds`, runs 45057630462 before, 45058483661 (probe) and 45059254343 with the change; `search-recent` 45059452221) |
 | 93 | `2f405160` | `PathIcon::foreground`: `IconElement.Foreground` on a `PathIcon` element, through the generator (`schema.toml`, the `theme_brush` adapter as on `FontIcon` and `SymbolIcon`, so a theme brush follows theme changes; undeclared, it is cleared and the icon takes its parent's again); no new bindings | none | New | Extends 15 to the last icon element without a foreground: a path icon could only take its parent's, while `Icon::path(..).foreground(..)` (22) already tints one in a menu. Okojo's ribbon Unsubscribe glyph is a `PathIcon` and takes the command's rose brush, as More and the right-click menu do (Okojo#3263). On `okojo-flow-layout` (TKIPisalegacycipher/windows-rs#15, merged as `28d71758`). Evidence: unit (`tests/declarations.rs`, `icon_foregrounds_record_the_same_theme_brush_as_text`) |
 | 94 | `2f48148f` | `TeachingTip::action_button_style(ButtonStyle)` and `TeachingTip::on_closed(TeachingTipCloseReason)`: binds `ITeachingTip::put_ActionButtonStyle`, `ITeachingTipStatics::get_ActionButtonStyleProperty`, `ITeachingTipClosedEventArgs::get_Reason` and `TeachingTipCloseReason::{CloseButton, LightDismiss, Programmatic}` through the generator (`schema.toml` + `bindings.txt`); `ActionButtonStyle` uses `resource_style` (`lookup_button_style` / `ClearValue`), and `Closed` dispatches `TeachingTipCloseReason` | none | New | Lets Okojo's All accounts tip draw "Turn on" as the accent button and distinguish "Not now" (`CloseButton`) from Esc (`LightDismiss`) or window hide (`Programmatic`) (Okojo#3235). Evidence: unit (`tests/declarations.rs`, `teaching_tip_records_action_button_style_and_dispatches_close_reason`; 445 passed, 0 failed) |
+| 95 | `4d1242af` | `Button::padding(Thickness)` and `Button::corner_radius(CornerRadius)`: `Control.Padding` and `Control.CornerRadius` on a `Button` through the generator (`schema.toml` + `bindings.txt`: `IControl::{put_Padding, put_CornerRadius}`, `IControlStatics::{get_PaddingProperty, get_CornerRadiusProperty}`), declared after `Style` so the local value is over the style's setter; undeclared, each is cleared (`ClearValue`) back to the style's | none | New | A `ButtonPadding` or `ControlCornerRadius` resource override doesn't reach the Subtle style's setters, so a button's padding and corners could not change. Okojo's ribbon split buttons (Delete, Done, Snooze) join their action and chevron halves into one pill: square inner corners, the chevron 8 px after the label and centred in its half (Okojo#3370). Evidence: unit (`tests/declarations.rs`, `a_button_records_its_padding_and_corner_radius`, `a_button_rejects_a_negative_padding`; 447 passed, 0 failed); app (Okojo GUI runs on PR #3370) |
 
 ## 5. Input fixes
 
@@ -310,12 +311,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-94 came after the rebuild and have no original.
+Commits 46-95 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77, 83, 84, 86, 88, 89, 90, 93 and 94 add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77, 83, 84, 86, 88, 89, 90, 93, 94 and 95 add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_font`,
 `Border::use_system_focus_visuals`, `Border::focus_visual_margin`, `automation_accessibility_view`,

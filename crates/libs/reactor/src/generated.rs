@@ -1394,6 +1394,14 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::ButtonStyle,
         }),
+        (ObjectType::Button, PropertyId::Padding) => Some(PropertyContract {
+            id,
+            value: ValueType::Thickness,
+        }),
+        (ObjectType::Button, PropertyId::CornerRadius) => Some(PropertyContract {
+            id,
+            value: ValueType::CornerRadius,
+        }),
         (ObjectType::Button, PropertyId::KeyboardAccelerators) => Some(PropertyContract {
             id,
             value: ValueType::KeyAccelerators,
@@ -2674,7 +2682,9 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::Button, PropertyId::VerticalContentAlignment) => 34,
         (ObjectType::Button, PropertyId::Resources) => 35,
         (ObjectType::Button, PropertyId::Style) => 36,
-        (ObjectType::Button, PropertyId::KeyboardAccelerators) => 37,
+        (ObjectType::Button, PropertyId::Padding) => 37,
+        (ObjectType::Button, PropertyId::CornerRadius) => 38,
+        (ObjectType::Button, PropertyId::KeyboardAccelerators) => 39,
         (ObjectType::CheckBox, PropertyId::IsChecked) => 31,
         (ObjectType::CheckBox, PropertyId::IsEnabled) => 32,
         (ObjectType::Border, PropertyId::Background) => 31,

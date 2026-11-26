@@ -935,6 +935,7 @@ pub fn windows_reactor::Button::can_be_scroll_anchor(self, bool) -> Self
 pub fn windows_reactor::Button::canvas_left(self, f64) -> Self
 pub fn windows_reactor::Button::canvas_top(self, f64) -> Self
 pub fn windows_reactor::Button::content(self, impl core::convert::Into<windows_reactor::View>) -> Self
+pub fn windows_reactor::Button::corner_radius(self, impl core::convert::Into<windows_reactor::CornerRadius>) -> Self
 pub fn windows_reactor::Button::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
 pub fn windows_reactor::Button::element_ref<R>(self, &R) -> Self where R: windows_reactor::CompatibleElementRef<windows_reactor::Button>
 pub fn windows_reactor::Button::exit_fade(self, core::time::Duration) -> Self
@@ -958,6 +959,7 @@ pub fn windows_reactor::Button::new() -> Self
 pub fn windows_reactor::Button::on_click(self, impl windows_reactor::IntoUnitCallback) -> Self
 pub fn windows_reactor::Button::on_double_tapped(self, impl windows_reactor::IntoUnitCallback) -> Self
 pub fn windows_reactor::Button::opacity(self, f64) -> Self
+pub fn windows_reactor::Button::padding(self, impl core::convert::Into<windows_reactor::Thickness>) -> Self
 pub fn windows_reactor::Button::relative_align_bottom(self) -> Self
 pub fn windows_reactor::Button::relative_align_horizontal_center(self) -> Self
 pub fn windows_reactor::Button::relative_align_left(self) -> Self
