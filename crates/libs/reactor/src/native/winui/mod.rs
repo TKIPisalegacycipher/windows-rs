@@ -1990,6 +1990,7 @@ fn build_menu_items(
             MenuItem::Submenu {
                 key,
                 label,
+                enabled,
                 icon,
                 items,
             } => {
@@ -1999,6 +2000,7 @@ fn build_menu_items(
                 if let Some(icon) = menu_icon(icon.as_ref(), None)? {
                     item.SetIcon(&icon)?;
                 }
+                item.cast::<native::IControl>()?.SetIsEnabled(*enabled)?;
                 build_menu_items(
                     items,
                     &item.Items()?,

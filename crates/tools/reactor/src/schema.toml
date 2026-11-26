@@ -862,6 +862,10 @@ adapter = "icon_element"
 [[objects.properties]]
 name = "IsSuggestionListOpen"
 
+[[objects.properties]]
+name = "CornerRadius"
+validation = "finite_non_negative"
+
 [[objects.relations]]
 name = "Header"
 
@@ -1189,6 +1193,14 @@ name = "IsChecked"
 value = "OptionalBool"
 controlled = "IsCheckedChanged"
 feedback = "exact"
+
+[[objects.properties]]
+name = "Padding"
+validation = "finite_non_negative"
+
+[[objects.properties]]
+name = "CornerRadius"
+validation = "finite_non_negative"
 
 [[objects.relations]]
 name = "Content"
@@ -1584,6 +1596,10 @@ name = "SelectedIndex"
 adapter = "selection_index"
 controlled = "SelectionChanged"
 feedback = "exact"
+
+[[objects.properties]]
+name = "CornerRadius"
+validation = "finite_non_negative"
 
 [[objects.relations]]
 name = "Header"

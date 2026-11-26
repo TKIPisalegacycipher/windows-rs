@@ -1582,6 +1582,69 @@ fn a_button_rejects_a_negative_padding() {
 }
 
 #[test]
+fn toggle_button_records_padding_and_corner_radius() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            ToggleButton::new()
+                .padding(Thickness::new(10.0, 3.0, 10.0, 3.0))
+                .corner_radius(CornerRadius::uniform(12.0)),
+        )
+        .unwrap();
+    let toggle = runtime.graph().root().unwrap();
+    let properties = runtime.graph().properties(toggle).unwrap();
+    assert!(properties.contains(&Property {
+        id: PropertyId::Padding,
+        value: PropertyValue::Thickness(Thickness::new(10.0, 3.0, 10.0, 3.0)),
+    }));
+    assert!(properties.contains(&Property {
+        id: PropertyId::CornerRadius,
+        value: PropertyValue::CornerRadius(CornerRadius::uniform(12.0)),
+    }));
+}
+
+#[test]
+#[should_panic(expected = "ToggleButton.Padding requires finite_non_negative")]
+fn toggle_button_rejects_a_negative_padding() {
+    let _ = ToggleButton::new().padding(Thickness::new(-1.0, 0.0, 0.0, 0.0));
+}
+
+#[test]
+fn search_controls_record_corner_radius() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(ComboBox::new().corner_radius(CornerRadius::new(4.0, 0.0, 0.0, 4.0)))
+        .unwrap();
+    let combo = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(combo)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::CornerRadius,
+                value: PropertyValue::CornerRadius(CornerRadius::new(4.0, 0.0, 0.0, 4.0)),
+            })
+    );
+
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(AutoSuggestBox::new().corner_radius(CornerRadius::new(0.0, 4.0, 4.0, 0.0)))
+        .unwrap();
+    let box_node = runtime.graph().root().unwrap();
+    assert!(
+        runtime
+            .graph()
+            .properties(box_node)
+            .unwrap()
+            .contains(&Property {
+                id: PropertyId::CornerRadius,
+                value: PropertyValue::CornerRadius(CornerRadius::new(0.0, 4.0, 4.0, 0.0)),
+            })
+    );
+}
+
+#[test]
 fn icon_foregrounds_record_the_same_theme_brush_as_text() {
     let expected = Property {
         id: PropertyId::Foreground,
@@ -2066,4 +2129,16 @@ fn menu_item_icon_applies_to_items_and_submenus() {
         MenuItem::item("a", "A").icon(icon),
         MenuItem::item("a", "A").icon(Icon::font("\u{E8B7}").foreground(ThemeBrush::Accent))
     );
+}
+
+#[test]
+fn menu_item_submenu_records_enabled_state() {
+    assert!(matches!(
+        MenuItem::submenu("m", "M", [MenuItem::item("a", "A")]),
+        MenuItem::Submenu { enabled: true, .. }
+    ));
+    assert!(matches!(
+        MenuItem::disabled_submenu("m", "M", [MenuItem::item("a", "A")]),
+        MenuItem::Submenu { enabled: false, .. }
+    ));
 }

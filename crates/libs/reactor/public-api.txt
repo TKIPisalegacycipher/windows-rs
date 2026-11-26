@@ -220,12 +220,14 @@ pub windows_reactor::MenuItem::Item::swatch: core::option::Option<windows_reacto
 pub windows_reactor::MenuItem::Separator
 pub windows_reactor::MenuItem::Separator::key: windows_reactor::Key
 #[non_exhaustive] pub windows_reactor::MenuItem::Submenu
+pub windows_reactor::MenuItem::Submenu::enabled: bool
 pub windows_reactor::MenuItem::Submenu::icon: core::option::Option<windows_reactor::Icon>
 pub windows_reactor::MenuItem::Submenu::items: alloc::rcs::rc::Rc<alloc::vec::Vec<Self>>
 pub windows_reactor::MenuItem::Submenu::key: windows_reactor::Key
 pub windows_reactor::MenuItem::Submenu::label: alloc::rcs::rc::Rc<str>
 impl windows_reactor::MenuItem
 pub fn windows_reactor::MenuItem::disabled(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>) -> Self
+pub fn windows_reactor::MenuItem::disabled_submenu(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>, impl core::iter::traits::collect::IntoIterator<Item = Self>) -> Self
 pub fn windows_reactor::MenuItem::icon(self, impl core::convert::Into<windows_reactor::Icon>) -> Self
 pub fn windows_reactor::MenuItem::item(impl core::convert::Into<windows_reactor::Key>, impl core::convert::Into<alloc::rcs::rc::Rc<str>>) -> Self
 pub fn windows_reactor::MenuItem::separator(impl core::convert::Into<windows_reactor::Key>) -> Self
@@ -714,6 +716,7 @@ pub fn windows_reactor::AutoSuggestBox::automation_name(self, impl core::convert
 pub fn windows_reactor::AutoSuggestBox::can_be_scroll_anchor(self, bool) -> Self
 pub fn windows_reactor::AutoSuggestBox::canvas_left(self, f64) -> Self
 pub fn windows_reactor::AutoSuggestBox::canvas_top(self, f64) -> Self
+pub fn windows_reactor::AutoSuggestBox::corner_radius(self, impl core::convert::Into<windows_reactor::CornerRadius>) -> Self
 pub fn windows_reactor::AutoSuggestBox::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
 pub fn windows_reactor::AutoSuggestBox::element_ref<R>(self, &R) -> Self where R: windows_reactor::CompatibleElementRef<windows_reactor::AutoSuggestBox>
 pub fn windows_reactor::AutoSuggestBox::exit_fade(self, core::time::Duration) -> Self
@@ -1255,6 +1258,7 @@ pub fn windows_reactor::ComboBox::automation_name(self, impl core::convert::AsRe
 pub fn windows_reactor::ComboBox::can_be_scroll_anchor(self, bool) -> Self
 pub fn windows_reactor::ComboBox::canvas_left(self, f64) -> Self
 pub fn windows_reactor::ComboBox::canvas_top(self, f64) -> Self
+pub fn windows_reactor::ComboBox::corner_radius(self, impl core::convert::Into<windows_reactor::CornerRadius>) -> Self
 pub fn windows_reactor::ComboBox::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
 pub fn windows_reactor::ComboBox::element_ref<R>(self, &R) -> Self where R: windows_reactor::CompatibleElementRef<windows_reactor::ComboBox>
 pub fn windows_reactor::ComboBox::exit_fade(self, core::time::Duration) -> Self
@@ -4427,6 +4431,7 @@ pub fn windows_reactor::ToggleButton::can_be_scroll_anchor(self, bool) -> Self
 pub fn windows_reactor::ToggleButton::canvas_left(self, f64) -> Self
 pub fn windows_reactor::ToggleButton::canvas_top(self, f64) -> Self
 pub fn windows_reactor::ToggleButton::content(self, impl core::convert::Into<windows_reactor::View>) -> Self
+pub fn windows_reactor::ToggleButton::corner_radius(self, impl core::convert::Into<windows_reactor::CornerRadius>) -> Self
 pub fn windows_reactor::ToggleButton::cursor(self, windows_reactor::InputSystemCursorShape) -> Self
 pub fn windows_reactor::ToggleButton::element_ref<R>(self, &R) -> Self where R: windows_reactor::CompatibleElementRef<windows_reactor::ToggleButton>
 pub fn windows_reactor::ToggleButton::exit_fade(self, core::time::Duration) -> Self
@@ -4448,6 +4453,7 @@ pub fn windows_reactor::ToggleButton::min_width(self, f64) -> Self
 pub fn windows_reactor::ToggleButton::new() -> Self
 pub fn windows_reactor::ToggleButton::on_is_checked_changed(self, impl windows_reactor::IntoPayloadCallback<core::option::Option<bool>>) -> Self
 pub fn windows_reactor::ToggleButton::opacity(self, f64) -> Self
+pub fn windows_reactor::ToggleButton::padding(self, impl core::convert::Into<windows_reactor::Thickness>) -> Self
 pub fn windows_reactor::ToggleButton::relative_align_bottom(self) -> Self
 pub fn windows_reactor::ToggleButton::relative_align_horizontal_center(self) -> Self
 pub fn windows_reactor::ToggleButton::relative_align_left(self) -> Self

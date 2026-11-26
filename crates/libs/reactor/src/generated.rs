@@ -1702,6 +1702,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::Bool,
         }),
+        (ObjectType::AutoSuggestBox, PropertyId::CornerRadius) => Some(PropertyContract {
+            id,
+            value: ValueType::CornerRadius,
+        }),
         (ObjectType::PasswordBox, PropertyId::PlaceholderText) => Some(PropertyContract {
             id,
             value: ValueType::String,
@@ -1862,6 +1866,14 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
         (ObjectType::ToggleButton, PropertyId::IsChecked) => Some(PropertyContract {
             id,
             value: ValueType::OptionalBool,
+        }),
+        (ObjectType::ToggleButton, PropertyId::Padding) => Some(PropertyContract {
+            id,
+            value: ValueType::Thickness,
+        }),
+        (ObjectType::ToggleButton, PropertyId::CornerRadius) => Some(PropertyContract {
+            id,
+            value: ValueType::CornerRadius,
         }),
         (ObjectType::RadioButton, PropertyId::GroupName) => Some(PropertyContract {
             id,
@@ -2323,6 +2335,10 @@ pub fn property_contract(kind: ObjectType, id: PropertyId) -> Option<PropertyCon
             id,
             value: ValueType::SelectionIndex,
         }),
+        (ObjectType::ComboBox, PropertyId::CornerRadius) => Some(PropertyContract {
+            id,
+            value: ValueType::CornerRadius,
+        }),
         (ObjectType::Pivot, PropertyId::Title) => Some(PropertyContract {
             id,
             value: ValueType::String,
@@ -2759,6 +2775,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::AutoSuggestBox, PropertyId::Text) => 34,
         (ObjectType::AutoSuggestBox, PropertyId::QueryIcon) => 35,
         (ObjectType::AutoSuggestBox, PropertyId::IsSuggestionListOpen) => 36,
+        (ObjectType::AutoSuggestBox, PropertyId::CornerRadius) => 37,
         (ObjectType::PasswordBox, PropertyId::PlaceholderText) => 31,
         (ObjectType::PasswordBox, PropertyId::PasswordRevealMode) => 32,
         (ObjectType::PasswordBox, PropertyId::IsEnabled) => 33,
@@ -2801,6 +2818,8 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::ToggleSwitch, PropertyId::IsOn) => 32,
         (ObjectType::ToggleButton, PropertyId::IsEnabled) => 31,
         (ObjectType::ToggleButton, PropertyId::IsChecked) => 32,
+        (ObjectType::ToggleButton, PropertyId::Padding) => 33,
+        (ObjectType::ToggleButton, PropertyId::CornerRadius) => 34,
         (ObjectType::RadioButton, PropertyId::GroupName) => 31,
         (ObjectType::RadioButton, PropertyId::IsEnabled) => 32,
         (ObjectType::RadioButton, PropertyId::IsChecked) => 33,
@@ -2865,6 +2884,7 @@ pub(crate) fn property_order(kind: ObjectType, id: PropertyId) -> usize {
         (ObjectType::ComboBox, PropertyId::IsEnabled) => 33,
         (ObjectType::ComboBox, PropertyId::ItemsSource) => 34,
         (ObjectType::ComboBox, PropertyId::SelectedIndex) => 35,
+        (ObjectType::ComboBox, PropertyId::CornerRadius) => 36,
         (ObjectType::Pivot, PropertyId::Title) => 31,
         (ObjectType::Pivot, PropertyId::SelectedIndex) => 32,
         (ObjectType::PivotItem, PropertyId::Header) => 31,
