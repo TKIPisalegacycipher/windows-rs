@@ -2,7 +2,7 @@
 
 Every commit on `okojo-flow-layout` on top of upstream `ffe56ded6`, grouped by what it is for,
 followed by a map from the original 58-commit stack.
-Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-95 were added on top of it
+Commits 1-45 are the rebuilt stack (`okojo-rebased`, `47c5b855d`); 46-96 were added on top of it
 since. Read [readme.md](readme.md) first for the background.
 
 ## How to read the tables
@@ -134,6 +134,7 @@ Each of these exposes a WinUI member Reactor does not. None is in #5087.
 | 93 | `2f405160` | `PathIcon::foreground`: `IconElement.Foreground` on a `PathIcon` element, through the generator (`schema.toml`, the `theme_brush` adapter as on `FontIcon` and `SymbolIcon`, so a theme brush follows theme changes; undeclared, it is cleared and the icon takes its parent's again); no new bindings | none | New | Extends 15 to the last icon element without a foreground: a path icon could only take its parent's, while `Icon::path(..).foreground(..)` (22) already tints one in a menu. Okojo's ribbon Unsubscribe glyph is a `PathIcon` and takes the command's rose brush, as More and the right-click menu do (Okojo#3263). On `okojo-flow-layout` (TKIPisalegacycipher/windows-rs#15, merged as `28d71758`). Evidence: unit (`tests/declarations.rs`, `icon_foregrounds_record_the_same_theme_brush_as_text`) |
 | 94 | `2f48148f` | `TeachingTip::action_button_style(ButtonStyle)` and `TeachingTip::on_closed(TeachingTipCloseReason)`: binds `ITeachingTip::put_ActionButtonStyle`, `ITeachingTipStatics::get_ActionButtonStyleProperty`, `ITeachingTipClosedEventArgs::get_Reason` and `TeachingTipCloseReason::{CloseButton, LightDismiss, Programmatic}` through the generator (`schema.toml` + `bindings.txt`); `ActionButtonStyle` uses `resource_style` (`lookup_button_style` / `ClearValue`), and `Closed` dispatches `TeachingTipCloseReason` | none | New | Lets Okojo's All accounts tip draw "Turn on" as the accent button and distinguish "Not now" (`CloseButton`) from Esc (`LightDismiss`) or window hide (`Programmatic`) (Okojo#3235). Evidence: unit (`tests/declarations.rs`, `teaching_tip_records_action_button_style_and_dispatches_close_reason`; 445 passed, 0 failed) |
 | 95 | `4d1242af` | `Button::padding(Thickness)` and `Button::corner_radius(CornerRadius)`: `Control.Padding` and `Control.CornerRadius` on a `Button` through the generator (`schema.toml` + `bindings.txt`: `IControl::{put_Padding, put_CornerRadius}`, `IControlStatics::{get_PaddingProperty, get_CornerRadiusProperty}`), declared after `Style` so the local value is over the style's setter; undeclared, each is cleared (`ClearValue`) back to the style's | none | New | A `ButtonPadding` or `ControlCornerRadius` resource override doesn't reach the Subtle style's setters, so a button's padding and corners could not change. Okojo's ribbon split buttons (Delete, Done, Snooze) join their action and chevron halves into one pill: square inner corners, the chevron 8 px after the label and centred in its half (Okojo#3370). Evidence: unit (`tests/declarations.rs`, `a_button_records_its_padding_and_corner_radius`, `a_button_rejects_a_negative_padding`; 447 passed, 0 failed); app (Okojo GUI runs on PR #3370) |
+| 96 | `fbea4345` | `ToggleButton::{padding, corner_radius}`, `ComboBox::corner_radius`, `AutoSuggestBox::corner_radius` through `schema.toml` (`IControl::{put_Padding, put_CornerRadius}`), plus `MenuItem::Submenu::enabled` / `MenuItem::disabled_submenu` (`IControl::SetIsEnabled` on `MenuFlyoutSubItem` in `winui` & `transient_menu`) | none | New | Okojo chrome polish pass 2: renders sleek pill search filter chips on `ToggleButton` without dropping UIA `TogglePattern`, joins `Search.Scope` (`ComboBox`) and `Search.Box` (`AutoSuggestBox`) with square inner corners, and preserves `>` submenu chevrons on disabled ribbon overflow commands (`MenuItem::disabled_submenu`). Evidence: unit (`tests/declarations.rs`, `toggle_button_records_padding_and_corner_radius`, `toggle_button_rejects_a_negative_padding`, `search_controls_record_corner_radius`, `menu_item_submenu_records_enabled_state`; 451 passed, 0 failed) |
 
 ## 5. Input fixes
 
@@ -311,12 +312,12 @@ drag commit likewise rest on live behaviour.
 Seven were dropped (3, 14, 16, 23, 24, 33, 41), ten were merged into a neighbour (37, 38, 39, 40,
 42, 44, 45, 46, 47, 50) and four commits are new (1 to 4). The seven dropped commits are not lost:
 they remain reachable from the tag `archive/okojo-fast-list` (the branch itself is retired).
-Commits 46-95 came after the rebuild and have no original.
+Commits 46-96 came after the rebuild and have no original.
 
 ## Public API impact
 
 Comparing `public-api.txt` at upstream `ffe56ded6` and at `47c5b855d`: the stack adds public items
-and changes a few. Commits 46-77, 83, 84, 86, 88, 89, 90, 93, 94 and 95 add items (`FlowLayout`, `ItemsRepeater::layout`,
+and changes a few. Commits 46-77, 83, 84, 86, 88, 89, 90, 93, 94, 95 and 96 add items (`FlowLayout`, `ItemsRepeater::layout`,
 `ListView::resource_overrides`, the `ElementRef<ListView>`, `ElementRef<Border>` and `WebView2`
 requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_font`,
 `Border::use_system_focus_visuals`, `Border::focus_visual_margin`, `automation_accessibility_view`,
@@ -324,7 +325,7 @@ requests, `Menu::on_opening`, `register_resource_fonts`, `register_text_block_fo
 `NavigationViewItem::on_got_focus`, `on_lost_focus` and `element_ref`, `Menu::on_closed`,
 `Button::on_double_tapped`, `RichText::on_link_click`, `RichTextBlock::foreground`,
 `ElementRef<ListView>::request_focus_key`, `ElementRef<ListView>::request_selected_keys_into_view`,
-`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`, `PathIcon::foreground`, `TeachingTipCloseReason`, `TeachingTip::action_button_style`), 78-82, 87 and 91 change behaviour (above, no public item), and 85 removes the one 57 added
+`TextBlock::font_family`, `ElementRef<WebView2>::request_accelerator_keys`, `TextBlock::text_highlighters`, `TextHighlighter`, `TextRange`, `AutoSuggestBox::is_suggestion_list_open`, `ContentDialog::resource_overrides`, `ResourceValue::Double` and its `From<f64>`, `PathIcon::foreground`, `TeachingTipCloseReason`, `TeachingTip::action_button_style`, `Button::{padding, corner_radius}`, `ToggleButton::{padding, corner_radius}`, `ComboBox::corner_radius`, `AutoSuggestBox::corner_radius`, `MenuItem::{Submenu::enabled, disabled_submenu}`), 78-82, 87 and 91 change behaviour (above, no public item), and 85 removes the one 57 added
 (`Border::handles_plain_presses`); none changes an existing item, except that 90 adds a variant to an enum and 94 changes `TeachingTip::on_closed`'s callback payload (the table below). `register_resource_fonts` is
 missing from `public-api.txt`, which commit 60 did not update. These are source-breaking for code
 that names them:
