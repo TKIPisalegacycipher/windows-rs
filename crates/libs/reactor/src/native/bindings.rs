@@ -2885,6 +2885,16 @@ impl Control {
             .and_then(|| windows_core::imp::Type::from_abi(result__))
         })
     }
+    pub(crate) fn PaddingProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IControlStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).PaddingProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
     pub(crate) fn HorizontalContentAlignmentProperty() -> windows_core::Result<DependencyProperty> {
         Self::IControlStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
@@ -2929,6 +2939,16 @@ impl Control {
         Self::IControlStatics(|this| unsafe {
             let mut result__ = core::mem::zeroed();
             (windows_core::Interface::vtable(this).BorderBrushProperty)(
+                windows_core::Interface::as_raw(this),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        })
+    }
+    pub(crate) fn CornerRadiusProperty() -> windows_core::Result<DependencyProperty> {
+        Self::IControlStatics(|this| unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(this).CornerRadiusProperty)(
                 windows_core::Interface::as_raw(this),
                 &mut result__,
             )
@@ -9781,6 +9801,15 @@ impl IControl {
             .ok()
         }
     }
+    pub(crate) fn SetPadding(&self, value: Thickness) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetPadding)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
     pub(crate) fn SetHorizontalContentAlignment(
         &self,
         value: HorizontalAlignment,
@@ -9848,6 +9877,15 @@ impl IControl {
             .map(|| result__)
         }
     }
+    pub(crate) fn SetCornerRadius(&self, value: CornerRadius) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).SetCornerRadius)(
+                windows_core::Interface::as_raw(self),
+                value,
+            )
+            .ok()
+        }
+    }
 }
 #[repr(C)]
 pub struct IControl_Vtbl {
@@ -9889,7 +9927,8 @@ pub struct IControl_Vtbl {
         *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
     Padding: usize,
-    SetPadding: usize,
+    pub SetPadding:
+        unsafe extern "system" fn(*mut core::ffi::c_void, Thickness) -> windows_core::HRESULT,
     HorizontalContentAlignment: usize,
     pub SetHorizontalContentAlignment: unsafe extern "system" fn(
         *mut core::ffi::c_void,
@@ -9923,6 +9962,8 @@ pub struct IControl_Vtbl {
         *mut core::ffi::c_void,
         *mut CornerRadius,
     ) -> windows_core::HRESULT,
+    pub SetCornerRadius:
+        unsafe extern "system" fn(*mut core::ffi::c_void, CornerRadius) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
     IControlStatics,
@@ -9956,7 +9997,10 @@ pub struct IControlStatics_Vtbl {
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
-    PaddingProperty: usize,
+    pub PaddingProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
     pub HorizontalContentAlignmentProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
@@ -9975,6 +10019,13 @@ pub struct IControlStatics_Vtbl {
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
     pub BorderBrushProperty: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    DefaultStyleKeyProperty: usize,
+    DefaultStyleResourceUriProperty: usize,
+    ElementSoundModeProperty: usize,
+    pub CornerRadiusProperty: unsafe extern "system" fn(
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,

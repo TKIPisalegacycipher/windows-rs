@@ -1554,6 +1554,34 @@ fn generated_controls_cover_distinct_native_value_and_relation_shapes() {
 }
 
 #[test]
+fn a_button_records_its_padding_and_corner_radius() {
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime
+        .update(
+            Button::new()
+                .padding(Thickness::new(11.0, 0.0, 3.0, 0.0))
+                .corner_radius(CornerRadius::new(4.0, 0.0, 0.0, 4.0)),
+        )
+        .unwrap();
+    let button = runtime.graph().root().unwrap();
+    let properties = runtime.graph().properties(button).unwrap();
+    assert!(properties.contains(&Property {
+        id: PropertyId::Padding,
+        value: PropertyValue::Thickness(Thickness::new(11.0, 0.0, 3.0, 0.0)),
+    }));
+    assert!(properties.contains(&Property {
+        id: PropertyId::CornerRadius,
+        value: PropertyValue::CornerRadius(CornerRadius::new(4.0, 0.0, 0.0, 4.0)),
+    }));
+}
+
+#[test]
+#[should_panic(expected = "Button.Padding requires finite_non_negative")]
+fn a_button_rejects_a_negative_padding() {
+    let _ = Button::new().padding(Thickness::new(-1.0, 0.0, 0.0, 0.0));
+}
+
+#[test]
 fn icon_foregrounds_record_the_same_theme_brush_as_text() {
     let expected = Property {
         id: PropertyId::Foreground,

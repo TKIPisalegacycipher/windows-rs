@@ -4406,6 +4406,66 @@ impl GeneratedHandle {
                             .map_err(Into::into)
                     }),
             ),
+            (Self::Button(object), PropertyId::Padding, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::Control::PaddingProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (Self::Button(object), PropertyId::Padding, Some(PropertyValue::Thickness(value))) => {
+                Some(
+                    object
+                        .value
+                        .cast::<native::IControl>()
+                        .map_err(Into::into)
+                        .and_then(|object| {
+                            object
+                                .SetPadding(native::Thickness {
+                                    left: value.left,
+                                    top: value.top,
+                                    right: value.right,
+                                    bottom: value.bottom,
+                                })
+                                .map_err(Into::into)
+                        }),
+                )
+            }
+            (Self::Button(object), PropertyId::CornerRadius, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::Control::CornerRadiusProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::Button(object),
+                PropertyId::CornerRadius,
+                Some(PropertyValue::CornerRadius(value)),
+            ) => Some(
+                object
+                    .value
+                    .cast::<native::IControl>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        object
+                            .SetCornerRadius(native::CornerRadius {
+                                top_left: value.top_left,
+                                top_right: value.top_right,
+                                bottom_right: value.bottom_right,
+                                bottom_left: value.bottom_left,
+                            })
+                            .map_err(Into::into)
+                    }),
+            ),
             (Self::CheckBox(object), PropertyId::IsChecked, None) => Some(
                 object
                     .value

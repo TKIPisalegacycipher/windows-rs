@@ -106,8 +106,8 @@ Microsoft::UI::Xaml::Controls::IContentControl::{get_ContentTemplateRoot, put_Co
 Microsoft::UI::Xaml::Controls::IContentDialog::{add_Closed, add_Opened, get_DefaultButton, Hide, put_CloseButtonText, put_DefaultButton, put_IsPrimaryButtonEnabled, put_IsSecondaryButtonEnabled, put_PrimaryButtonText, put_SecondaryButtonText, put_Title, remove_Closed, remove_Opened, ShowAsync}
 Microsoft::UI::Xaml::Controls::IContentDialogClosedEventArgs::get_Result
 Microsoft::UI::Xaml::Controls::IContentDialogStatics::{get_CloseButtonTextProperty, get_DefaultButtonProperty, get_IsPrimaryButtonEnabledProperty, get_IsSecondaryButtonEnabledProperty, get_PrimaryButtonTextProperty, get_SecondaryButtonTextProperty, get_TitleProperty}
-Microsoft::UI::Xaml::Controls::IControl::{get_CornerRadius, get_IsEnabled, put_Background, put_BorderBrush, put_BorderThickness, put_Foreground, put_HorizontalContentAlignment, put_IsEnabled, put_Template, put_VerticalContentAlignment}
-Microsoft::UI::Xaml::Controls::IControlStatics::{get_BackgroundProperty, get_BorderBrushProperty, get_BorderThicknessProperty, get_HorizontalContentAlignmentProperty, get_IsEnabledProperty, get_TemplateProperty, get_VerticalContentAlignmentProperty}
+Microsoft::UI::Xaml::Controls::IControl::{get_CornerRadius, get_IsEnabled, put_Background, put_BorderBrush, put_BorderThickness, put_CornerRadius, put_Foreground, put_HorizontalContentAlignment, put_IsEnabled, put_Padding, put_Template, put_VerticalContentAlignment}
+Microsoft::UI::Xaml::Controls::IControlStatics::{get_BackgroundProperty, get_BorderBrushProperty, get_BorderThicknessProperty, get_CornerRadiusProperty, get_HorizontalContentAlignmentProperty, get_IsEnabledProperty, get_PaddingProperty, get_TemplateProperty, get_VerticalContentAlignmentProperty}
 Microsoft::UI::Xaml::Controls::IDatePicker::{add_SelectedDateChanged, put_DayVisible, put_Header, put_MonthVisible, put_YearVisible, remove_SelectedDateChanged}
 Microsoft::UI::Xaml::Controls::IDatePickerSelectedValueChangedEventArgs::get_NewDate
 Microsoft::UI::Xaml::Controls::IDatePickerStatics::{get_DayVisibleProperty, get_MonthVisibleProperty, get_YearVisibleProperty}

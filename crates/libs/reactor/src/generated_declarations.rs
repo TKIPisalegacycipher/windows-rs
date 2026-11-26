@@ -2340,6 +2340,29 @@ impl Button {
             .property(PropertyId::Style, PropertyValue::ButtonStyle(style));
         self
     }
+    pub fn padding(mut self, padding: impl Into<Thickness>) -> Self {
+        let padding = padding.into();
+        assert!(
+            padding.is_finite_non_negative(),
+            "Button.Padding requires finite_non_negative"
+        );
+        self.0 = self
+            .0
+            .property(PropertyId::Padding, PropertyValue::Thickness(padding));
+        self
+    }
+    pub fn corner_radius(mut self, corner_radius: impl Into<CornerRadius>) -> Self {
+        let corner_radius = corner_radius.into();
+        assert!(
+            corner_radius.is_finite_non_negative(),
+            "Button.CornerRadius requires finite_non_negative"
+        );
+        self.0 = self.0.property(
+            PropertyId::CornerRadius,
+            PropertyValue::CornerRadius(corner_radius),
+        );
+        self
+    }
     pub fn key_accelerators(mut self, key_accelerators: KeyAccelerators) -> Self {
         self.0 = self.0.property(
             PropertyId::KeyboardAccelerators,
