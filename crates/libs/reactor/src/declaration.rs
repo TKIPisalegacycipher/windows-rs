@@ -1081,6 +1081,7 @@ pub enum MenuItem {
     Submenu {
         key: Key,
         label: Rc<str>,
+        enabled: bool,
         icon: Option<Icon>,
         items: Rc<Vec<Self>>,
     },
@@ -1142,6 +1143,21 @@ impl MenuItem {
         Self::Submenu {
             key: key.into(),
             label: label.into(),
+            enabled: true,
+            icon: None,
+            items: Rc::new(items.into_iter().collect()),
+        }
+    }
+
+    pub fn disabled_submenu(
+        key: impl Into<Key>,
+        label: impl Into<Rc<str>>,
+        items: impl IntoIterator<Item = Self>,
+    ) -> Self {
+        Self::Submenu {
+            key: key.into(),
+            label: label.into(),
+            enabled: false,
             icon: None,
             items: Rc::new(items.into_iter().collect()),
         }

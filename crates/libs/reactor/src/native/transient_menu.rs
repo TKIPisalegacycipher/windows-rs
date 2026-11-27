@@ -359,13 +359,18 @@ fn build_menu_items(
             }
             MenuItem::Separator { .. } => MenuFlyoutSeparator::new()?.cast()?,
             MenuItem::Submenu {
-                label, icon, items, ..
+                label,
+                enabled,
+                icon,
+                items,
+                ..
             } => {
                 let item = MenuFlyoutSubItem::new()?;
                 item.SetText(label)?;
                 if let Some(icon) = menu_icon(icon.as_ref(), None)? {
                     item.SetIcon(&icon)?;
                 }
+                item.cast::<IControl>()?.SetIsEnabled(*enabled)?;
                 build_menu_items(items, &item.Items()?, revokers, callback)?;
                 item.cast()?
             }

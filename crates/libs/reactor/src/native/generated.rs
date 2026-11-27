@@ -5524,6 +5524,37 @@ impl GeneratedHandle {
                     .SetIsSuggestionListOpen(*value)
                     .map_err(Into::into),
             ),
+            (Self::AutoSuggestBox(object), PropertyId::CornerRadius, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::Control::CornerRadiusProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::AutoSuggestBox(object),
+                PropertyId::CornerRadius,
+                Some(PropertyValue::CornerRadius(value)),
+            ) => Some(
+                object
+                    .value
+                    .cast::<native::IControl>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        object
+                            .SetCornerRadius(native::CornerRadius {
+                                top_left: value.top_left,
+                                top_right: value.top_right,
+                                bottom_right: value.bottom_right,
+                                bottom_left: value.bottom_left,
+                            })
+                            .map_err(Into::into)
+                    }),
+            ),
             (Self::PasswordBox(object), PropertyId::PlaceholderText, None) => Some(
                 object
                     .value
@@ -6377,6 +6408,68 @@ impl GeneratedHandle {
                 PropertyId::IsChecked,
                 Some(PropertyValue::OptionalBool(value)),
             ) => Some(object.value.SetIsChecked(*value).map_err(Into::into)),
+            (Self::ToggleButton(object), PropertyId::Padding, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::Control::PaddingProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::ToggleButton(object),
+                PropertyId::Padding,
+                Some(PropertyValue::Thickness(value)),
+            ) => Some(
+                object
+                    .value
+                    .cast::<native::IControl>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        object
+                            .SetPadding(native::Thickness {
+                                left: value.left,
+                                top: value.top,
+                                right: value.right,
+                                bottom: value.bottom,
+                            })
+                            .map_err(Into::into)
+                    }),
+            ),
+            (Self::ToggleButton(object), PropertyId::CornerRadius, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::Control::CornerRadiusProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::ToggleButton(object),
+                PropertyId::CornerRadius,
+                Some(PropertyValue::CornerRadius(value)),
+            ) => Some(
+                object
+                    .value
+                    .cast::<native::IControl>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        object
+                            .SetCornerRadius(native::CornerRadius {
+                                top_left: value.top_left,
+                                top_right: value.top_right,
+                                bottom_right: value.bottom_right,
+                                bottom_left: value.bottom_left,
+                            })
+                            .map_err(Into::into)
+                    }),
+            ),
             (Self::RadioButton(object), PropertyId::GroupName, None) => Some(
                 object
                     .value
@@ -7723,6 +7816,37 @@ impl GeneratedHandle {
                     .and_then(|object| {
                         native_selection_index(*value)
                             .and_then(|value| object.SetSelectedIndex(value).map_err(Into::into))
+                    }),
+            ),
+            (Self::ComboBox(object), PropertyId::CornerRadius, None) => Some(
+                object
+                    .value
+                    .cast::<native::IDependencyObject>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        native::Control::CornerRadiusProperty()
+                            .map_err(Into::into)
+                            .and_then(|property| object.ClearValue(&property).map_err(Into::into))
+                    }),
+            ),
+            (
+                Self::ComboBox(object),
+                PropertyId::CornerRadius,
+                Some(PropertyValue::CornerRadius(value)),
+            ) => Some(
+                object
+                    .value
+                    .cast::<native::IControl>()
+                    .map_err(Into::into)
+                    .and_then(|object| {
+                        object
+                            .SetCornerRadius(native::CornerRadius {
+                                top_left: value.top_left,
+                                top_right: value.top_right,
+                                bottom_right: value.bottom_right,
+                                bottom_left: value.bottom_left,
+                            })
+                            .map_err(Into::into)
                     }),
             ),
             (Self::Pivot(object), PropertyId::Title, None) => Some(
